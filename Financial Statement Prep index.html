@@ -1,0 +1,3079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoteFlow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --border: #e1e5eb;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --text: #1e293b;
+      --muted: #64748b;
+      --green: #16a34a;
+      --red: #dc2626;
+      --header-bg: #1e293b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #fff;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.02em; }
+    header span { font-size: 0.8rem; color: #94a3b8; letter-spacing: 0.04em; }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: var(--header-bg);
+      padding: 0 32px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #94a3b8;
+      border-bottom: 3px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .tab:hover { color: #e2e8f0; }
+    .tab.active { color: #fff; border-bottom-color: var(--primary); }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    @media (max-width: 700px) {
+      header { padding: 14px 16px; }
+      .tabs { padding: 0 16px; }
+      .container { padding: 20px 12px; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-sm { padding: 5px 11px; font-size: 0.8rem; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-danger { background: #fee2e2; color: var(--red); border: none; }
+    .btn-danger:hover { background: #fecaca; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+    /* Statement output styles */
+    .statement {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .stmt-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .stmt-header .company { font-size: 1.2rem; font-weight: 700; }
+    .stmt-header .title { font-size: 1rem; font-weight: 600; color: var(--muted); margin: 4px 0; }
+    .stmt-header .period { font-size: 0.85rem; color: var(--muted); }
+
+    .stmt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .stmt-table td { padding: 6px 8px; }
+    .stmt-table .col-label { width: 60%; }
+    .stmt-table .col-amount { text-align: right; width: 20%; }
+    .stmt-table .col-total { text-align: right; width: 20%; }
+
+    .stmt-table .section-header td {
+      font-weight: 700;
+      padding-top: 16px;
+      padding-bottom: 4px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    .stmt-table .item td { border-bottom: 1px solid #f1f5f9; }
+    .stmt-table .item td:first-child { padding-left: 20px; }
+
+    .stmt-table .subtotal td {
+      font-weight: 600;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stmt-table .grand-total td {
+      font-weight: 700;
+      border-top: 2px solid var(--text);
+      border-bottom: 2px solid var(--text);
+      font-size: 0.95rem;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+
+    .print-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .meta-row { grid-template-columns: 1fr; }
+    }
+
+    .meta-row label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    .meta-row input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      outline: none;
+    }
+    .meta-row input:focus { border-color: var(--primary); }
+
+    /* ── Import UI ─────────────────────────────────────────────────────── */
+    .import-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 18px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--bg);
+      position: relative;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .import-zone:hover, .import-zone.drag-over {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+    .import-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .import-zone .zone-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .import-zone .zone-hint {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    .import-zone .zone-file {
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 600;
+      pointer-events: none;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .import-zone.has-file { border-color: var(--primary); border-style: solid; background: #eff6ff; }
+
+    .import-status {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      border-radius: 7px;
+      padding: 10px 14px;
+    }
+    .import-status.success { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .import-status.error   { background: #fef2f2; color: var(--red);   border: 1px solid #fecaca; }
+    .import-status.info    { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+
+    .unmapped-list {
+      margin-top: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      font-size: 0.82rem;
+    }
+    .unmapped-list table { width: 100%; border-collapse: collapse; }
+    .unmapped-list th, .unmapped-list td {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .unmapped-list th { font-weight: 600; color: var(--text); background: var(--bg); position: sticky; top: 0; }
+    .unmapped-list select {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.8rem;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .unmapped-list select:focus { border-color: var(--primary); outline: none; }
+    .unmapped-list select.mapped { border-color: var(--green); background: #f0fdf4; }
+    .map-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
+    .map-count { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── Notes questionnaire ──────────────────────────────────────────── */
+    .notes-form { display: flex; flex-direction: column; gap: 18px; }
+    .note-group { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .note-group:last-child { border-bottom: none; }
+    .note-group-title {
+      font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--primary); margin-bottom: 10px;
+    }
+    .note-field { margin-bottom: 12px; }
+    .note-field label {
+      display: block; font-size: 0.85rem; font-weight: 500;
+      color: var(--text); margin-bottom: 4px; line-height: 1.4;
+    }
+    .note-field label .hint {
+      font-weight: 400; font-size: 0.78rem; color: var(--muted); display: block;
+    }
+    .note-field input[type="text"],
+    .note-field textarea,
+    .note-field select {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 0.875rem; font-family: inherit; outline: none;
+    }
+    .note-field textarea { resize: vertical; min-height: 60px; }
+    .note-field input:focus, .note-field textarea:focus, .note-field select:focus {
+      border-color: var(--primary);
+    }
+    .note-field .radio-row {
+      display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem;
+    }
+    .note-field .radio-row label { display: inline-flex; align-items: center; gap: 5px; font-weight: 400; }
+
+    .notes-output { font-size: 0.9rem; line-height: 1.7; }
+    .notes-output h3 {
+      font-size: 0.95rem; font-weight: 700; margin: 20px 0 6px; color: var(--text);
+    }
+    .notes-output h3:first-child { margin-top: 0; }
+    .notes-output p { margin-bottom: 8px; color: #334155; }
+
+    /* ── Login screen ─────────────────────────────────────────────────── */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-card .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-card .logo h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .login-card .logo p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .login-card .form-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    .login-field {
+      margin-bottom: 14px;
+    }
+    .login-field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .login-field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .login-field input:focus { border-color: var(--primary); }
+    .login-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 7px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s;
+    }
+    .login-btn:hover { background: var(--primary-dark); }
+    .login-footer {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .login-footer a {
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .login-footer a:hover { text-decoration: underline; }
+    .login-msg {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 14px;
+    }
+    .login-msg.error { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+    .login-msg.success { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .app-wrapper { display: none; }
+    .app-wrapper.visible { display: block; }
+
+    /* ── Dashboard ───────────────────────────────────────────────────── */
+    .dashboard { display: none; min-height: 100vh; background: var(--bg); }
+    .dashboard.visible { display: block; }
+    .dash-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #fff; padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-header h1 { font-size: 1.35rem; font-weight: 700; }
+    .dash-header .user-area { display: flex; align-items: center; gap: 14px; }
+    .dash-header .user-area span { font-size: 0.8rem; color: #94a3b8; }
+    .dash-content {
+      max-width: 900px; margin: 0 auto; padding: 40px 20px;
+    }
+    .dash-welcome {
+      margin-bottom: 32px;
+    }
+    .dash-welcome h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .dash-welcome p { font-size: 0.9rem; color: var(--muted); margin-top: 6px; }
+    .dash-actions {
+      display: flex; gap: 12px; margin-bottom: 28px;
+    }
+    .project-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .project-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px; cursor: pointer; transition: all 0.15s;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .project-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(37,99,235,0.1); }
+    .project-card .pc-name { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .project-card .pc-meta { font-size: 0.78rem; color: var(--muted); }
+    .project-card { position: relative; }
+    .pc-menu-wrap { position: absolute; top: 12px; right: 12px; }
+    .pc-dots { background: none; border: none; cursor: pointer; font-size: 1.2rem; color: var(--muted); padding: 4px 8px; border-radius: 6px; line-height: 1; }
+    .pc-dots:hover { background: var(--border); color: var(--text); }
+    .pc-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 130px; z-index: 20; overflow: hidden; }
+    .pc-dropdown.open { display: block; }
+    .pc-dropdown button { display: block; width: 100%; text-align: left; padding: 10px 14px; border: none; background: none; cursor: pointer; font-size: 0.82rem; color: var(--text); }
+    .pc-dropdown button:hover { background: var(--bg); }
+    .pc-dropdown button.danger { color: #dc2626; }
+    .pc-dropdown button.danger:hover { background: #fef2f2; }
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .empty-state p { font-size: 0.9rem; margin-bottom: 16px; }
+
+    /* ── Project bar ─────────────────────────────────────────────────── */
+    .project-bar {
+      background: #0f172a;
+      padding: 8px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .project-bar select {
+      padding: 5px 10px;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 0.82rem;
+      outline: none;
+      min-width: 180px;
+    }
+    .project-bar select:focus { border-color: var(--primary); }
+    .project-bar .proj-btn {
+      padding: 4px 10px;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .project-bar .proj-btn:hover { background: #1e293b; color: #e2e8f0; }
+    .project-bar .proj-btn.danger { border-color: #7f1d1d; color: #fca5a5; }
+    .project-bar .proj-btn.danger:hover { background: #7f1d1d; color: #fff; }
+    .project-bar .proj-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Import period toggle ────────────────────────────────────────── */
+    .period-toggle {
+      display: flex; gap: 0; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; width: fit-content;
+    }
+    .period-toggle label {
+      padding: 7px 16px; font-size: 0.82rem; cursor: pointer; color: var(--muted); transition: all 0.15s; user-select: none;
+    }
+    .period-toggle input { display: none; }
+    .period-toggle input:checked + label { background: var(--primary); color: #fff; }
+
+    /* ── Multi-period statement columns ──────────────────────────────── */
+    .stmt-table.multi-period .col-label { width: 50%; }
+    .stmt-table.multi-period .col-current { text-align: right; width: 25%; }
+    .stmt-table.multi-period .col-prior { text-align: right; width: 25%; }
+
+    @media print {
+      body { background: #fff; }
+      header, .tabs, .actions, .print-actions, .card { display: none !important; }
+      .page { display: block !important; }
+      .statement { border: none; padding: 0; }
+      .page.active .statement { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <h2>NoteFlow</h2>
+      <p>Professional Financial Reports</p>
+    </div>
+
+    <!-- Sign In -->
+    <div id="auth-signin">
+      <div class="form-title">Sign In</div>
+      <div id="signin-msg"></div>
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="signin-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="signin-password" placeholder="Enter your password" />
+      </div>
+      <button class="login-btn" onclick="handleSignIn()">Sign In</button>
+      <div class="login-footer">
+        <a onclick="showAuthView('forgot')">Forgot password?</a><br>
+        Don't have an account? <a onclick="showAuthView('signup')">Sign up</a>
+      </div>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="auth-signup" style="display:none">
+      <div class="form-title">Create Account</div>
+      <div id="signup-msg"></div>
+      <div class="login-field">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Your full name" />
+      </div>
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="At least 6 characters" />
+      </div>
+      <div class="login-field">
+        <label>Confirm Password</label>
+        <input type="password" id="signup-confirm" placeholder="Re-enter password" />
+      </div>
+      <button class="login-btn" onclick="handleSignUp()">Create Account</button>
+      <div class="login-footer">
+        Already have an account? <a onclick="showAuthView('signin')">Sign in</a>
+      </div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div id="auth-forgot" style="display:none">
+      <div class="form-title">Reset Password</div>
+      <div id="forgot-msg"></div>
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="forgot-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label>New Password</label>
+        <input type="password" id="forgot-password" placeholder="At least 6 characters" />
+      </div>
+      <div class="login-field">
+        <label>Confirm New Password</label>
+        <input type="password" id="forgot-confirm" placeholder="Re-enter new password" />
+      </div>
+      <button class="login-btn" onclick="handleForgotPassword()">Reset Password</button>
+      <div class="login-footer">
+        <a onclick="showAuthView('signin')">Back to Sign In</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <h1>NoteFlow</h1>
+    <div class="user-area">
+      <span id="dash-user-display"></span>
+      <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
+    </div>
+  </div>
+  <div class="dash-content">
+    <div class="dash-welcome">
+      <h2 id="dash-greeting">Your Projects</h2>
+      <p>Select a project to open, or create a new one.</p>
+    </div>
+    <div class="dash-actions">
+      <button class="btn btn-primary" onclick="dashCreateProject()">+ New Project</button>
+    </div>
+    <div id="project-grid" class="project-grid"></div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP (hidden until project is open) ===== -->
+<div class="app-wrapper" id="app-wrapper">
+
+<header>
+  <div>
+    <h1 id="app-project-name" style="cursor:pointer" onclick="goToDashboard()">NoteFlow</h1>
+    <span>Import. Map. Generate.</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="goToDashboard()">All Projects</button>
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('input')">Import & Setup</div>
+  <div class="tab" onclick="switchTab('income')">Income Statement</div>
+  <div class="tab" onclick="switchTab('balance')">Balance Sheet</div>
+  <div class="tab" onclick="switchTab('cashflow')">Cash Flow</div>
+  <div class="tab" onclick="switchTab('notes')">Notes</div>
+</div>
+
+<div class="container">
+
+  <!-- ===== DATA ENTRY ===== -->
+  <div class="page active" id="page-input">
+    <!-- ===== IMPORT ===== -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Import Trial Balance</div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+        Upload your trial balance CSV. Accounts with a <code>Section</code> column will be mapped automatically — any unmapped accounts can be assigned interactively below.
+      </p>
+
+      <div class="period-toggle">
+        <input type="radio" name="import-period" id="import-current" value="current" checked>
+        <label for="import-current">Current Period</label>
+        <input type="radio" name="import-period" id="import-prior" value="prior">
+        <label for="import-prior">Prior Period</label>
+      </div>
+
+      <div class="import-zone" id="zone-combined" ondragover="zoneDrag(event,'zone-combined')" ondragleave="zoneDragEnd('zone-combined')" ondrop="zoneDrop(event,'zone-combined','combined')">
+        <input type="file" accept=".csv,.tsv,.txt" onchange="fileChosen(this,'zone-combined','combined')" />
+        <div class="zone-label">Trial Balance CSV</div>
+        <div class="zone-hint" id="zone-combined-hint">Drop file here or click to browse</div>
+        <div class="zone-file" id="zone-combined-name"></div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;line-height:1.6">
+        <strong>Required columns:</strong> <code>Account Number</code>, <code>Account Name</code>, <code>Debit</code>, <code>Credit</code><br>
+        <strong>Optional:</strong> <code>Section</code> column to pre-map accounts (unmapped accounts can be assigned after import)
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="runImport()">Import & Map</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">Download Template</button>
+      </div>
+
+      <div id="import-status"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Report Settings</div>
+      <div class="meta-row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label>Company Name</label>
+          <input type="text" id="companyName" value="" placeholder="e.g. Acme Corporation" oninput="saveProject()" />
+        </div>
+        <div>
+          <label>Currency</label>
+          <input type="text" id="currency" value="$" placeholder="$" oninput="saveProject()" />
+        </div>
+      </div>
+      <div class="meta-row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label>Current Period</label>
+          <input type="text" id="period" value="" placeholder="e.g. Year Ended Dec 31, 2025" oninput="saveProject()" />
+        </div>
+        <div>
+          <label>Prior Period</label>
+          <input type="text" id="priorPeriod" value="" placeholder="e.g. Year Ended Dec 31, 2024" oninput="saveProject()" />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generateAll()">Generate Statements</button>
+      <button class="btn btn-ghost" onclick="exportPackagePDF()" style="margin-left:8px">Export Full Package (PDF)</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear All Data</button>
+    </div>
+  </div>
+
+  <!-- ===== INCOME STATEMENT ===== -->
+  <div class="page" id="page-income">
+    <div class="print-actions">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="statement" id="income-statement"></div>
+  </div>
+
+  <!-- ===== BALANCE SHEET ===== -->
+  <div class="page" id="page-balance">
+    <div class="print-actions">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="statement" id="balance-statement"></div>
+  </div>
+
+  <!-- ===== CASH FLOW ===== -->
+  <div class="page" id="page-cashflow">
+    <div class="print-actions">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="statement" id="cashflow-statement"></div>
+  </div>
+
+  <!-- ===== NOTES ===== -->
+  <div class="page" id="page-notes">
+    <div class="card" id="notes-questionnaire">
+      <div class="card-title">Financial Statement Notes — Questionnaire</div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.5">
+        Answer the questions below to generate notes to the financial statements that are compliant with private company disclosure requirements (GAAP basis). Fields left blank will be omitted from the generated notes.
+      </p>
+
+      <div class="notes-form">
+
+        <!-- Note 1: Nature of Business -->
+        <div class="note-group">
+          <div class="note-group-title">Note 1 — Nature of Business</div>
+          <div class="note-field">
+            <label>What does the company do?
+              <span class="hint">Describe the principal business activities (e.g., "manufactures custom furniture," "provides IT consulting services")</span>
+            </label>
+            <textarea id="nq-business-desc" placeholder="e.g., The Company provides residential plumbing and HVAC services to homeowners in the greater Atlanta metropolitan area."></textarea>
+          </div>
+          <div class="note-field">
+            <label>State / jurisdiction of incorporation or formation</label>
+            <input type="text" id="nq-state" placeholder="e.g., Georgia" />
+          </div>
+          <div class="note-field">
+            <label>Date of incorporation or formation</label>
+            <input type="text" id="nq-formed" placeholder="e.g., March 15, 2018" />
+          </div>
+          <div class="note-field">
+            <label>Entity type</label>
+            <select id="nq-entity-type">
+              <option value="">— Select —</option>
+              <option value="S Corporation">S Corporation</option>
+              <option value="C Corporation">C Corporation</option>
+              <option value="Limited Liability Company (LLC)">Limited Liability Company (LLC)</option>
+              <option value="Partnership">Partnership</option>
+              <option value="Sole Proprietorship">Sole Proprietorship</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Note 2: Accounting Policies -->
+        <div class="note-group">
+          <div class="note-group-title">Note 2 — Summary of Significant Accounting Policies</div>
+          <div class="note-field">
+            <label>Basis of accounting</label>
+            <select id="nq-basis">
+              <option value="">— Select —</option>
+              <option value="accrual" selected>Accrual basis (GAAP)</option>
+              <option value="cash">Cash basis</option>
+              <option value="modified-cash">Modified cash basis</option>
+              <option value="tax">Income tax basis</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>How does the company recognize revenue?
+              <span class="hint">Describe when revenue is recorded (e.g., at point of sale, upon delivery, over time as services are performed)</span>
+            </label>
+            <textarea id="nq-revenue-recognition" placeholder="e.g., Revenue is recognized when services are rendered and the Company has a right to payment."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Inventory valuation method (if applicable)</label>
+            <select id="nq-inventory">
+              <option value="">N/A — No inventory</option>
+              <option value="FIFO">First-In, First-Out (FIFO)</option>
+              <option value="weighted average">Weighted Average Cost</option>
+              <option value="specific identification">Specific Identification</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Depreciation method for property & equipment</label>
+            <select id="nq-depreciation">
+              <option value="">N/A — No fixed assets</option>
+              <option value="straight-line" selected>Straight-line</option>
+              <option value="declining balance">Declining balance</option>
+              <option value="MACRS">MACRS (tax basis)</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Estimated useful lives for major asset classes (if applicable)
+              <span class="hint">e.g., "Vehicles: 5 years, Equipment: 7 years, Building: 39 years"</span>
+            </label>
+            <input type="text" id="nq-useful-lives" placeholder="e.g., Vehicles: 5 years, Equipment: 7 years" />
+          </div>
+        </div>
+
+        <!-- Note 3: Concentrations -->
+        <div class="note-group">
+          <div class="note-group-title">Note 3 — Concentrations</div>
+          <div class="note-field">
+            <label>Does any single customer account for more than 10% of revenue?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-cust-conc" value="yes" onchange="document.getElementById('nq-cust-conc-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-cust-conc" value="no" checked onchange="document.getElementById('nq-cust-conc-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-cust-conc-detail" style="display:none">
+            <label>Describe the concentration
+              <span class="hint">e.g., "One customer accounted for approximately 35% of revenue during the year."</span>
+            </label>
+            <textarea id="nq-cust-conc-text" placeholder="Describe customer concentration..."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Does any single vendor/supplier account for a significant portion of purchases?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-vendor-conc" value="yes" onchange="document.getElementById('nq-vendor-conc-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-vendor-conc" value="no" checked onchange="document.getElementById('nq-vendor-conc-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-vendor-conc-detail" style="display:none">
+            <label>Describe the vendor concentration</label>
+            <textarea id="nq-vendor-conc-text" placeholder="Describe vendor concentration..."></textarea>
+          </div>
+        </div>
+
+        <!-- Note 4: Related Party Transactions -->
+        <div class="note-group">
+          <div class="note-group-title">Note 4 — Related Party Transactions</div>
+          <div class="note-field">
+            <label>Are there any transactions with owners, officers, or related entities?
+              <span class="hint">e.g., loans to/from shareholders, lease of owner's property, management fees to a related entity</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-related" value="yes" onchange="document.getElementById('nq-related-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-related" value="no" checked onchange="document.getElementById('nq-related-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-related-detail" style="display:none">
+            <label>Describe the related party transactions</label>
+            <textarea id="nq-related-text" placeholder="e.g., The Company leases its office space from the sole shareholder under a month-to-month arrangement at $3,000 per month."></textarea>
+          </div>
+        </div>
+
+        <!-- Note 5: Commitments & Contingencies -->
+        <div class="note-group">
+          <div class="note-group-title">Note 5 — Commitments & Contingencies</div>
+          <div class="note-field">
+            <label>Does the company have any operating leases (office, equipment, vehicles)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-leases" value="yes" onchange="document.getElementById('nq-leases-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-leases" value="no" checked onchange="document.getElementById('nq-leases-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-leases-detail" style="display:none">
+            <label>Describe lease commitments
+              <span class="hint">Include terms, annual amounts, and expiration dates if known</span>
+            </label>
+            <textarea id="nq-leases-text" placeholder="e.g., The Company leases office space under a 5-year agreement expiring June 2028 with annual payments of $48,000."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Are there any pending or threatened lawsuits, claims, or legal proceedings?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-litigation" value="yes" onchange="document.getElementById('nq-litigation-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-litigation" value="no" checked onchange="document.getElementById('nq-litigation-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-litigation-detail" style="display:none">
+            <label>Describe the litigation or claims</label>
+            <textarea id="nq-litigation-text" placeholder="Describe pending litigation..."></textarea>
+          </div>
+        </div>
+
+        <!-- Note 6: Subsequent Events -->
+        <div class="note-group">
+          <div class="note-group-title">Note 6 — Subsequent Events</div>
+          <div class="note-field">
+            <label>Through what date has management evaluated subsequent events?</label>
+            <input type="text" id="nq-subseq-date" placeholder="e.g., March 15, 2026" />
+          </div>
+          <div class="note-field">
+            <label>Have any significant events occurred after the reporting period?
+              <span class="hint">e.g., major asset purchase, new loan, loss of key customer, natural disaster</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-subseq" value="yes" onchange="document.getElementById('nq-subseq-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-subseq" value="no" checked onchange="document.getElementById('nq-subseq-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-subseq-detail" style="display:none">
+            <label>Describe the subsequent events</label>
+            <textarea id="nq-subseq-text" placeholder="Describe subsequent events..."></textarea>
+          </div>
+        </div>
+
+        <!-- Note 7: Going Concern (conditional) -->
+        <div class="note-group">
+          <div class="note-group-title">Note 7 — Going Concern (if applicable)</div>
+          <div class="note-field">
+            <label>Are there substantial doubts about the company's ability to continue as a going concern?
+              <span class="hint">e.g., recurring losses, negative working capital, loan covenant violations</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-going-concern" value="yes" onchange="document.getElementById('nq-gc-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-going-concern" value="no" checked onchange="document.getElementById('nq-gc-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-gc-detail" style="display:none">
+            <label>Describe the conditions and management's plans to address them</label>
+            <textarea id="nq-gc-text" placeholder="e.g., The Company has incurred recurring losses and has a working capital deficiency. Management plans to..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions" style="margin-top:22px">
+        <button class="btn btn-primary" onclick="generateNotes()">Generate Notes</button>
+      </div>
+    </div>
+
+    <div id="notes-output-wrapper" style="display:none">
+      <div class="print-actions">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('notes-output-wrapper').style.display='none';document.getElementById('notes-questionnaire').style.display='block'">← Edit Answers</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      </div>
+      <div class="statement" id="notes-statement"></div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /app-wrapper -->
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+<script>
+// ─── Constants ──────────────────────────────────────────────────────────────
+const SECTIONS = [
+  'revenue','cogs','opex','other',
+  'current-assets','noncurrent-assets',
+  'current-liab','noncurrent-liab','equity',
+  'cf-operating','cf-investing','cf-financing'
+];
+
+const SECTION_SIGN = {
+  'revenue':           -1,
+  'cogs':               1,
+  'opex':               1,
+  'other':             -1,
+  'current-assets':     1,
+  'noncurrent-assets':  1,
+  'current-liab':      -1,
+  'noncurrent-liab':   -1,
+  'equity':            -1,
+  'cf-operating':       1,
+  'cf-investing':       1,
+  'cf-financing':       1,
+};
+
+const VALID_SECTIONS = new Set(Object.keys(SECTION_SIGN));
+
+const SECTION_GROUPS = [
+  { label: 'Income Statement', options: [
+    { value: 'revenue',    text: 'Revenue' },
+    { value: 'cogs',       text: 'Cost of Goods Sold' },
+    { value: 'opex',       text: 'Operating Expenses' },
+    { value: 'other',      text: 'Other Income / Expense' },
+  ]},
+  { label: 'Balance Sheet', options: [
+    { value: 'current-assets',    text: 'Current Assets' },
+    { value: 'noncurrent-assets', text: 'Non-Current Assets' },
+    { value: 'current-liab',      text: 'Current Liabilities' },
+    { value: 'noncurrent-liab',   text: 'Non-Current Liabilities' },
+    { value: 'equity',            text: "Shareholders' Equity" },
+  ]},
+  { label: 'Cash Flow', options: [
+    { value: 'cf-operating',  text: 'Operating Activities' },
+    { value: 'cf-investing',  text: 'Investing Activities' },
+    { value: 'cf-financing',  text: 'Financing Activities' },
+  ]},
+];
+
+// ─── Data Model ─────────────────────────────────────────────────────────────
+let currentData = {};
+let priorData = {};
+SECTIONS.forEach(s => { currentData[s] = []; priorData[s] = []; });
+
+let currentProjectId = null;
+let currentUserEmail = null;
+let currentUserName = null;
+
+// ─── UUID Generator ─────────────────────────────────────────────────────────
+function genId() {
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// ─── Project Management ─────────────────────────────────────────────────────
+function getProjectList(email) {
+  try {
+    return JSON.parse(localStorage.getItem('fsgen-projects-' + email)) || [];
+  } catch { return []; }
+}
+
+function saveProjectList(email, list) {
+  localStorage.setItem('fsgen-projects-' + email, JSON.stringify(list));
+}
+
+function loadProject(id) {
+  const raw = localStorage.getItem('fsgen-project-' + id);
+  if (!raw) return;
+  try {
+    const proj = JSON.parse(raw);
+    currentProjectId = id;
+
+    // Load current data
+    SECTIONS.forEach(s => {
+      currentData[s] = (proj.currentData && proj.currentData[s]) ? proj.currentData[s] : [];
+      priorData[s] = (proj.priorData && proj.priorData[s]) ? proj.priorData[s] : [];
+    });
+
+    // Load UI fields
+    document.getElementById('companyName').value = proj.company || '';
+    document.getElementById('period').value = proj.period || '';
+    document.getElementById('priorPeriod').value = proj.priorPeriod || '';
+    document.getElementById('currency').value = proj.currency || '$';
+
+    // Load notes questionnaire answers
+    if (proj.notes) {
+      loadNotesFromProject(proj.notes);
+    }
+  } catch (e) { /* ignore corrupt project */ }
+}
+
+function saveProject() {
+  if (!currentProjectId || !currentUserEmail) return;
+
+  const proj = {
+    currentData: {},
+    priorData: {},
+    company: document.getElementById('companyName').value,
+    period: document.getElementById('period').value,
+    priorPeriod: document.getElementById('priorPeriod').value,
+    currency: document.getElementById('currency').value,
+    notes: collectNotesData(),
+  };
+  SECTIONS.forEach(s => {
+    proj.currentData[s] = currentData[s];
+    proj.priorData[s] = priorData[s];
+  });
+  localStorage.setItem('fsgen-project-' + currentProjectId, JSON.stringify(proj));
+
+  // Update project index updatedAt
+  const list = getProjectList(currentUserEmail);
+  const entry = list.find(p => p.id === currentProjectId);
+  if (entry) {
+    entry.updatedAt = new Date().toISOString();
+    saveProjectList(currentUserEmail, list);
+  }
+}
+
+function createProject(name) {
+  const id = genId();
+  currentProjectId = id;
+
+  // Reset working state
+  SECTIONS.forEach(s => { currentData[s] = []; priorData[s] = []; });
+  document.getElementById('companyName').value = '';
+  document.getElementById('period').value = '';
+  document.getElementById('priorPeriod').value = '';
+  document.getElementById('currency').value = '$';
+
+  // Save blank project
+  saveProject();
+
+  // Add to index
+  const list = getProjectList(currentUserEmail);
+  list.push({ id, name, updatedAt: new Date().toISOString() });
+  saveProjectList(currentUserEmail, list);
+
+  populateProjectSelect();
+  return id;
+}
+
+function deleteProject(id) {
+  const list = getProjectList(currentUserEmail);
+  const filtered = list.filter(p => p.id !== id);
+  saveProjectList(currentUserEmail, filtered);
+  localStorage.removeItem('fsgen-project-' + id);
+
+  if (filtered.length > 0) {
+    // Switch to most recent
+    filtered.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    loadProject(filtered[0].id);
+    populateProjectSelect();
+  } else {
+    // Create a new blank project
+    createProject('Untitled Project');
+  }
+}
+
+function renameProject(id, newName) {
+  const list = getProjectList(currentUserEmail);
+  const entry = list.find(p => p.id === id);
+  if (entry) {
+    entry.name = newName;
+    saveProjectList(currentUserEmail, list);
+    populateProjectSelect();
+  }
+}
+
+function switchProject(id) {
+  if (currentProjectId && id !== currentProjectId) {
+    saveProject();
+  }
+  loadProject(id);
+  populateProjectSelect();
+}
+
+function promptNewProject() {
+  const name = prompt('New project name:', 'Untitled Project');
+  if (name && name.trim()) {
+    if (currentProjectId) saveProject();
+    createProject(name.trim());
+  }
+}
+
+function promptRenameProject() {
+  if (!currentProjectId) return;
+  const list = getProjectList(currentUserEmail);
+  const entry = list.find(p => p.id === currentProjectId);
+  const oldName = entry ? entry.name : '';
+  const newName = prompt('Rename project:', oldName);
+  if (newName && newName.trim()) {
+    renameProject(currentProjectId, newName.trim());
+  }
+}
+
+function promptDeleteProject() {
+  if (!currentProjectId) return;
+  const list = getProjectList(currentUserEmail);
+  const entry = list.find(p => p.id === currentProjectId);
+  const name = entry ? entry.name : 'this project';
+  if (confirm('Delete "' + name + '"? This cannot be undone.')) {
+    deleteProject(currentProjectId);
+  }
+}
+
+function populateProjectSelect() {
+  const sel = document.getElementById('project-select');
+  if (!sel) return;
+  const list = getProjectList(currentUserEmail);
+  sel.innerHTML = '';
+  list.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    if (p.id === currentProjectId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ─── Notes Persistence ──────────────────────────────────────────────────────
+function collectNotesData() {
+  const data = {};
+  // Text/select fields
+  const textIds = [
+    'nq-business-desc','nq-state','nq-formed','nq-entity-type','nq-basis',
+    'nq-revenue-recognition','nq-inventory','nq-depreciation','nq-useful-lives',
+    'nq-subseq-date'
+  ];
+  textIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+
+  // Radio buttons
+  const radioNames = [
+    'nq-cust-conc','nq-vendor-conc','nq-related','nq-leases',
+    'nq-litigation','nq-subseq','nq-going-concern'
+  ];
+  radioNames.forEach(name => {
+    const checked = document.querySelector('input[name="' + name + '"]:checked');
+    data[name] = checked ? checked.value : 'no';
+  });
+
+  // Textarea details
+  const textareaIds = [
+    'nq-cust-conc-text','nq-vendor-conc-text','nq-related-text',
+    'nq-leases-text','nq-litigation-text','nq-subseq-text','nq-gc-text'
+  ];
+  textareaIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+
+  return data;
+}
+
+function loadNotesFromProject(notes) {
+  if (!notes) return;
+
+  // Text/select fields
+  const textIds = [
+    'nq-business-desc','nq-state','nq-formed','nq-entity-type','nq-basis',
+    'nq-revenue-recognition','nq-inventory','nq-depreciation','nq-useful-lives',
+    'nq-subseq-date'
+  ];
+  textIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && notes[id] !== undefined) el.value = notes[id];
+  });
+
+  // Radio buttons + conditional detail divs
+  const radioDetailMap = {
+    'nq-cust-conc': 'nq-cust-conc-detail',
+    'nq-vendor-conc': 'nq-vendor-conc-detail',
+    'nq-related': 'nq-related-detail',
+    'nq-leases': 'nq-leases-detail',
+    'nq-litigation': 'nq-litigation-detail',
+    'nq-subseq': 'nq-subseq-detail',
+    'nq-going-concern': 'nq-gc-detail',
+  };
+
+  Object.keys(radioDetailMap).forEach(name => {
+    const val = notes[name] || 'no';
+    const radios = document.querySelectorAll('input[name="' + name + '"]');
+    radios.forEach(r => { r.checked = (r.value === val); });
+    const detailDiv = document.getElementById(radioDetailMap[name]);
+    if (detailDiv) {
+      detailDiv.style.display = val === 'yes' ? 'block' : 'none';
+    }
+  });
+
+  // Textarea details
+  const textareaIds = [
+    'nq-cust-conc-text','nq-vendor-conc-text','nq-related-text',
+    'nq-leases-text','nq-litigation-text','nq-subseq-text','nq-gc-text'
+  ];
+  textareaIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && notes[id] !== undefined) el.value = notes[id];
+  });
+}
+
+function saveNotesToProject() {
+  saveProject();
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const cur = () => document.getElementById('currency').value || '$';
+
+function fmt(n) {
+  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n < 0 ? '(' + abs + ')' : abs;
+}
+
+function sum(dataObj, section) {
+  return (dataObj[section] || [])
+    .filter(Boolean)
+    .reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+}
+
+function rows(dataObj, section) {
+  return (dataObj[section] || []).filter(Boolean).filter(r => r.label || r.amount);
+}
+
+function meta() {
+  return {
+    company: document.getElementById('companyName').value || 'Your Company',
+    period: document.getElementById('period').value || 'Period',
+    priorPeriod: document.getElementById('priorPeriod').value || '',
+  };
+}
+
+function hasPriorData() {
+  for (const s of SECTIONS) {
+    if (rows(priorData, s).length > 0) return true;
+  }
+  return false;
+}
+
+function stmtHeader(title) {
+  const m = meta();
+  const multi = hasPriorData();
+  let periodText = m.period;
+  if (multi && m.priorPeriod) {
+    periodText = m.period + ' and ' + m.priorPeriod;
+  }
+  return '<div class="stmt-header">' +
+    '<div class="company">' + esc(m.company) + '</div>' +
+    '<div class="title">' + title + '</div>' +
+    '<div class="period">' + esc(periodText) + '</div>' +
+  '</div>';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Statement Row Builders ─────────────────────────────────────────────────
+function tr(label, indent, currentAmt, priorAmt, isTotal, cls, multi) {
+  const c = cur();
+
+  if (multi) {
+    const curStr = currentAmt !== null ? c + fmt(currentAmt) : '';
+    const priorStr = priorAmt !== null ? c + fmt(priorAmt) : '';
+    const curColor = currentAmt !== null && currentAmt < 0 ? 'negative' : '';
+    const priorColor = priorAmt !== null && priorAmt < 0 ? 'negative' : '';
+
+    if (isTotal) {
+      return '<tr class="grand-total ' + (cls || '') + '">' +
+        '<td class="col-label">' + label + '</td>' +
+        '<td class="col-current ' + curColor + '">' + curStr + '</td>' +
+        '<td class="col-prior ' + priorColor + '">' + priorStr + '</td>' +
+      '</tr>';
+    }
+    if (indent) {
+      return '<tr class="item ' + (cls || '') + '">' +
+        '<td class="col-label" style="padding-left:20px">' + label + '</td>' +
+        '<td class="col-current ' + curColor + '">' + curStr + '</td>' +
+        '<td class="col-prior ' + priorColor + '">' + priorStr + '</td>' +
+      '</tr>';
+    }
+    return '<tr class="subtotal ' + (cls || '') + '">' +
+      '<td class="col-label">' + label + '</td>' +
+      '<td class="col-current ' + curColor + '">' + curStr + '</td>' +
+      '<td class="col-prior ' + priorColor + '">' + priorStr + '</td>' +
+    '</tr>';
+  } else {
+    // Two columns: amount + total (original layout)
+    const amtStr = currentAmt !== null ? c + fmt(currentAmt) : '';
+    const colorCls = currentAmt !== null && currentAmt < 0 ? 'negative' : '';
+
+    if (isTotal) {
+      return '<tr class="grand-total ' + (cls || '') + '"><td class="col-label">' + label + '</td><td></td>' +
+        '<td class="col-total ' + colorCls + '">' + amtStr + '</td></tr>';
+    }
+    if (indent) {
+      return '<tr class="item ' + (cls || '') + '"><td class="col-label" style="padding-left:20px">' + label + '</td>' +
+        '<td class="col-amount ' + colorCls + '">' + amtStr + '</td><td></td></tr>';
+    }
+    return '<tr class="subtotal ' + (cls || '') + '"><td class="col-label">' + label + '</td><td></td>' +
+      '<td class="col-total ' + colorCls + '">' + amtStr + '</td></tr>';
+  }
+}
+
+function sectionHeader(label, multi) {
+  return '<tr class="section-header"><td colspan="3">' + label + '</td></tr>';
+}
+
+function columnHeaders(multi) {
+  if (multi) {
+    return '<tr style="font-size:0.78rem;font-weight:600;color:#64748b;border-bottom:1px solid #e1e5eb">' +
+      '<td class="col-label"></td>' +
+      '<td class="col-current" style="text-align:right">Current</td>' +
+      '<td class="col-prior" style="text-align:right">Prior</td>' +
+    '</tr>';
+  }
+  return '';
+}
+
+// ─── Income Statement ───────────────────────────────────────────────────────
+function buildIncomeStatement() {
+  const multi = hasPriorData();
+  const totalRevenue = sum(currentData, 'revenue');
+  const totalCOGS = sum(currentData, 'cogs');
+  const grossProfit = totalRevenue - totalCOGS;
+  const totalOpex = sum(currentData, 'opex');
+  const operatingIncome = grossProfit - totalOpex;
+  const totalOther = sum(currentData, 'other');
+  const netIncome = operatingIncome + totalOther;
+
+  let pTotalRevenue = 0, pTotalCOGS = 0, pGrossProfit = 0, pTotalOpex = 0, pOperatingIncome = 0, pTotalOther = 0, pNetIncome = 0;
+  if (multi) {
+    pTotalRevenue = sum(priorData, 'revenue');
+    pTotalCOGS = sum(priorData, 'cogs');
+    pGrossProfit = pTotalRevenue - pTotalCOGS;
+    pTotalOpex = sum(priorData, 'opex');
+    pOperatingIncome = pGrossProfit - pTotalOpex;
+    pTotalOther = sum(priorData, 'other');
+    pNetIncome = pOperatingIncome + pTotalOther;
+  }
+
+  let html = stmtHeader('Income Statement');
+  const tableClass = multi ? 'stmt-table multi-period' : 'stmt-table';
+  if (multi) {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-current"><col class="col-prior"></colgroup><tbody>';
+  } else {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-amount"><col class="col-total"></colgroup><tbody>';
+  }
+  html += columnHeaders(multi);
+
+  // Revenue
+  html += sectionHeader('Revenue', multi);
+  const revRows = rows(currentData, 'revenue');
+  const pRevRows = multi ? rows(priorData, 'revenue') : [];
+  // Merge line items by label
+  const allRevLabels = mergeLabels(revRows, pRevRows, multi);
+  allRevLabels.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Revenue', false, totalRevenue, multi ? pTotalRevenue : null, false, '', multi);
+
+  // COGS
+  html += sectionHeader('Cost of Goods Sold', multi);
+  const cogsRows = rows(currentData, 'cogs');
+  const pCogsRows = multi ? rows(priorData, 'cogs') : [];
+  const allCogsLabels = mergeLabels(cogsRows, pCogsRows, multi);
+  allCogsLabels.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Cost of Goods Sold', false, totalCOGS, multi ? pTotalCOGS : null, false, '', multi);
+
+  html += tr('Gross Profit', false, grossProfit, multi ? pGrossProfit : null, true, '', multi);
+
+  // OpEx
+  html += sectionHeader('Operating Expenses', multi);
+  const opexRows = rows(currentData, 'opex');
+  const pOpexRows = multi ? rows(priorData, 'opex') : [];
+  const allOpexLabels = mergeLabels(opexRows, pOpexRows, multi);
+  allOpexLabels.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Operating Expenses', false, totalOpex, multi ? pTotalOpex : null, false, '', multi);
+
+  html += tr('Operating Income', false, operatingIncome, multi ? pOperatingIncome : null, true, '', multi);
+
+  // Other
+  if (rows(currentData, 'other').length || (multi && rows(priorData, 'other').length)) {
+    html += sectionHeader('Other Income / (Expense)', multi);
+    const otherRows = rows(currentData, 'other');
+    const pOtherRows = multi ? rows(priorData, 'other') : [];
+    const allOtherLabels = mergeLabels(otherRows, pOtherRows, multi);
+    allOtherLabels.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+    html += tr('Total Other Income / (Expense)', false, totalOther, multi ? pTotalOther : null, false, '', multi);
+  }
+
+  html += tr('Net Income', false, netIncome, multi ? pNetIncome : null, true, '', multi);
+
+  html += '</tbody></table>';
+  document.getElementById('income-statement').innerHTML = html;
+}
+
+// Helper to merge current and prior row labels for multi-period display
+function mergeLabels(curRows, priorRows, multi) {
+  if (!multi) {
+    return curRows.map(r => ({ label: r.label, cur: parseFloat(r.amount) || 0, prior: null }));
+  }
+  const map = new Map();
+  curRows.forEach(r => {
+    map.set(r.label, { label: r.label, cur: parseFloat(r.amount) || 0, prior: 0 });
+  });
+  priorRows.forEach(r => {
+    if (map.has(r.label)) {
+      map.get(r.label).prior = parseFloat(r.amount) || 0;
+    } else {
+      map.set(r.label, { label: r.label, cur: 0, prior: parseFloat(r.amount) || 0 });
+    }
+  });
+  return Array.from(map.values());
+}
+
+// ─── Balance Sheet ──────────────────────────────────────────────────────────
+function buildBalanceSheet() {
+  const multi = hasPriorData();
+
+  const totalCA = sum(currentData, 'current-assets');
+  const totalNCA = sum(currentData, 'noncurrent-assets');
+  const totalAssets = totalCA + totalNCA;
+  const totalCL = sum(currentData, 'current-liab');
+  const totalNCL = sum(currentData, 'noncurrent-liab');
+  const totalLiab = totalCL + totalNCL;
+  const totalEquity = sum(currentData, 'equity');
+  const totalLiabEquity = totalLiab + totalEquity;
+
+  let pTotalCA = 0, pTotalNCA = 0, pTotalAssets = 0, pTotalCL = 0, pTotalNCL = 0, pTotalLiab = 0, pTotalEquity = 0, pTotalLiabEquity = 0;
+  if (multi) {
+    pTotalCA = sum(priorData, 'current-assets');
+    pTotalNCA = sum(priorData, 'noncurrent-assets');
+    pTotalAssets = pTotalCA + pTotalNCA;
+    pTotalCL = sum(priorData, 'current-liab');
+    pTotalNCL = sum(priorData, 'noncurrent-liab');
+    pTotalLiab = pTotalCL + pTotalNCL;
+    pTotalEquity = sum(priorData, 'equity');
+    pTotalLiabEquity = pTotalLiab + pTotalEquity;
+  }
+
+  let html = stmtHeader('Balance Sheet');
+  const tableClass = multi ? 'stmt-table multi-period' : 'stmt-table';
+  if (multi) {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-current"><col class="col-prior"></colgroup><tbody>';
+  } else {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-amount"><col class="col-total"></colgroup><tbody>';
+  }
+  html += columnHeaders(multi);
+
+  html += sectionHeader('ASSETS', multi);
+  html += sectionHeader('Current Assets', multi);
+  const caItems = mergeLabels(rows(currentData, 'current-assets'), multi ? rows(priorData, 'current-assets') : [], multi);
+  caItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Current Assets', false, totalCA, multi ? pTotalCA : null, false, '', multi);
+
+  html += sectionHeader('Non-Current Assets', multi);
+  const ncaItems = mergeLabels(rows(currentData, 'noncurrent-assets'), multi ? rows(priorData, 'noncurrent-assets') : [], multi);
+  ncaItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Non-Current Assets', false, totalNCA, multi ? pTotalNCA : null, false, '', multi);
+  html += tr('TOTAL ASSETS', false, totalAssets, multi ? pTotalAssets : null, true, '', multi);
+
+  html += sectionHeader('LIABILITIES & EQUITY', multi);
+  html += sectionHeader('Current Liabilities', multi);
+  const clItems = mergeLabels(rows(currentData, 'current-liab'), multi ? rows(priorData, 'current-liab') : [], multi);
+  clItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Current Liabilities', false, totalCL, multi ? pTotalCL : null, false, '', multi);
+
+  html += sectionHeader('Non-Current Liabilities', multi);
+  const nclItems = mergeLabels(rows(currentData, 'noncurrent-liab'), multi ? rows(priorData, 'noncurrent-liab') : [], multi);
+  nclItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Non-Current Liabilities', false, totalNCL, multi ? pTotalNCL : null, false, '', multi);
+  html += tr('Total Liabilities', false, totalLiab, multi ? pTotalLiab : null, false, '', multi);
+
+  html += sectionHeader("Shareholders' Equity", multi);
+  const eqItems = mergeLabels(rows(currentData, 'equity'), multi ? rows(priorData, 'equity') : [], multi);
+  eqItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Total Equity', false, totalEquity, multi ? pTotalEquity : null, false, '', multi);
+
+  html += tr('TOTAL LIABILITIES & EQUITY', false, totalLiabEquity, multi ? pTotalLiabEquity : null, true, '', multi);
+
+  const diff = totalAssets - totalLiabEquity;
+  const cols = multi ? 4 : 3;
+  if (Math.abs(diff) > 0.01) {
+    html += '<tr><td colspan="' + cols + '" style="padding:12px 8px;font-size:0.8rem;color:var(--red)">' +
+      'Warning: Balance sheet does not balance by ' + cur() + fmt(Math.abs(diff)) + '. Check your entries.' +
+    '</td></tr>';
+  } else {
+    html += '<tr><td colspan="' + cols + '" style="padding:12px 8px;font-size:0.8rem;color:var(--green)">' +
+      'Balance sheet balances.' +
+    '</td></tr>';
+  }
+
+  html += '</tbody></table>';
+  document.getElementById('balance-statement').innerHTML = html;
+}
+
+// ─── Cash Flow ──────────────────────────────────────────────────────────────
+function buildCashFlow() {
+  const multi = hasPriorData();
+
+  const totalOp = sum(currentData, 'cf-operating');
+  const totalInv = sum(currentData, 'cf-investing');
+  const totalFin = sum(currentData, 'cf-financing');
+  const netChange = totalOp + totalInv + totalFin;
+
+  let pTotalOp = 0, pTotalInv = 0, pTotalFin = 0, pNetChange = 0;
+  if (multi) {
+    pTotalOp = sum(priorData, 'cf-operating');
+    pTotalInv = sum(priorData, 'cf-investing');
+    pTotalFin = sum(priorData, 'cf-financing');
+    pNetChange = pTotalOp + pTotalInv + pTotalFin;
+  }
+
+  let html = stmtHeader('Statement of Cash Flows');
+  const tableClass = multi ? 'stmt-table multi-period' : 'stmt-table';
+  if (multi) {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-current"><col class="col-prior"></colgroup><tbody>';
+  } else {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-amount"><col class="col-total"></colgroup><tbody>';
+  }
+  html += columnHeaders(multi);
+
+  html += sectionHeader('Operating Activities', multi);
+  const opItems = mergeLabels(rows(currentData, 'cf-operating'), multi ? rows(priorData, 'cf-operating') : [], multi);
+  opItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Net Cash from Operating Activities', false, totalOp, multi ? pTotalOp : null, false, '', multi);
+
+  html += sectionHeader('Investing Activities', multi);
+  const invItems = mergeLabels(rows(currentData, 'cf-investing'), multi ? rows(priorData, 'cf-investing') : [], multi);
+  invItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Net Cash from Investing Activities', false, totalInv, multi ? pTotalInv : null, false, '', multi);
+
+  html += sectionHeader('Financing Activities', multi);
+  const finItems = mergeLabels(rows(currentData, 'cf-financing'), multi ? rows(priorData, 'cf-financing') : [], multi);
+  finItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  html += tr('Net Cash from Financing Activities', false, totalFin, multi ? pTotalFin : null, false, '', multi);
+
+  html += tr('Net Change in Cash', false, netChange, multi ? pNetChange : null, true, '', multi);
+
+  html += '</tbody></table>';
+  document.getElementById('cashflow-statement').innerHTML = html;
+}
+
+// ─── Import System ──────────────────────────────────────────────────────────
+const importFiles = { combined: null };
+
+function zoneDrag(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function zoneDragEnd(zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function zoneDrop(e, zoneId, key) {
+  e.preventDefault();
+  zoneDragEnd(zoneId);
+  const file = e.dataTransfer.files[0];
+  if (file) setImportFile(zoneId, key, file);
+}
+function fileChosen(input, zoneId, key) {
+  if (input.files[0]) setImportFile(zoneId, key, input.files[0]);
+}
+function setImportFile(zoneId, key, file) {
+  importFiles[key] = file;
+  const zone = document.getElementById(zoneId);
+  zone.classList.add('has-file');
+  const nameEl = document.getElementById(zoneId + '-name');
+  const hintEl = document.getElementById(zoneId + '-hint');
+  if (nameEl) nameEl.textContent = file.name;
+  if (hintEl) hintEl.textContent = '';
+}
+
+// ── CSV parser ──────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const firstLine = text.split('\n')[0];
+  const delim = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
+
+  const rowsArr = [];
+  let curStr = '', inQ = false, fields = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQ && text[i + 1] === '"') { curStr += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === delim && !inQ) {
+      fields.push(curStr.trim()); curStr = '';
+    } else if (ch === '\n' && !inQ) {
+      fields.push(curStr.trim()); rowsArr.push(fields); fields = []; curStr = '';
+    } else {
+      curStr += ch;
+    }
+  }
+  if (curStr.trim() || fields.length) { fields.push(curStr.trim()); rowsArr.push(fields); }
+  return rowsArr;
+}
+
+function normalizeHeader(h) {
+  return h.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+function findCol(headers, candidates) {
+  for (const c of candidates) {
+    const idx = headers.indexOf(c);
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function parseAmount(s) {
+  let str = String(s).replace(/[$\u00a3\u20ac,\s]/g, '');
+  const neg = str.startsWith('(') && str.endsWith(')');
+  str = str.replace(/[()]/g, '');
+  const n = parseFloat(str) || 0;
+  return neg ? -n : n;
+}
+
+function parseTB(rowsArr, mode) {
+  if (rowsArr.length < 1) throw new Error('Trial balance is empty.');
+  const headers = rowsArr[0].map(normalizeHeader);
+  const acctIdx  = findCol(headers, ['accountnumber','acctno','account','acct','code','id']);
+  const nameIdx  = findCol(headers, ['accountname','name','description','desc']);
+  const debitIdx = findCol(headers, ['debit','dr','debitamount']);
+  const creditIdx= findCol(headers, ['credit','cr','creditamount']);
+  const sectIdx  = mode === 'combined'
+    ? findCol(headers, ['section','category','classification'])
+    : -1;
+
+  if (acctIdx  === -1) throw new Error('Trial balance missing "Account Number" column.');
+  if (debitIdx === -1) throw new Error('Trial balance missing "Debit" column.');
+  if (creditIdx=== -1) throw new Error('Trial balance missing "Credit" column.');
+
+  const result = [];
+  for (let i = 1; i < rowsArr.length; i++) {
+    const r = rowsArr[i];
+    if (!r || r.every(c => !c)) continue;
+    const acct   = (r[acctIdx]  || '').trim();
+    const name   = nameIdx !== -1 ? (r[nameIdx] || '').trim() : acct;
+    const debit  = parseAmount(r[debitIdx]  || '0');
+    const credit = parseAmount(r[creditIdx] || '0');
+    const sect   = sectIdx !== -1 ? (r[sectIdx] || '').trim().toLowerCase().replace(/\s+/g, '-') : undefined;
+    if (acct) result.push({ accountNumber: acct, accountName: name || acct, debit, credit, section: sect });
+  }
+  return result;
+}
+
+// Pending unmapped state
+let pendingUnmapped = [];
+let pendingTargetData = null;
+
+async function runImport() {
+  try {
+    if (!importFiles.combined) { showStatus('error', 'Please select a file to import.'); return; }
+    const periodVal = document.querySelector('input[name="import-period"]:checked').value;
+    const text = await readFileText(importFiles.combined);
+    const tbRows = parseTB(parseCSV(text), 'combined');
+
+    let targetData;
+    if (periodVal === 'prior') {
+      SECTIONS.forEach(s => { priorData[s] = []; });
+      targetData = priorData;
+    } else {
+      SECTIONS.forEach(s => { currentData[s] = []; });
+      targetData = currentData;
+    }
+
+    applyImport(tbRows, null, targetData);
+  } catch (err) {
+    showStatus('error', 'Parse error: ' + err.message);
+  }
+}
+
+function applyImport(tbRows, accountMap, targetData) {
+  const unmapped = [];
+  let imported = 0;
+
+  for (const row of tbRows) {
+    const section = row.section !== undefined ? row.section : (accountMap ? accountMap.get(row.accountNumber) : undefined);
+    if (!section || !VALID_SECTIONS.has(section)) {
+      unmapped.push({ ...row, section: section || '' });
+      continue;
+    }
+    const sign   = SECTION_SIGN[section];
+    const amount = sign * (row.debit - row.credit);
+    targetData[section].push({ label: row.accountName, amount: parseFloat(amount.toFixed(2)) });
+    imported++;
+  }
+
+  saveProject();
+  pendingUnmapped = unmapped;
+  pendingTargetData = targetData;
+
+  let html = '';
+
+  if (imported > 0) {
+    html += '<div class="import-status success" style="margin-bottom:' + (unmapped.length ? '12px' : '0') + '">';
+    html += '<strong>' + imported + ' account' + (imported !== 1 ? 's' : '') + ' imported successfully.</strong>';
+    html += '</div>';
+  }
+
+  if (unmapped.length) {
+    html += '<div class="import-status info">';
+    html += '<strong>' + unmapped.length + ' account' + (unmapped.length !== 1 ? 's' : '') + ' need' + (unmapped.length === 1 ? 's' : '') + ' a section assignment.</strong>';
+    html += ' Use the dropdowns to assign each account to the correct financial statement section.';
+    html += '<div class="unmapped-list"><table>';
+    html += '<tr><th>Account #</th><th>Name</th><th>Debit</th><th>Credit</th><th style="min-width:180px">Assign Section</th></tr>';
+    for (let i = 0; i < unmapped.length; i++) {
+      const u = unmapped[i];
+      html += '<tr>' +
+        '<td>' + esc(u.accountNumber) + '</td>' +
+        '<td>' + esc(u.accountName) + '</td>' +
+        '<td>' + fmt(u.debit) + '</td>' +
+        '<td>' + fmt(u.credit) + '</td>' +
+        '<td>' + buildSectionSelect('map-' + i, '') + '</td>' +
+      '</tr>';
+    }
+    html += '</table></div>';
+    html += '<div class="map-actions">' +
+      '<button class="btn btn-primary btn-sm" onclick="applyMappings()">Map & Import</button>' +
+      '<span class="map-count" id="map-count">0 of ' + unmapped.length + ' assigned</span>' +
+    '</div>';
+    html += '</div>';
+  }
+
+  if (!imported && !unmapped.length) {
+    html = '<div class="import-status error">No accounts found in file.</div>';
+  }
+
+  document.getElementById('import-status').innerHTML = html;
+}
+
+function buildSectionSelect(id, preselect) {
+  let html = '<select id="' + id + '" onchange="onMappingChange(this)">';
+  html += '<option value="">-- Select section --</option>';
+  for (const group of SECTION_GROUPS) {
+    html += '<optgroup label="' + group.label + '">';
+    for (const opt of group.options) {
+      const sel = opt.value === preselect ? ' selected' : '';
+      html += '<option value="' + opt.value + '"' + sel + '>' + opt.text + '</option>';
+    }
+    html += '</optgroup>';
+  }
+  html += '</select>';
+  return html;
+}
+
+function onMappingChange(sel) {
+  sel.classList.toggle('mapped', sel.value !== '');
+  updateMapCount();
+}
+
+function updateMapCount() {
+  const el = document.getElementById('map-count');
+  if (!el) return;
+  const total = pendingUnmapped.length;
+  const mapped = pendingUnmapped.filter(function(_, i) {
+    var s = document.getElementById('map-' + i);
+    return s && s.value;
+  }).length;
+  el.textContent = mapped + ' of ' + total + ' assigned';
+}
+
+function applyMappings() {
+  const targetData = pendingTargetData || currentData;
+  let added = 0;
+  for (let i = 0; i < pendingUnmapped.length; i++) {
+    const sel = document.getElementById('map-' + i);
+    const section = sel ? sel.value : '';
+    if (!section || !VALID_SECTIONS.has(section)) continue;
+    const row = pendingUnmapped[i];
+    const sign = SECTION_SIGN[section];
+    const amount = sign * (row.debit - row.credit);
+    targetData[section].push({ label: row.accountName, amount: parseFloat(amount.toFixed(2)) });
+    added++;
+  }
+  if (added === 0) { showStatus('error', 'No sections assigned. Use the dropdowns to map accounts first.'); return; }
+  pendingUnmapped = [];
+  pendingTargetData = null;
+  saveProject();
+  const total = SECTIONS.reduce(function(n, s) { return n + currentData[s].length + priorData[s].length; }, 0);
+  showStatus('success', '<strong>' + added + ' account' + (added !== 1 ? 's' : '') + ' mapped and imported.</strong> ' + total + ' total accounts loaded.');
+}
+
+function showStatus(type, msg) {
+  document.getElementById('import-status').innerHTML =
+    '<div class="import-status ' + type + '">' + msg + '</div>';
+}
+
+// ─── Template Download ──────────────────────────────────────────────────────
+function downloadTemplate() {
+  const csv = 'Account Number,Account Name,Debit,Credit,Section\n' +
+    '1000,Cash,124000,0,current-assets\n' +
+    '1100,Accounts Receivable,88000,0,current-assets\n' +
+    '1200,Inventory,210000,0,current-assets\n' +
+    '2000,Accounts Payable,0,64000,current-liab\n' +
+    '2500,Long-Term Debt,0,245000,noncurrent-liab\n' +
+    '3000,Common Stock,0,100000,equity\n' +
+    '4000,Product Sales,0,850000,revenue\n' +
+    '5000,Cost of Goods Sold,310000,0,cogs\n' +
+    '6000,Salaries & Wages,148000,0,opex\n' +
+    '7100,Interest Expense,14200,0,other\n';
+  const filename = 'import_template.csv';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob), download: filename
+  });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ─── Tab Switching ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('page-' + name).classList.add('active');
+  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, notes: 4 };
+  document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
+
+  if (name === 'income') buildIncomeStatement();
+  if (name === 'balance') buildBalanceSheet();
+  if (name === 'cashflow') buildCashFlow();
+}
+
+function generateAll() {
+  buildIncomeStatement();
+  buildBalanceSheet();
+  buildCashFlow();
+  switchTab('income');
+}
+
+// ─── Clear ──────────────────────────────────────────────────────────────────
+function clearAll() {
+  SECTIONS.forEach(function(s) { currentData[s] = []; priorData[s] = []; });
+  document.getElementById('import-status').innerHTML = '';
+  // Reset file zone
+  importFiles.combined = null;
+  const z = document.getElementById('zone-combined');
+  if (z) z.classList.remove('has-file');
+  const hint = document.getElementById('zone-combined-hint');
+  const name = document.getElementById('zone-combined-name');
+  if (hint) hint.textContent = 'Drop CSV here or click to browse';
+  if (name) name.textContent = '';
+  saveProject();
+}
+
+// ─── Excel Export ───────────────────────────────────────────────────────────
+function exportToExcel() {
+  const m = meta();
+  const c = cur();
+  const multi = hasPriorData();
+  const wb = XLSX.utils.book_new();
+
+  // Helper to build a statement sheet as array-of-arrays
+  function buildISData() {
+    const aoa = [];
+    aoa.push([m.company]);
+    aoa.push(['Income Statement']);
+    aoa.push([multi ? m.period + ' and ' + m.priorPeriod : m.period]);
+    aoa.push([]);
+
+    if (multi) {
+      aoa.push(['', 'Current', 'Prior']);
+    } else {
+      aoa.push(['', 'Amount']);
+    }
+
+    const totalRevenue = sum(currentData, 'revenue');
+    const totalCOGS = sum(currentData, 'cogs');
+    const grossProfit = totalRevenue - totalCOGS;
+    const totalOpex = sum(currentData, 'opex');
+    const operatingIncome = grossProfit - totalOpex;
+    const totalOther = sum(currentData, 'other');
+    const netIncome = operatingIncome + totalOther;
+
+    let pTotalRevenue = 0, pTotalCOGS = 0, pGrossProfit = 0, pTotalOpex = 0, pOperatingIncome = 0, pTotalOther = 0, pNetIncome = 0;
+    if (multi) {
+      pTotalRevenue = sum(priorData, 'revenue');
+      pTotalCOGS = sum(priorData, 'cogs');
+      pGrossProfit = pTotalRevenue - pTotalCOGS;
+      pTotalOpex = sum(priorData, 'opex');
+      pOperatingIncome = pGrossProfit - pTotalOpex;
+      pTotalOther = sum(priorData, 'other');
+      pNetIncome = pOperatingIncome + pTotalOther;
+    }
+
+    function addSection(sectionLabel, sectionKey, totalLabel) {
+      aoa.push([sectionLabel]);
+      const items = mergeLabels(rows(currentData, sectionKey), multi ? rows(priorData, sectionKey) : [], multi);
+      items.forEach(function(item) {
+        if (multi) {
+          aoa.push(['  ' + item.label, item.cur, item.prior]);
+        } else {
+          aoa.push(['  ' + item.label, item.cur]);
+        }
+      });
+      // return so caller can add total
+    }
+
+    addSection('Revenue', 'revenue', 'Total Revenue');
+    if (multi) { aoa.push(['Total Revenue', totalRevenue, pTotalRevenue]); }
+    else { aoa.push(['Total Revenue', totalRevenue]); }
+
+    addSection('Cost of Goods Sold', 'cogs', 'Total Cost of Goods Sold');
+    if (multi) { aoa.push(['Total Cost of Goods Sold', totalCOGS, pTotalCOGS]); }
+    else { aoa.push(['Total Cost of Goods Sold', totalCOGS]); }
+
+    if (multi) { aoa.push(['Gross Profit', grossProfit, pGrossProfit]); }
+    else { aoa.push(['Gross Profit', grossProfit]); }
+
+    addSection('Operating Expenses', 'opex', 'Total Operating Expenses');
+    if (multi) { aoa.push(['Total Operating Expenses', totalOpex, pTotalOpex]); }
+    else { aoa.push(['Total Operating Expenses', totalOpex]); }
+
+    if (multi) { aoa.push(['Operating Income', operatingIncome, pOperatingIncome]); }
+    else { aoa.push(['Operating Income', operatingIncome]); }
+
+    if (rows(currentData, 'other').length || (multi && rows(priorData, 'other').length)) {
+      addSection('Other Income / (Expense)', 'other', 'Total Other Income / (Expense)');
+      if (multi) { aoa.push(['Total Other Income / (Expense)', totalOther, pTotalOther]); }
+      else { aoa.push(['Total Other Income / (Expense)', totalOther]); }
+    }
+
+    if (multi) { aoa.push(['Net Income', netIncome, pNetIncome]); }
+    else { aoa.push(['Net Income', netIncome]); }
+
+    return aoa;
+  }
+
+  function buildBSData() {
+    const aoa = [];
+    aoa.push([m.company]);
+    aoa.push(['Balance Sheet']);
+    aoa.push([multi ? m.period + ' and ' + m.priorPeriod : m.period]);
+    aoa.push([]);
+
+    if (multi) {
+      aoa.push(['', 'Current', 'Prior']);
+    } else {
+      aoa.push(['', 'Amount']);
+    }
+
+    const totalCA = sum(currentData, 'current-assets');
+    const totalNCA = sum(currentData, 'noncurrent-assets');
+    const totalAssets = totalCA + totalNCA;
+    const totalCL = sum(currentData, 'current-liab');
+    const totalNCL = sum(currentData, 'noncurrent-liab');
+    const totalLiab = totalCL + totalNCL;
+    const totalEquity = sum(currentData, 'equity');
+    const totalLiabEquity = totalLiab + totalEquity;
+
+    let pTotalCA = 0, pTotalNCA = 0, pTotalAssets = 0, pTotalCL = 0, pTotalNCL = 0, pTotalLiab = 0, pTotalEquity = 0, pTotalLiabEquity = 0;
+    if (multi) {
+      pTotalCA = sum(priorData, 'current-assets');
+      pTotalNCA = sum(priorData, 'noncurrent-assets');
+      pTotalAssets = pTotalCA + pTotalNCA;
+      pTotalCL = sum(priorData, 'current-liab');
+      pTotalNCL = sum(priorData, 'noncurrent-liab');
+      pTotalLiab = pTotalCL + pTotalNCL;
+      pTotalEquity = sum(priorData, 'equity');
+      pTotalLiabEquity = pTotalLiab + pTotalEquity;
+    }
+
+    function addSection(sectionLabel, sectionKey) {
+      aoa.push([sectionLabel]);
+      const items = mergeLabels(rows(currentData, sectionKey), multi ? rows(priorData, sectionKey) : [], multi);
+      items.forEach(function(item) {
+        if (multi) { aoa.push(['  ' + item.label, item.cur, item.prior]); }
+        else { aoa.push(['  ' + item.label, item.cur]); }
+      });
+    }
+
+    function addTotal(label, cur, prior) {
+      if (multi) { aoa.push([label, cur, prior]); }
+      else { aoa.push([label, cur]); }
+    }
+
+    aoa.push(['ASSETS']);
+    addSection('Current Assets', 'current-assets');
+    addTotal('Total Current Assets', totalCA, pTotalCA);
+
+    addSection('Non-Current Assets', 'noncurrent-assets');
+    addTotal('Total Non-Current Assets', totalNCA, pTotalNCA);
+    addTotal('TOTAL ASSETS', totalAssets, pTotalAssets);
+
+    aoa.push(['LIABILITIES & EQUITY']);
+    addSection('Current Liabilities', 'current-liab');
+    addTotal('Total Current Liabilities', totalCL, pTotalCL);
+
+    addSection('Non-Current Liabilities', 'noncurrent-liab');
+    addTotal('Total Non-Current Liabilities', totalNCL, pTotalNCL);
+    addTotal('Total Liabilities', totalLiab, pTotalLiab);
+
+    addSection("Shareholders' Equity", 'equity');
+    addTotal('Total Equity', totalEquity, pTotalEquity);
+    addTotal('TOTAL LIABILITIES & EQUITY', totalLiabEquity, pTotalLiabEquity);
+
+    return aoa;
+  }
+
+  function buildCFData() {
+    const aoa = [];
+    aoa.push([m.company]);
+    aoa.push(['Statement of Cash Flows']);
+    aoa.push([multi ? m.period + ' and ' + m.priorPeriod : m.period]);
+    aoa.push([]);
+
+    if (multi) {
+      aoa.push(['', 'Current', 'Prior']);
+    } else {
+      aoa.push(['', 'Amount']);
+    }
+
+    const totalOp = sum(currentData, 'cf-operating');
+    const totalInv = sum(currentData, 'cf-investing');
+    const totalFin = sum(currentData, 'cf-financing');
+    const netChange = totalOp + totalInv + totalFin;
+
+    let pTotalOp = 0, pTotalInv = 0, pTotalFin = 0, pNetChange = 0;
+    if (multi) {
+      pTotalOp = sum(priorData, 'cf-operating');
+      pTotalInv = sum(priorData, 'cf-investing');
+      pTotalFin = sum(priorData, 'cf-financing');
+      pNetChange = pTotalOp + pTotalInv + pTotalFin;
+    }
+
+    function addSection(sectionLabel, sectionKey) {
+      aoa.push([sectionLabel]);
+      const items = mergeLabels(rows(currentData, sectionKey), multi ? rows(priorData, sectionKey) : [], multi);
+      items.forEach(function(item) {
+        if (multi) { aoa.push(['  ' + item.label, item.cur, item.prior]); }
+        else { aoa.push(['  ' + item.label, item.cur]); }
+      });
+    }
+
+    function addTotal(label, cur, prior) {
+      if (multi) { aoa.push([label, cur, prior]); }
+      else { aoa.push([label, cur]); }
+    }
+
+    addSection('Operating Activities', 'cf-operating');
+    addTotal('Net Cash from Operating Activities', totalOp, pTotalOp);
+
+    addSection('Investing Activities', 'cf-investing');
+    addTotal('Net Cash from Investing Activities', totalInv, pTotalInv);
+
+    addSection('Financing Activities', 'cf-financing');
+    addTotal('Net Cash from Financing Activities', totalFin, pTotalFin);
+
+    addTotal('Net Change in Cash', netChange, pNetChange);
+
+    return aoa;
+  }
+
+  function buildNotesData() {
+    const aoa = [];
+    aoa.push([m.company]);
+    aoa.push(['Notes to the Financial Statements']);
+    aoa.push([multi ? m.period + ' and ' + m.priorPeriod : m.period]);
+    aoa.push([]);
+
+    const notesEl = document.getElementById('notes-statement');
+    if (notesEl && notesEl.innerText.trim()) {
+      const lines = notesEl.innerText.split('\n');
+      lines.forEach(function(line) {
+        aoa.push([line]);
+      });
+    } else {
+      aoa.push(['Notes have not been generated yet.']);
+    }
+    return aoa;
+  }
+
+  // Build sheets
+  const isData = buildISData();
+  const wsIS = XLSX.utils.aoa_to_sheet(isData);
+  wsIS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsIS, 'Income Statement');
+
+  const bsData = buildBSData();
+  const wsBS = XLSX.utils.aoa_to_sheet(bsData);
+  wsBS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsBS, 'Balance Sheet');
+
+  const cfData = buildCFData();
+  const wsCF = XLSX.utils.aoa_to_sheet(cfData);
+  wsCF['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsCF, 'Cash Flow');
+
+  const notesData = buildNotesData();
+  const wsNotes = XLSX.utils.aoa_to_sheet(notesData);
+  wsNotes['!cols'] = [{ wch: 80 }];
+  XLSX.utils.book_append_sheet(wb, wsNotes, 'Notes');
+
+  const filename = (m.company || 'Financial_Statements').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
+// ─── PDF Package Export ─────────────────────────────────────────────────────
+function exportPackagePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const m = meta();
+  const c = cur();
+  const multi = hasPriorData();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 54; // 0.75 inch
+  const contentW = pageW - margin * 2;
+  let pageNum = 0;
+  const tocEntries = [];
+
+  // ── Formatting helpers ──
+  function fmtAmt(n) {
+    if (n === null || n === undefined) return '';
+    const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return n < 0 ? '(' + c + abs + ')' : c + abs;
+  }
+
+  function addFooter(doc, pg) {
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(m.company + ' — Financial Statement Package', margin, pageH - 30);
+    doc.text('Page ' + pg, pageW - margin, pageH - 30, { align: 'right' });
+    doc.setTextColor(0);
+  }
+
+  function startPage(doc, title) {
+    if (pageNum > 0) doc.addPage();
+    pageNum++;
+    tocEntries.push({ title: title, page: pageNum });
+    addFooter(doc, pageNum);
+    return pageNum;
+  }
+
+  // ── 1. COVER PAGE ──
+  pageNum++;
+  // Decorative top bar
+  doc.setFillColor(30, 41, 59); // slate-800
+  doc.rect(0, 0, pageW, 200, 'F');
+  doc.setFillColor(37, 99, 235); // primary blue
+  doc.rect(0, 200, pageW, 6, 'F');
+
+  doc.setTextColor(255);
+  doc.setFontSize(32);
+  doc.setFont('helvetica', 'bold');
+  doc.text(m.company, pageW / 2, 120, { align: 'center' });
+
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Financial Statement Package', pageW / 2, 155, { align: 'center' });
+
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(14);
+  var periodLabel = multi ? m.period + ' and ' + m.priorPeriod : m.period;
+  doc.text(periodLabel, pageW / 2, 260, { align: 'center' });
+
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text('Prepared with NoteFlow', pageW / 2, 300, { align: 'center' });
+  doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), pageW / 2, 320, { align: 'center' });
+
+  addFooter(doc, pageNum);
+
+  // ── 2. TABLE OF CONTENTS (placeholder — page numbers filled after) ──
+  // We'll come back and fill this in. For now, reserve the page.
+  doc.addPage();
+  pageNum++;
+  var tocPageNum = pageNum;
+  // Drawn later after we know all page numbers
+
+  // ── Helper: draw a financial statement table ──
+  function drawStatementTable(title, dataRows, isTotalFn) {
+    startPage(doc, title);
+
+    // Statement header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text(m.company, pageW / 2, margin + 10, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(title, pageW / 2, margin + 28, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(periodLabel, pageW / 2, margin + 44, { align: 'center' });
+    doc.setTextColor(0);
+
+    // Build table
+    var head, colStyles;
+    if (multi) {
+      head = [['', m.period || 'Current', m.priorPeriod || 'Prior']];
+      colStyles = {
+        0: { cellWidth: contentW * 0.50, halign: 'left' },
+        1: { cellWidth: contentW * 0.25, halign: 'right' },
+        2: { cellWidth: contentW * 0.25, halign: 'right' }
+      };
+    } else {
+      head = [['', 'Amount']];
+      colStyles = {
+        0: { cellWidth: contentW * 0.65, halign: 'left' },
+        1: { cellWidth: contentW * 0.35, halign: 'right' }
+      };
+    }
+
+    var body = [];
+    dataRows.forEach(function(row) {
+      var labelStyle = isTotalFn(row) ? { fontStyle: 'bold' } : (row[0].startsWith('  ') ? {} : { fontStyle: 'bold', textColor: [100, 116, 139] });
+      var amtStyle = isTotalFn(row) ? { fontStyle: 'bold' } : {};
+      var rowArr = [
+        { content: row[0], styles: labelStyle },
+        { content: row[1] !== undefined && row[1] !== '' ? fmtAmt(row[1]) : '', styles: amtStyle }
+      ];
+      if (multi) {
+        rowArr.push({ content: row[2] !== undefined && row[2] !== '' ? fmtAmt(row[2]) : '', styles: amtStyle });
+      }
+      body.push(rowArr);
+    });
+
+    doc.autoTable({
+      startY: margin + 60,
+      head: head,
+      body: body,
+      theme: 'plain',
+      margin: { left: margin, right: margin },
+      styles: { fontSize: 9, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, lineColor: [226, 232, 240], overflow: 'linebreak' },
+      headStyles: { fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [30, 41, 59], lineWidth: { bottom: 0.5 } },
+      columnStyles: colStyles,
+      didDrawPage: function(data) {
+        addFooter(doc, pageNum);
+      },
+      willDrawCell: function(data) {
+        // Draw top border on total rows
+        if (data.section === 'body') {
+          var rowData = dataRows[data.row.index];
+          if (rowData && isTotalFn(rowData)) {
+            doc.setDrawColor(30, 41, 59);
+            doc.setLineWidth(0.5);
+            doc.line(data.cell.x, data.cell.y, data.cell.x + data.cell.width, data.cell.y);
+          }
+        }
+      }
+    });
+  }
+
+  // ── Helper: detect total rows ──
+  function isTotal(row) {
+    var lbl = (row[0] || '').trim();
+    return lbl.indexOf('Total') === 0 || lbl.indexOf('TOTAL') === 0 ||
+           lbl === 'Gross Profit' || lbl === 'Operating Income' || lbl === 'Net Income' ||
+           lbl === 'Net Change in Cash';
+  }
+
+  // ── 3. INDEPENDENT AUDITOR'S REPORT (template) ──
+  startPage(doc, "Independent Auditor's Report");
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text("Independent Auditor's Report", pageW / 2, margin + 20, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(60);
+  var auditY = margin + 60;
+  var auditLines = [
+    'To the Board of Directors and Shareholders of ' + m.company + ':',
+    '',
+    'Opinion',
+    '',
+    'We have audited the accompanying financial statements of ' + m.company + ',',
+    'which comprise the balance sheet as of ' + (m.period || '[period end]') + ', and the related',
+    'statements of income, changes in equity, and cash flows for the period then ended,',
+    'and the related notes to the financial statements.',
+    '',
+    'In our opinion, the financial statements referred to above present fairly, in all material',
+    'respects, the financial position of ' + m.company + ' as of',
+    (m.period || '[period end]') + ', and the results of its operations and its cash flows for the',
+    'period then ended in accordance with accounting principles generally accepted in the',
+    'United States of America.',
+    '',
+    'Basis for Opinion',
+    '',
+    'We conducted our audit in accordance with auditing standards generally accepted in the',
+    'United States of America (GAAS). Our responsibilities under those standards are further',
+    'described in the Auditor\'s Responsibilities for the Audit of the Financial Statements section',
+    'of our report. We are required to be independent of ' + m.company + ' and to',
+    'meet our other ethical responsibilities, in accordance with the relevant ethical requirements',
+    'relating to our audit. We believe that the audit evidence we have obtained is sufficient and',
+    'appropriate to provide a basis for our audit opinion.',
+    '',
+    '',
+    '',
+    '________________________________________',
+    '[Firm Name]',
+    '[City, State]',
+    '[Date]'
+  ];
+  auditLines.forEach(function(line) {
+    if (line === 'Opinion' || line === 'Basis for Opinion') {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+    }
+    doc.text(line, margin, auditY);
+    if (line === 'Opinion' || line === 'Basis for Opinion') {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60);
+    }
+    auditY += 16;
+  });
+
+  // ── 4. BALANCE SHEET ──
+  // Build data using same logic as Excel export
+  var bsAoa = [];
+  var totalCA = sum(currentData, 'current-assets'), totalNCA = sum(currentData, 'noncurrent-assets');
+  var totalAssets = totalCA + totalNCA;
+  var totalCL = sum(currentData, 'current-liab'), totalNCL = sum(currentData, 'noncurrent-liab');
+  var totalLiab = totalCL + totalNCL, totalEquity = sum(currentData, 'equity');
+  var totalLiabEquity = totalLiab + totalEquity;
+  var pCA = 0, pNCA = 0, pAssets = 0, pCL = 0, pNCL = 0, pLiab = 0, pEq = 0, pLE = 0;
+  if (multi) {
+    pCA = sum(priorData, 'current-assets'); pNCA = sum(priorData, 'noncurrent-assets'); pAssets = pCA + pNCA;
+    pCL = sum(priorData, 'current-liab'); pNCL = sum(priorData, 'noncurrent-liab'); pLiab = pCL + pNCL;
+    pEq = sum(priorData, 'equity'); pLE = pLiab + pEq;
+  }
+
+  function pushSection(arr, label, sectionKey) {
+    arr.push([label]);
+    var items = mergeLabels(rows(currentData, sectionKey), multi ? rows(priorData, sectionKey) : [], multi);
+    items.forEach(function(item) {
+      if (multi) arr.push(['  ' + item.label, item.cur, item.prior]);
+      else arr.push(['  ' + item.label, item.cur]);
+    });
+  }
+  function pushTotal(arr, label, cur, prior) {
+    if (multi) arr.push([label, cur, prior]);
+    else arr.push([label, cur]);
+  }
+
+  bsAoa.push(['ASSETS']);
+  pushSection(bsAoa, 'Current Assets', 'current-assets');
+  pushTotal(bsAoa, 'Total Current Assets', totalCA, pCA);
+  pushSection(bsAoa, 'Non-Current Assets', 'noncurrent-assets');
+  pushTotal(bsAoa, 'Total Non-Current Assets', totalNCA, pNCA);
+  pushTotal(bsAoa, 'TOTAL ASSETS', totalAssets, pAssets);
+  bsAoa.push(['']);
+  bsAoa.push(['LIABILITIES & EQUITY']);
+  pushSection(bsAoa, 'Current Liabilities', 'current-liab');
+  pushTotal(bsAoa, 'Total Current Liabilities', totalCL, pCL);
+  pushSection(bsAoa, 'Non-Current Liabilities', 'noncurrent-liab');
+  pushTotal(bsAoa, 'Total Non-Current Liabilities', totalNCL, pNCL);
+  pushTotal(bsAoa, 'Total Liabilities', totalLiab, pLiab);
+  pushSection(bsAoa, "Shareholders' Equity", 'equity');
+  pushTotal(bsAoa, 'Total Equity', totalEquity, pEq);
+  pushTotal(bsAoa, 'TOTAL LIABILITIES & EQUITY', totalLiabEquity, pLE);
+
+  drawStatementTable('Balance Sheet', bsAoa, isTotal);
+
+  // ── 5. INCOME STATEMENT ──
+  var isAoa = [];
+  var totalRev = sum(currentData, 'revenue'), totalCOGS = sum(currentData, 'cogs');
+  var grossProfit = totalRev - totalCOGS;
+  var totalOpex = sum(currentData, 'opex'), opIncome = grossProfit - totalOpex;
+  var totalOther = sum(currentData, 'other'), netIncome = opIncome + totalOther;
+  var pRev = 0, pCOGS2 = 0, pGP = 0, pOpex = 0, pOpInc = 0, pOther = 0, pNI = 0;
+  if (multi) {
+    pRev = sum(priorData, 'revenue'); pCOGS2 = sum(priorData, 'cogs'); pGP = pRev - pCOGS2;
+    pOpex = sum(priorData, 'opex'); pOpInc = pGP - pOpex;
+    pOther = sum(priorData, 'other'); pNI = pOpInc + pOther;
+  }
+
+  pushSection(isAoa, 'Revenue', 'revenue');
+  pushTotal(isAoa, 'Total Revenue', totalRev, pRev);
+  pushSection(isAoa, 'Cost of Goods Sold', 'cogs');
+  pushTotal(isAoa, 'Total Cost of Goods Sold', totalCOGS, pCOGS2);
+  pushTotal(isAoa, 'Gross Profit', grossProfit, pGP);
+  pushSection(isAoa, 'Operating Expenses', 'opex');
+  pushTotal(isAoa, 'Total Operating Expenses', totalOpex, pOpex);
+  pushTotal(isAoa, 'Operating Income', opIncome, pOpInc);
+  if (rows(currentData, 'other').length || (multi && rows(priorData, 'other').length)) {
+    pushSection(isAoa, 'Other Income / (Expense)', 'other');
+    pushTotal(isAoa, 'Total Other Income / (Expense)', totalOther, pOther);
+  }
+  pushTotal(isAoa, 'Net Income', netIncome, pNI);
+
+  drawStatementTable('Income Statement', isAoa, isTotal);
+
+  // ── 6. STATEMENT OF CHANGES IN EQUITY ──
+  startPage(doc, 'Statement of Changes in Equity');
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text(m.company, pageW / 2, margin + 10, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('Statement of Changes in Equity', pageW / 2, margin + 28, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text(periodLabel, pageW / 2, margin + 44, { align: 'center' });
+  doc.setTextColor(0);
+
+  var eqBody = [];
+  if (multi) {
+    eqBody.push([{ content: 'Beginning Balance (Prior Period)', styles: { fontStyle: 'bold' } }, fmtAmt(pEq)]);
+    eqBody.push(['Net Income — Prior Period', fmtAmt(pNI)]);
+    eqBody.push([{ content: 'Ending Balance (Prior Period)', styles: { fontStyle: 'bold' } }, fmtAmt(pEq)]);
+    eqBody.push(['', '']);
+    eqBody.push([{ content: 'Beginning Balance (Current Period)', styles: { fontStyle: 'bold' } }, fmtAmt(pEq)]);
+    eqBody.push(['Net Income — Current Period', fmtAmt(netIncome)]);
+    var eqItems = mergeLabels(rows(currentData, 'equity'), rows(priorData, 'equity'), multi);
+    eqItems.forEach(function(item) {
+      if (item.label.toLowerCase().indexOf('retained') === -1) {
+        eqBody.push(['  ' + item.label, fmtAmt(item.cur)]);
+      }
+    });
+    eqBody.push([{ content: 'Ending Balance (Current Period)', styles: { fontStyle: 'bold' } }, fmtAmt(totalEquity)]);
+  } else {
+    eqBody.push([{ content: 'Beginning Balance', styles: { fontStyle: 'bold' } }, fmtAmt(0)]);
+    eqBody.push(['Net Income', fmtAmt(netIncome)]);
+    var eqItems2 = rows(currentData, 'equity');
+    eqItems2.forEach(function(item) {
+      if (item.label.toLowerCase().indexOf('retained') === -1) {
+        eqBody.push(['  ' + item.label, fmtAmt(parseFloat(item.amount) || 0)]);
+      }
+    });
+    eqBody.push([{ content: 'Ending Balance', styles: { fontStyle: 'bold' } }, fmtAmt(totalEquity)]);
+  }
+
+  doc.autoTable({
+    startY: margin + 60,
+    head: [['', 'Amount']],
+    body: eqBody,
+    theme: 'plain',
+    margin: { left: margin, right: margin },
+    styles: { fontSize: 9, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, lineColor: [226, 232, 240] },
+    headStyles: { fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [30, 41, 59], lineWidth: { bottom: 0.5 } },
+    columnStyles: { 0: { cellWidth: contentW * 0.65, halign: 'left' }, 1: { cellWidth: contentW * 0.35, halign: 'right' } },
+    didDrawPage: function() { addFooter(doc, pageNum); }
+  });
+
+  // ── 7. CASH FLOW STATEMENT ──
+  var cfAoa = [];
+  var totalOp = sum(currentData, 'cf-operating'), totalInv = sum(currentData, 'cf-investing');
+  var totalFin = sum(currentData, 'cf-financing'), netChange = totalOp + totalInv + totalFin;
+  var pOp = 0, pInv = 0, pFin = 0, pNet = 0;
+  if (multi) {
+    pOp = sum(priorData, 'cf-operating'); pInv = sum(priorData, 'cf-investing');
+    pFin = sum(priorData, 'cf-financing'); pNet = pOp + pInv + pFin;
+  }
+
+  pushSection(cfAoa, 'Operating Activities', 'cf-operating');
+  pushTotal(cfAoa, 'Net Cash from Operating Activities', totalOp, pOp);
+  pushSection(cfAoa, 'Investing Activities', 'cf-investing');
+  pushTotal(cfAoa, 'Net Cash from Investing Activities', totalInv, pInv);
+  pushSection(cfAoa, 'Financing Activities', 'cf-financing');
+  pushTotal(cfAoa, 'Net Cash from Financing Activities', totalFin, pFin);
+  pushTotal(cfAoa, 'Net Change in Cash', netChange, pNet);
+
+  drawStatementTable('Statement of Cash Flows', cfAoa, isTotal);
+
+  // ── 8. NOTES TO FINANCIAL STATEMENTS ──
+  startPage(doc, 'Notes to the Financial Statements');
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text(m.company, pageW / 2, margin + 10, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('Notes to the Financial Statements', pageW / 2, margin + 28, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text(periodLabel, pageW / 2, margin + 44, { align: 'center' });
+  doc.setTextColor(0);
+
+  var notesEl = document.getElementById('notes-statement');
+  var notesText = '';
+  if (notesEl && notesEl.innerText.trim()) {
+    notesText = notesEl.innerText.trim();
+  } else {
+    notesText = 'Notes have not been generated yet. Complete the Notes questionnaire to include notes in this package.';
+  }
+
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  var noteLines = doc.splitTextToSize(notesText, contentW);
+  var noteY = margin + 68;
+  noteLines.forEach(function(line) {
+    if (noteY > pageH - 50) {
+      doc.addPage();
+      pageNum++;
+      addFooter(doc, pageNum);
+      noteY = margin + 20;
+    }
+    // Detect note headers (lines starting with "Note" or all caps)
+    if (/^Note \d/.test(line.trim())) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      noteY += 6;
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60);
+    }
+    doc.text(line, margin, noteY);
+    noteY += 14;
+  });
+
+  // ── NOW DRAW TABLE OF CONTENTS on page 2 ──
+  var totalPages = pageNum;
+
+  // Go to page 2 (TOC page)
+  doc.setPage(2);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text('Table of Contents', pageW / 2, margin + 30, { align: 'center' });
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  var tocY = margin + 70;
+  tocEntries.forEach(function(entry, idx) {
+    doc.setTextColor(30, 41, 59);
+    doc.text(entry.title, margin + 10, tocY);
+    doc.setTextColor(150);
+    var dots = '';
+    var titleW = doc.getStringUnitWidth(entry.title) * 11 / doc.internal.scaleFactor;
+    var pageStr = String(entry.page);
+    var pageStrW = doc.getStringUnitWidth(pageStr) * 11 / doc.internal.scaleFactor;
+    var dotsStartX = margin + 10 + titleW + 8;
+    var dotsEndX = pageW - margin - 10 - pageStrW - 4;
+    var dotChar = '.';
+    var dotW = doc.getStringUnitWidth(dotChar) * 11 / doc.internal.scaleFactor;
+    var numDots = Math.floor((dotsEndX - dotsStartX) / (dotW + 1));
+    if (numDots > 0) {
+      doc.setTextColor(200);
+      for (var d = 0; d < numDots; d++) {
+        doc.text('.', dotsStartX + d * (dotW + 1), tocY);
+      }
+    }
+    doc.setTextColor(30, 41, 59);
+    doc.text(pageStr, pageW - margin - 10, tocY, { align: 'right' });
+    tocY += 28;
+  });
+
+  addFooter(doc, tocPageNum);
+
+  // ── Save ──
+  var filename = (m.company || 'Financial_Statements').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + '_Package.pdf';
+  doc.save(filename);
+}
+
+// ─── Notes Generator ────────────────────────────────────────────────────────
+function nqVal(id) { return (document.getElementById(id) ? document.getElementById(id).value : '').trim(); }
+function nqRadio(name) {
+  var el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : 'no';
+}
+
+function generateNotes() {
+  const m = meta();
+  const company = m.company;
+  const period = m.period;
+  let noteNum = 0;
+
+  let html = '<div class="stmt-header">' +
+    '<div class="company">' + esc(company) + '</div>' +
+    '<div class="title">Notes to the Financial Statements</div>' +
+    '<div class="period">' + esc(period) + '</div>' +
+  '</div><div class="notes-output">';
+
+  // Note 1: Nature of Business
+  const bizDesc = nqVal('nq-business-desc');
+  const state = nqVal('nq-state');
+  const formed = nqVal('nq-formed');
+  const entityType = nqVal('nq-entity-type');
+  if (bizDesc || state || entityType) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Nature of Business</h3>';
+    let p = '';
+    const an = /^([aeiou]|S\b|S )/i.test(entityType) ? 'an' : 'a';
+    if (entityType && state && formed) {
+      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized in the State of ' + esc(state) + ', formed on ' + esc(formed) + '. ';
+    } else if (entityType && state) {
+      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized in the State of ' + esc(state) + '. ';
+    } else if (entityType) {
+      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + '. ';
+    }
+    if (bizDesc) p += esc(bizDesc);
+    html += '<p>' + p + '</p>';
+  }
+
+  // Note 2: Accounting Policies
+  const basis = nqVal('nq-basis');
+  const revRec = nqVal('nq-revenue-recognition');
+  const inventory = nqVal('nq-inventory');
+  const depreciation = nqVal('nq-depreciation');
+  const usefulLives = nqVal('nq-useful-lives');
+  if (basis || revRec || inventory || depreciation) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Summary of Significant Accounting Policies</h3>';
+
+    if (basis) {
+      const basisLabels = {
+        'accrual': 'accrual basis of accounting in accordance with accounting principles generally accepted in the United States of America (U.S. GAAP)',
+        'cash': 'cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenue is recognized when received and expenses are recognized when paid',
+        'modified-cash': 'modified cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. This basis modifies the cash basis to record certain items on the accrual basis, such as depreciation',
+        'tax': 'income tax basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenues and expenses are recognized in accordance with applicable income tax regulations',
+      };
+      html += '<p><strong>Basis of Accounting</strong> — The Company prepares its financial statements on the ' + (basisLabels[basis] || esc(basis)) + '.</p>';
+    }
+
+    if (revRec) {
+      html += '<p><strong>Revenue Recognition</strong> — ' + esc(revRec) + '</p>';
+    }
+
+    if (inventory) {
+      html += '<p><strong>Inventory</strong> — Inventory is valued at the lower of cost or net realizable value, with cost determined using the ' + esc(inventory) + ' method.</p>';
+    }
+
+    if (depreciation) {
+      const depLabels = {
+        'straight-line': 'straight-line method',
+        'declining balance': 'declining balance method',
+        'MACRS': 'Modified Accelerated Cost Recovery System (MACRS) for tax purposes',
+      };
+      let depText = 'Property and equipment are stated at cost less accumulated depreciation. Depreciation is computed using the ' + (depLabels[depreciation] || esc(depreciation)) + ' over the estimated useful lives of the assets.';
+      if (usefulLives) depText += ' Estimated useful lives are as follows: ' + esc(usefulLives) + '.';
+      html += '<p><strong>Property and Equipment</strong> — ' + depText + '</p>';
+    }
+
+    html += '<p><strong>Use of Estimates</strong> — The preparation of financial statements requires management to make estimates and assumptions that affect the reported amounts of assets and liabilities and disclosure of contingent assets and liabilities at the date of the financial statements and the reported amounts of revenues and expenses during the reporting period. Actual results could differ from those estimates.</p>';
+  }
+
+  // Note 3: Concentrations
+  const hasCustConc = nqRadio('nq-cust-conc') === 'yes';
+  const hasVendorConc = nqRadio('nq-vendor-conc') === 'yes';
+  const custConcText = nqVal('nq-cust-conc-text');
+  const vendorConcText = nqVal('nq-vendor-conc-text');
+  if (hasCustConc || hasVendorConc) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Concentrations</h3>';
+    if (hasCustConc && custConcText) {
+      html += '<p><strong>Revenue Concentration</strong> — ' + esc(custConcText) + '</p>';
+    }
+    if (hasVendorConc && vendorConcText) {
+      html += '<p><strong>Vendor Concentration</strong> — ' + esc(vendorConcText) + '</p>';
+    }
+  }
+
+  // Note 4: Related Party Transactions
+  const hasRelated = nqRadio('nq-related') === 'yes';
+  const relatedText = nqVal('nq-related-text');
+  if (hasRelated && relatedText) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Related Party Transactions</h3>';
+    html += '<p>' + esc(relatedText) + '</p>';
+  }
+
+  // Note 5: Commitments & Contingencies
+  const hasLeases = nqRadio('nq-leases') === 'yes';
+  const leasesText = nqVal('nq-leases-text');
+  const hasLitigation = nqRadio('nq-litigation') === 'yes';
+  const litigationText = nqVal('nq-litigation-text');
+  if (hasLeases || hasLitigation) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Commitments and Contingencies</h3>';
+    if (hasLeases && leasesText) {
+      html += '<p><strong>Leases</strong> — ' + esc(leasesText) + '</p>';
+    }
+    if (hasLitigation && litigationText) {
+      html += '<p><strong>Litigation</strong> — ' + esc(litigationText) + '</p>';
+    }
+    if (!hasLitigation) {
+      html += '<p><strong>Litigation</strong> — The Company is not aware of any pending or threatened litigation as of the date of these financial statements.</p>';
+    }
+  }
+
+  // Note 6: Subsequent Events
+  const subseqDate = nqVal('nq-subseq-date');
+  const hasSubseq = nqRadio('nq-subseq') === 'yes';
+  const subseqText = nqVal('nq-subseq-text');
+  {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Subsequent Events</h3>';
+    const evalDate = subseqDate || 'the date these financial statements were available to be issued';
+    html += '<p>Management has evaluated subsequent events through ' + esc(evalDate) + ', the date these financial statements were available to be issued.';
+    if (hasSubseq && subseqText) {
+      html += ' ' + esc(subseqText);
+    } else {
+      html += ' No material subsequent events have occurred since the balance sheet date that require recognition or disclosure in the financial statements.';
+    }
+    html += '</p>';
+  }
+
+  // Note 7: Going Concern
+  const hasGC = nqRadio('nq-going-concern') === 'yes';
+  const gcText = nqVal('nq-gc-text');
+  if (hasGC && gcText) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Going Concern</h3>';
+    html += '<p>The accompanying financial statements have been prepared assuming that the Company will continue as a going concern. ' + esc(gcText) + '</p>';
+    html += '<p>The financial statements do not include any adjustments that might result from the outcome of this uncertainty.</p>';
+  }
+
+  html += '</div>';
+
+  document.getElementById('notes-statement').innerHTML = html;
+  document.getElementById('notes-questionnaire').style.display = 'none';
+  document.getElementById('notes-output-wrapper').style.display = 'block';
+
+  saveNotesToProject();
+}
+
+// ─── Authentication ─────────────────────────────────────────────────────────
+const AUTH_USERS_KEY = 'fsgen-users';
+const AUTH_SESSION_KEY = 'fsgen-session';
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+function saveUsers(users) { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users)); }
+
+function showAuthView(view) {
+  document.getElementById('auth-signin').style.display = view === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-signup').style.display = view === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-forgot').style.display = view === 'forgot' ? 'block' : 'none';
+  document.getElementById('signin-msg').innerHTML = '';
+  document.getElementById('signup-msg').innerHTML = '';
+  document.getElementById('forgot-msg').innerHTML = '';
+}
+
+function authMsg(elId, type, msg) {
+  document.getElementById(elId).innerHTML = '<div class="login-msg ' + type + '">' + msg + '</div>';
+}
+
+function handleSignUp() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
+  const pass = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+
+  if (!name) { authMsg('signup-msg', 'error', 'Please enter your name.'); return; }
+  if (!email || !email.includes('@')) { authMsg('signup-msg', 'error', 'Please enter a valid email.'); return; }
+  if (pass.length < 6) { authMsg('signup-msg', 'error', 'Password must be at least 6 characters.'); return; }
+  if (pass !== confirm) { authMsg('signup-msg', 'error', 'Passwords do not match.'); return; }
+
+  const users = getUsers();
+  if (users[email]) { authMsg('signup-msg', 'error', 'An account with this email already exists.'); return; }
+
+  users[email] = { name: name, password: pass };
+  saveUsers(users);
+
+  authMsg('signup-msg', 'success', 'Account created! Redirecting...');
+  setTimeout(function() {
+    loginSession(email, name);
+  }, 800);
+}
+
+function handleSignIn() {
+  const email = document.getElementById('signin-email').value.trim().toLowerCase();
+  const pass = document.getElementById('signin-password').value;
+
+  if (!email) { authMsg('signin-msg', 'error', 'Please enter your email.'); return; }
+  if (!pass) { authMsg('signin-msg', 'error', 'Please enter your password.'); return; }
+
+  const users = getUsers();
+  const user = users[email];
+  if (!user || user.password !== pass) {
+    authMsg('signin-msg', 'error', 'Invalid email or password.');
+    return;
+  }
+
+  loginSession(email, user.name);
+}
+
+function handleForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  const pass = document.getElementById('forgot-password').value;
+  const confirm = document.getElementById('forgot-confirm').value;
+
+  if (!email || !email.includes('@')) { authMsg('forgot-msg', 'error', 'Please enter a valid email.'); return; }
+
+  const users = getUsers();
+  if (!users[email]) { authMsg('forgot-msg', 'error', 'No account found with this email.'); return; }
+
+  if (pass.length < 6) { authMsg('forgot-msg', 'error', 'New password must be at least 6 characters.'); return; }
+  if (pass !== confirm) { authMsg('forgot-msg', 'error', 'Passwords do not match.'); return; }
+
+  users[email].password = pass;
+  saveUsers(users);
+
+  authMsg('forgot-msg', 'success', 'Password updated! Redirecting to sign in...');
+  setTimeout(function() { showAuthView('signin'); }, 1200);
+}
+
+function loginSession(email, name) {
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ email: email, name: name }));
+  currentUserEmail = email;
+  currentUserName = name;
+
+  // Migration: check for old fsgen-state key
+  var oldState = localStorage.getItem('fsgen-state');
+  if (oldState) {
+    try {
+      var state = JSON.parse(oldState);
+      var id = genId();
+      var proj = {
+        currentData: {},
+        priorData: {},
+        company: state.company || '',
+        period: state.period || '',
+        priorPeriod: '',
+        currency: state.currency || '$',
+        notes: {},
+      };
+      SECTIONS.forEach(function(s) {
+        proj.currentData[s] = (state.data && state.data[s]) ? state.data[s] : [];
+        proj.priorData[s] = [];
+      });
+      localStorage.setItem('fsgen-project-' + id, JSON.stringify(proj));
+      var mList = getProjectList(email);
+      mList.push({ id: id, name: state.company || 'Migrated Project', updatedAt: new Date().toISOString() });
+      saveProjectList(email, mList);
+      localStorage.removeItem('fsgen-state');
+    } catch(e) {
+      localStorage.removeItem('fsgen-state');
+    }
+  }
+
+  showDashboard();
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-wrapper').classList.remove('visible');
+  document.getElementById('dashboard').classList.add('visible');
+  document.getElementById('dash-user-display').textContent = currentUserName || currentUserEmail;
+  document.getElementById('dash-greeting').textContent = 'Welcome, ' + (currentUserName || 'User');
+  renderProjectGrid();
+}
+
+function renderProjectGrid() {
+  var list = getProjectList(currentUserEmail);
+  list.sort(function(a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+  var grid = document.getElementById('project-grid');
+
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><p>No projects yet. Create your first project to get started.</p></div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var p = list[i];
+    var dateStr = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    html += '<div class="project-card" onclick="openProject(\'' + esc(p.id) + '\')">';
+    html += '<div class="pc-menu-wrap">';
+    html += '<button class="pc-dots" onclick="event.stopPropagation();toggleCardMenu(this)" aria-label="Menu">&#8943;</button>';
+    html += '<div class="pc-dropdown">';
+    html += '<button onclick="event.stopPropagation();dashRenameProject(\'' + esc(p.id) + '\',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">Rename</button>';
+    html += '<button class="danger" onclick="event.stopPropagation();dashDeleteProject(\'' + esc(p.id) + '\',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">Delete</button>';
+    html += '</div></div>';
+    html += '<div class="pc-name">' + esc(p.name) + '</div>';
+    html += '<div class="pc-meta">Last updated: ' + esc(dateStr) + '</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function openProject(id) {
+  loadProject(id);
+  populateProjectSelect();
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('app-wrapper').classList.add('visible');
+  document.getElementById('user-display').textContent = currentUserName || currentUserEmail;
+  // Set project name in header
+  var list = getProjectList(currentUserEmail);
+  var entry = list.find(function(p) { return p.id === id; });
+  document.getElementById('app-project-name').textContent = entry ? entry.name : 'NoteFlow';
+}
+
+function goToDashboard() {
+  if (currentProjectId) saveProject();
+  document.getElementById('app-wrapper').classList.remove('visible');
+  showDashboard();
+}
+
+function toggleCardMenu(btn) {
+  var dd = btn.nextElementSibling;
+  var wasOpen = dd.classList.contains('open');
+  // close all open menus first
+  document.querySelectorAll('.pc-dropdown.open').forEach(function(el) { el.classList.remove('open'); });
+  if (!wasOpen) dd.classList.add('open');
+}
+
+// close card menus when clicking outside
+document.addEventListener('click', function() {
+  document.querySelectorAll('.pc-dropdown.open').forEach(function(el) { el.classList.remove('open'); });
+});
+
+function dashCreateProject() {
+  var name = prompt('New project name:', 'Untitled Project');
+  if (name && name.trim()) {
+    if (currentProjectId) saveProject();
+    createProject(name.trim());
+    openProject(currentProjectId);
+  }
+}
+
+function dashRenameProject(id, oldName) {
+  var newName = prompt('Rename project:', oldName);
+  if (newName && newName.trim()) {
+    renameProject(id, newName.trim());
+    renderProjectGrid();
+  }
+}
+
+function dashDeleteProject(id, name) {
+  if (confirm('Delete "' + name + '"? This cannot be undone.')) {
+    localStorage.removeItem('fsgen-project-' + id);
+    var list = getProjectList(currentUserEmail).filter(function(p) { return p.id !== id; });
+    saveProjectList(currentUserEmail, list);
+    if (currentProjectId === id) {
+      currentProjectId = null;
+    }
+    renderProjectGrid();
+  }
+}
+
+function handleSignOut() {
+  if (currentProjectId) saveProject();
+  localStorage.removeItem(AUTH_SESSION_KEY);
+  currentUserEmail = null;
+  currentUserName = null;
+  currentProjectId = null;
+  document.getElementById('app-wrapper').classList.remove('visible');
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  showAuthView('signin');
+}
+
+function showApp(name) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('app-wrapper').classList.add('visible');
+  document.getElementById('user-display').textContent = name;
+}
+
+// Check session on load
+(function checkSession() {
+  const session = localStorage.getItem(AUTH_SESSION_KEY);
+  if (session) {
+    try {
+      const parsed = JSON.parse(session);
+      if (parsed.email) {
+        loginSession(parsed.email, parsed.name || parsed.email);
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('login-screen').style.display = 'flex';
+})();
+
+// Allow Enter key to submit forms
+document.querySelectorAll('#auth-signin input').forEach(function(el) {
+  el.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignIn(); });
+});
+document.querySelectorAll('#auth-signup input').forEach(function(el) {
+  el.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSignUp(); });
+});
+document.querySelectorAll('#auth-forgot input').forEach(function(el) {
+  el.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleForgotPassword(); });
+});
+
+</script>
+</body>
+</html>
