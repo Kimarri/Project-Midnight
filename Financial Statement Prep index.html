@@ -558,6 +558,68 @@
     .stmt-table.multi-period .col-current { text-align: right; width: 25%; }
     .stmt-table.multi-period .col-prior { text-align: right; width: 25%; }
 
+    /* ── Company Research panel ────────────────────────────────────── */
+    .research-btn {
+      padding: 8px 14px; border-radius: 7px; border: 1px solid var(--primary);
+      background: #eff6ff; color: var(--primary); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .research-btn:hover { background: var(--primary); color: #fff; }
+    .research-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .research-btn .spinner {
+      display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor;
+      border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .research-panel {
+      margin-top: 16px; border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; display: none;
+    }
+    .research-panel.open { display: block; }
+    .research-panel-header {
+      background: #f8fafc; padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .research-panel-header h3 { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .research-panel-body { padding: 18px; }
+    .research-finding {
+      display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;
+    }
+    .research-finding:last-child { border-bottom: none; }
+    .research-finding .rf-label {
+      flex-shrink: 0; width: 140px; font-weight: 600; color: var(--muted);
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; padding-top: 2px;
+    }
+    .research-finding .rf-value { flex: 1; color: var(--text); line-height: 1.5; }
+    .research-finding .rf-value.muted { color: var(--muted); font-style: italic; }
+    .research-finding .rf-apply {
+      flex-shrink: 0; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px;
+      border: 1px solid var(--primary); background: transparent; color: var(--primary);
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    }
+    .research-finding .rf-apply:hover { background: var(--primary); color: #fff; }
+    .research-finding .rf-apply.applied {
+      background: #f0fdf4; border-color: var(--green); color: var(--green);
+      cursor: default; pointer-events: none;
+    }
+    .research-sources {
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+      font-size: 0.75rem; color: var(--muted); line-height: 1.6;
+    }
+    .research-sources a { color: var(--primary); text-decoration: none; }
+    .research-sources a:hover { text-decoration: underline; }
+    .research-apply-all {
+      margin-top: 14px; display: flex; gap: 10px;
+    }
+
+    body.dark-mode .research-panel { border-color: #334155; }
+    body.dark-mode .research-panel-header { background: #0f172a; border-color: #334155; }
+    body.dark-mode .research-finding { border-color: #334155; }
+    body.dark-mode .research-btn { background: #1e3a5f; border-color: #2563eb; }
+
     /* ── GAAP reference badges on checklist ─────────────────────────── */
     .checklist-label { display: block; }
     .asc-ref {
@@ -917,7 +979,12 @@
       <div class="meta-row" style="grid-template-columns:1fr 1fr">
         <div>
           <label>Company Name</label>
-          <input type="text" id="companyName" value="" placeholder="e.g. Acme Corporation" oninput="saveProject()" />
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="companyName" value="" placeholder="e.g. Acme Corporation" oninput="saveProject()" style="flex:1" />
+            <button class="research-btn" id="research-btn" onclick="researchCompany()" title="Search the web to learn about this company and pre-fill notes">
+              <span id="research-btn-text">Research</span>
+            </button>
+          </div>
         </div>
         <div>
           <label>Currency</label>
@@ -932,6 +999,16 @@
         <div>
           <label>Prior Period</label>
           <input type="text" id="priorPeriod" value="" placeholder="e.g. Year Ended Dec 31, 2024" oninput="saveProject()" />
+        </div>
+      </div>
+
+      <!-- Research Results Panel -->
+      <div class="research-panel" id="research-panel">
+        <div class="research-panel-header">
+          <h3 id="research-panel-title">Company Research Results</h3>
+          <button class="btn btn-ghost btn-sm" onclick="closeResearchPanel()">Close</button>
+        </div>
+        <div class="research-panel-body" id="research-panel-body">
         </div>
       </div>
     </div>
@@ -4980,6 +5057,322 @@ function showApp(name) {
   }
   document.getElementById('login-screen').style.display = 'flex';
 })();
+
+// ─── Company Research Engine ────────────────────────────────────────────────
+function researchCompany() {
+  var name = (document.getElementById('companyName').value || '').trim();
+  if (!name) { alert('Please enter a company name first.'); return; }
+
+  var btn = document.getElementById('research-btn');
+  var btnText = document.getElementById('research-btn-text');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Searching...';
+
+  var findings = {
+    name: name,
+    description: null,
+    entityType: null,
+    state: null,
+    formed: null,
+    industry: null,
+    sic: null,
+    ticker: null,
+    isPublic: false,
+    address: null,
+    sources: []
+  };
+
+  // 1. Parse entity type from name suffix
+  var nameEntityMap = [
+    { pattern: /\bLLC\b|\bL\.L\.C\.\b/i, type: 'Limited Liability Company (LLC)' },
+    { pattern: /\bLLP\b|\bL\.L\.P\.\b/i, type: 'Partnership' },
+    { pattern: /\bLP\b|\bL\.P\.\b/i, type: 'Partnership' },
+    { pattern: /\bInc\.?\b|\bIncorporated\b/i, type: 'C Corporation' },
+    { pattern: /\bCorp\.?\b|\bCorporation\b/i, type: 'C Corporation' },
+    { pattern: /\bCo\.?\b|\bCompany\b/i, type: 'C Corporation' },
+    { pattern: /\bPLC\b/i, type: 'C Corporation' },
+    { pattern: /\bFoundation\b|\b501\(c\)/i, type: 'Nonprofit Organization' },
+  ];
+  nameEntityMap.forEach(function(m) {
+    if (m.pattern.test(name) && !findings.entityType) findings.entityType = m.type;
+  });
+
+  // 2. Launch parallel API searches
+  var searchName = encodeURIComponent(name);
+  var promises = [];
+
+  // A. OpenCorporates — company registration data
+  promises.push(
+    fetch('https://api.opencorporates.com/v0.4/companies/search?q=' + searchName + '&jurisdiction_code=us&per_page=5')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.results && data.results.companies && data.results.companies.length > 0) {
+          var co = data.results.companies[0].company;
+          findings.sources.push({ name: 'OpenCorporates', url: co.opencorporates_url || 'https://opencorporates.com' });
+          if (co.incorporation_date) findings.formed = formatResearchDate(co.incorporation_date);
+          if (co.jurisdiction_code) {
+            var jur = co.jurisdiction_code.replace('us_', '').toUpperCase();
+            var stateMap = { 'AL':'Alabama','AK':'Alaska','AZ':'Arizona','AR':'Arkansas','CA':'California','CO':'Colorado','CT':'Connecticut','DE':'Delaware','FL':'Florida','GA':'Georgia','HI':'Hawaii','ID':'Idaho','IL':'Illinois','IN':'Indiana','IA':'Iowa','KS':'Kansas','KY':'Kentucky','LA':'Louisiana','ME':'Maine','MD':'Maryland','MA':'Massachusetts','MI':'Michigan','MN':'Minnesota','MS':'Mississippi','MO':'Missouri','MT':'Montana','NE':'Nebraska','NV':'Nevada','NH':'New Hampshire','NJ':'New Jersey','NM':'New Mexico','NY':'New York','NC':'North Carolina','ND':'North Dakota','OH':'Ohio','OK':'Oklahoma','OR':'Oregon','PA':'Pennsylvania','RI':'Rhode Island','SC':'South Carolina','SD':'South Dakota','TN':'Tennessee','TX':'Texas','UT':'Utah','VT':'Vermont','VA':'Virginia','WA':'Washington','WV':'West Virginia','WI':'Wisconsin','WY':'Wyoming','DC':'District of Columbia' };
+            if (stateMap[jur]) findings.state = stateMap[jur];
+          }
+          // Refine entity type from company_type
+          if (co.company_type) {
+            var ct = co.company_type.toLowerCase();
+            if (ct.indexOf('llc') >= 0 || ct.indexOf('limited liability') >= 0) findings.entityType = 'Limited Liability Company (LLC)';
+            else if (ct.indexOf('nonprofit') >= 0 || ct.indexOf('not-for-profit') >= 0) findings.entityType = 'Nonprofit Organization';
+            else if (ct.indexOf('partnership') >= 0 || ct.indexOf('lp') >= 0) findings.entityType = 'Partnership';
+            else if (ct.indexOf('corporation') >= 0 || ct.indexOf('inc') >= 0) findings.entityType = 'C Corporation';
+          }
+          if (co.registered_address) {
+            var addr = co.registered_address;
+            var parts = [addr.street_address, addr.locality, addr.region, addr.postal_code].filter(Boolean);
+            if (parts.length > 0) findings.address = parts.join(', ');
+          }
+        }
+      })
+      .catch(function() { /* OpenCorporates unavailable */ })
+  );
+
+  // B. Wikipedia — business description (try full name, then stripped name)
+  promises.push(
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(name))
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.extract && data.type === 'standard' && isCompanyArticle(data.extract, name)) {
+          findings.description = data.extract;
+          findings.sources.push({ name: 'Wikipedia', url: data.content_urls ? data.content_urls.desktop.page : 'https://en.wikipedia.org' });
+        } else {
+          // Try with suffix stripped
+          var stripped = name.replace(/,?\s*(Inc|LLC|Corp|Corporation|Ltd|Co|LP|LLP|Company)\.?\s*$/i, '').trim();
+          if (stripped !== name) {
+            return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(stripped))
+              .then(function(r2) { return r2.ok ? r2.json() : null; })
+              .then(function(data2) {
+                if (data2 && data2.extract && data2.type === 'standard' && isCompanyArticle(data2.extract, stripped)) {
+                  findings.description = data2.extract;
+                  findings.sources.push({ name: 'Wikipedia', url: data2.content_urls ? data2.content_urls.desktop.page : 'https://en.wikipedia.org' });
+                }
+              });
+          }
+          // Also try with "(company)" disambiguation
+          return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(stripped + ' (company)'))
+            .then(function(r3) { return r3.ok ? r3.json() : null; })
+            .then(function(data3) {
+              if (!findings.description && data3 && data3.extract && data3.type === 'standard') {
+                findings.description = data3.extract;
+                findings.sources.push({ name: 'Wikipedia', url: data3.content_urls ? data3.content_urls.desktop.page : 'https://en.wikipedia.org' });
+              }
+            });
+        }
+      })
+      .catch(function() { /* Wikipedia unavailable */ })
+  );
+
+  // C. SEC EDGAR — public company data (SIC, ticker, address)
+  promises.push(
+    fetch('https://efts.sec.gov/LATEST/search-index?q=' + searchName + '&dateRange=custom&startdt=2020-01-01&forms=10-K&from=0&size=1', { headers: { 'User-Agent': 'NoteFlow/1.0' } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.hits && data.hits.hits && data.hits.hits.length > 0) {
+          var hit = data.hits.hits[0]._source;
+          findings.isPublic = true;
+          if (hit.display_names && hit.display_names.length > 0) {
+            findings.sources.push({ name: 'SEC EDGAR', url: 'https://www.sec.gov/cgi-bin/browse-edgar?company=' + searchName + '&CIK=&type=10-K&dateb=&owner=include&count=10&search_text=&action=getcompany' });
+          }
+        }
+      })
+      .catch(function() { /* SEC unavailable */ })
+  );
+
+  // D. SEC EDGAR full-text company search (CIK lookup)
+  promises.push(
+    fetch('https://efts.sec.gov/LATEST/search-index?q=%22' + searchName + '%22&forms=10-K', { headers: { 'User-Agent': 'NoteFlow/1.0' } })
+      .catch(function() { return null; })
+  );
+
+  // E. DuckDuckGo Instant Answer — general company info
+  promises.push(
+    fetch('https://api.duckduckgo.com/?q=' + searchName + '&format=json&no_redirect=1&no_html=1')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data) {
+          if (data.Abstract && data.Abstract.length > 30) {
+            var ddgIsCompany = isCompanyArticle(data.Abstract, name);
+            // Use DDG if no description yet, or if DDG is company-relevant and current isn't
+            if (!findings.description || (ddgIsCompany && !isCompanyArticle(findings.description, name))) {
+              findings.description = data.Abstract;
+              // Remove old Wikipedia source if being replaced
+              findings.sources = findings.sources.filter(function(s) { return s.name !== 'Wikipedia' || ddgIsCompany === false; });
+              findings.sources.push({ name: 'DuckDuckGo', url: data.AbstractURL || 'https://duckduckgo.com/?q=' + searchName });
+            }
+          }
+          // Extract industry from related topics
+          if (data.Infobox && data.Infobox.content) {
+            data.Infobox.content.forEach(function(item) {
+              if (item.label && /industry|sector|type/i.test(item.label)) {
+                findings.industry = item.value;
+              }
+              if (item.label && /traded as|ticker|stock/i.test(item.label)) {
+                findings.ticker = item.value;
+                findings.isPublic = true;
+              }
+              if (item.label && /founded|incorporated/i.test(item.label) && !findings.formed) {
+                findings.formed = item.value;
+              }
+              if (item.label && /headquarters|location/i.test(item.label) && !findings.state) {
+                // Try to extract state
+                var stateMatch = item.value.match(/,\s*([A-Z]{2})\b/);
+                if (stateMatch) {
+                  var stMap = { 'AL':'Alabama','AK':'Alaska','AZ':'Arizona','AR':'Arkansas','CA':'California','CO':'Colorado','CT':'Connecticut','DE':'Delaware','FL':'Florida','GA':'Georgia','HI':'Hawaii','ID':'Idaho','IL':'Illinois','IN':'Indiana','IA':'Iowa','KS':'Kansas','KY':'Kentucky','LA':'Louisiana','ME':'Maine','MD':'Maryland','MA':'Massachusetts','MI':'Michigan','MN':'Minnesota','MS':'Mississippi','MO':'Missouri','MT':'Montana','NE':'Nebraska','NV':'Nevada','NH':'New Hampshire','NJ':'New Jersey','NM':'New Mexico','NY':'New York','NC':'North Carolina','ND':'North Dakota','OH':'Ohio','OK':'Oklahoma','OR':'Oregon','PA':'Pennsylvania','RI':'Rhode Island','SC':'South Carolina','SD':'South Dakota','TN':'Tennessee','TX':'Texas','UT':'Utah','VT':'Vermont','VA':'Virginia','WA':'Washington','WV':'West Virginia','WI':'Wisconsin','WY':'Wyoming','DC':'District of Columbia' };
+                  if (stMap[stateMatch[1]]) findings.state = stMap[stateMatch[1]];
+                }
+              }
+            });
+          }
+        }
+      })
+      .catch(function() { /* DuckDuckGo unavailable */ })
+  );
+
+  Promise.allSettled(promises).then(function() {
+    btn.disabled = false;
+    btnText.textContent = 'Research';
+    renderResearchFindings(findings);
+  });
+}
+
+function isCompanyArticle(extract, name) {
+  if (!extract) return false;
+  var lower = extract.toLowerCase();
+  var companyKeywords = /\b(company|corporation|inc\b|llc|business|headquartered|founded|ceo|revenue|employees|subsidiary|conglomerate|manufacturer|provider|firm|enterprise|multinational|publicly traded|stock exchange|nasdaq|nyse)\b/i;
+  return companyKeywords.test(lower);
+}
+
+function formatResearchDate(dateStr) {
+  try {
+    var d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  } catch(e) { return dateStr; }
+}
+
+function renderResearchFindings(f) {
+  var panel = document.getElementById('research-panel');
+  var body = document.getElementById('research-panel-body');
+  var title = document.getElementById('research-panel-title');
+  title.textContent = 'Research Results — ' + f.name;
+
+  var items = [];
+  var hasAnyData = false;
+
+  function addFinding(label, value, fieldId, fieldType, applyValue) {
+    if (value) hasAnyData = true;
+    items.push({ label: label, value: value, fieldId: fieldId, fieldType: fieldType || 'text', applyValue: applyValue || value });
+  }
+
+  addFinding('Business Description', f.description, 'nq-business-desc', 'textarea');
+  addFinding('Entity Type', f.entityType, 'nq-entity-type', 'select');
+  addFinding('State / Jurisdiction', f.state, 'nq-state', 'text');
+  addFinding('Date Formed', f.formed, 'nq-formed', 'text');
+  addFinding('Industry', f.industry, null, null);
+  if (f.isPublic) addFinding('Public Company', (f.ticker || 'Yes') + ' — Note: public companies have additional SEC reporting requirements', null, null);
+  addFinding('Registered Address', f.address, null, null);
+
+  var html = '';
+
+  if (!hasAnyData) {
+    html += '<div style="text-align:center;padding:20px;color:var(--muted)">';
+    html += '<p style="font-size:0.9rem;margin-bottom:8px">No results found for <strong>' + esc(f.name) + '</strong></p>';
+    html += '<p style="font-size:0.82rem">Try entering the full legal name (e.g., "Apple Inc." instead of "Apple"). For private companies, you may need to fill in the notes manually.</p>';
+    html += '</div>';
+  } else {
+    // Count applicable items
+    var applyCount = items.filter(function(i) { return i.value && i.fieldId; }).length;
+
+    if (applyCount > 0) {
+      html += '<div class="research-apply-all">';
+      html += '<button class="btn btn-primary btn-sm" onclick="applyAllResearch()">Apply All to Notes (' + applyCount + ' fields)</button>';
+      html += '<button class="btn btn-ghost btn-sm" onclick="closeResearchPanel()">Dismiss</button>';
+      html += '</div>';
+    }
+
+    items.forEach(function(item, idx) {
+      html += '<div class="research-finding">';
+      html += '<div class="rf-label">' + item.label + '</div>';
+      if (item.value) {
+        var displayVal = item.value;
+        // Truncate long descriptions for display
+        if (displayVal.length > 300) displayVal = displayVal.substring(0, 300) + '...';
+        html += '<div class="rf-value">' + esc(displayVal) + '</div>';
+        if (item.fieldId) {
+          html += '<button class="rf-apply" id="rf-apply-' + idx + '" onclick="applyResearchField(' + idx + ')" data-field="' + item.fieldId + '" data-type="' + item.fieldType + '" data-value="' + esc(item.applyValue).replace(/"/g, '&quot;') + '">Apply</button>';
+        }
+      } else {
+        html += '<div class="rf-value muted">Not found</div>';
+      }
+      html += '</div>';
+    });
+
+    // Sources
+    if (f.sources.length > 0) {
+      html += '<div class="research-sources"><strong>Sources:</strong> ';
+      html += f.sources.map(function(s) { return '<a href="' + s.url + '" target="_blank" rel="noopener">' + esc(s.name) + '</a>'; }).join(' · ');
+      html += '</div>';
+    }
+  }
+
+  body.innerHTML = html;
+  panel.classList.add('open');
+
+  // Store findings for Apply All
+  panel._findings = items;
+}
+
+function applyResearchField(idx) {
+  var btn = document.getElementById('rf-apply-' + idx);
+  if (!btn) return;
+  var fieldId = btn.getAttribute('data-field');
+  var fieldType = btn.getAttribute('data-type');
+  var value = btn.getAttribute('data-value');
+  var el = document.getElementById(fieldId);
+  if (!el) return;
+
+  if (fieldType === 'select') {
+    // Find matching option
+    var options = Array.from(el.options);
+    var match = options.find(function(o) { return o.value === value; });
+    if (match) {
+      el.value = match.value;
+    } else {
+      // Try partial match
+      match = options.find(function(o) { return o.value.toLowerCase().indexOf(value.toLowerCase()) >= 0 || value.toLowerCase().indexOf(o.value.toLowerCase()) >= 0; });
+      if (match) el.value = match.value;
+    }
+  } else {
+    el.value = value;
+  }
+
+  // Trigger save
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  if (typeof saveProject === 'function') saveProject();
+
+  // Mark as applied
+  btn.textContent = 'Applied';
+  btn.classList.add('applied');
+}
+
+function applyAllResearch() {
+  var panel = document.getElementById('research-panel');
+  var buttons = panel.querySelectorAll('.rf-apply:not(.applied)');
+  buttons.forEach(function(btn) {
+    var idx = btn.id.replace('rf-apply-', '');
+    applyResearchField(parseInt(idx));
+  });
+}
+
+function closeResearchPanel() {
+  document.getElementById('research-panel').classList.remove('open');
+}
 
 // ─── #2 Mobile hamburger menu ───────────────────────────────────────────────
 function toggleMobileMenu() {
