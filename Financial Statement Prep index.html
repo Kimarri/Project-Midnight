@@ -657,6 +657,7 @@
   <div class="tab" onclick="switchTab('balance')">Balance Sheet</div>
   <div class="tab" onclick="switchTab('cashflow')">Cash Flow</div>
   <div class="tab" onclick="switchTab('notes')">Notes</div>
+  <div class="tab" onclick="switchTab('checklist')">Disclosure Checklist</div>
 </div>
 
 <div class="container">
@@ -765,17 +766,17 @@
     <div class="card" id="notes-questionnaire">
       <div class="card-title">Financial Statement Notes — Questionnaire</div>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.5">
-        Answer the questions below to generate notes to the financial statements that are compliant with private company disclosure requirements (GAAP basis). Fields left blank will be omitted from the generated notes.
+        Answer the questions below to generate notes to the financial statements compliant with U.S. GAAP private company disclosure requirements. Only completed sections will appear in the generated notes.
       </p>
 
       <div class="notes-form">
 
-        <!-- Note 1: Nature of Business -->
+        <!-- 1. Nature of Operations -->
         <div class="note-group">
-          <div class="note-group-title">Note 1 — Nature of Business</div>
+          <div class="note-group-title">1. Nature of Operations</div>
           <div class="note-field">
             <label>What does the company do?
-              <span class="hint">Describe the principal business activities (e.g., "manufactures custom furniture," "provides IT consulting services")</span>
+              <span class="hint">Describe the principal business activities</span>
             </label>
             <textarea id="nq-business-desc" placeholder="e.g., The Company provides residential plumbing and HVAC services to homeowners in the greater Atlanta metropolitan area."></textarea>
           </div>
@@ -796,28 +797,48 @@
               <option value="Limited Liability Company (LLC)">Limited Liability Company (LLC)</option>
               <option value="Partnership">Partnership</option>
               <option value="Sole Proprietorship">Sole Proprietorship</option>
+              <option value="Nonprofit Organization">Nonprofit Organization</option>
             </select>
           </div>
         </div>
 
-        <!-- Note 2: Accounting Policies -->
+        <!-- 2. Summary of Significant Accounting Policies -->
         <div class="note-group">
-          <div class="note-group-title">Note 2 — Summary of Significant Accounting Policies</div>
+          <div class="note-group-title">2. Summary of Significant Accounting Policies</div>
           <div class="note-field">
             <label>Basis of accounting</label>
             <select id="nq-basis">
               <option value="">— Select —</option>
-              <option value="accrual" selected>Accrual basis (GAAP)</option>
+              <option value="accrual" selected>Accrual basis (U.S. GAAP)</option>
               <option value="cash">Cash basis</option>
               <option value="modified-cash">Modified cash basis</option>
               <option value="tax">Income tax basis</option>
             </select>
           </div>
           <div class="note-field">
-            <label>How does the company recognize revenue?
-              <span class="hint">Describe when revenue is recorded (e.g., at point of sale, upon delivery, over time as services are performed)</span>
+            <label>Revenue recognition policy
+              <span class="hint">Under ASC 606, describe when and how revenue is recognized (e.g., at a point in time upon delivery, over time as services are performed)</span>
             </label>
-            <textarea id="nq-revenue-recognition" placeholder="e.g., Revenue is recognized when services are rendered and the Company has a right to payment."></textarea>
+            <textarea id="nq-revenue-recognition" placeholder="e.g., Revenue is recognized at the point in time when control of goods transfers to the customer, generally upon delivery. Service revenue is recognized over time as services are performed."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Cash and cash equivalents — what does the Company consider cash equivalents?
+              <span class="hint">Typically instruments with original maturities of three months or less</span>
+            </label>
+            <textarea id="nq-cash-equiv" placeholder="e.g., The Company considers all highly liquid investments with an original maturity of three months or less to be cash equivalents."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Does the Company maintain an allowance for doubtful accounts?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-allowance" value="yes" onchange="document.getElementById('nq-allowance-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-allowance" value="no" checked onchange="document.getElementById('nq-allowance-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-allowance-detail" style="display:none">
+            <label>Describe the allowance methodology and amount
+              <span class="hint">e.g., specific identification, percentage of receivables, aging analysis</span>
+            </label>
+            <textarea id="nq-allowance-text" placeholder="e.g., The Company provides an allowance based on specific identification of uncollectible accounts and an aging analysis of outstanding receivables."></textarea>
           </div>
           <div class="note-field">
             <label>Inventory valuation method (if applicable)</label>
@@ -829,7 +850,7 @@
             </select>
           </div>
           <div class="note-field">
-            <label>Depreciation method for property & equipment</label>
+            <label>Depreciation method for property &amp; equipment</label>
             <select id="nq-depreciation">
               <option value="">N/A — No fixed assets</option>
               <option value="straight-line" selected>Straight-line</option>
@@ -838,16 +859,169 @@
             </select>
           </div>
           <div class="note-field">
-            <label>Estimated useful lives for major asset classes (if applicable)
+            <label>Estimated useful lives for major asset classes
               <span class="hint">e.g., "Vehicles: 5 years, Equipment: 7 years, Building: 39 years"</span>
             </label>
             <input type="text" id="nq-useful-lives" placeholder="e.g., Vehicles: 5 years, Equipment: 7 years" />
           </div>
+          <div class="note-field">
+            <label>Does the Company have intangible assets (patents, trademarks, goodwill, customer lists)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-intangibles" value="yes" onchange="document.getElementById('nq-intangibles-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-intangibles" value="no" checked onchange="document.getElementById('nq-intangibles-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-intangibles-detail" style="display:none">
+            <label>Describe intangible assets and amortization policy
+              <span class="hint">Include type, useful life, and amortization method</span>
+            </label>
+            <textarea id="nq-intangibles-text" placeholder="e.g., Customer relationships are amortized over 10 years using the straight-line method. Goodwill is tested for impairment annually."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Advertising costs policy</label>
+            <select id="nq-advertising">
+              <option value="">N/A — Not material</option>
+              <option value="expensed">Expensed as incurred</option>
+              <option value="capitalized">Capitalized and amortized</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Note 3: Concentrations -->
+        <!-- 3. Income Taxes -->
         <div class="note-group">
-          <div class="note-group-title">Note 3 — Concentrations</div>
+          <div class="note-group-title">3. Income Taxes</div>
+          <div class="note-field">
+            <label>How is the entity taxed?
+              <span class="hint">This determines the disclosure language</span>
+            </label>
+            <select id="nq-tax-status">
+              <option value="">— Select —</option>
+              <option value="s-corp">S Corporation (pass-through to shareholders)</option>
+              <option value="c-corp">C Corporation (entity-level tax)</option>
+              <option value="llc-partner">LLC / Partnership (pass-through to members)</option>
+              <option value="llc-scorp">LLC taxed as S Corporation</option>
+              <option value="sole-prop">Sole Proprietorship (reported on owner's return)</option>
+              <option value="nonprofit">Tax-exempt organization</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Does the Company have any uncertain tax positions or open tax years under examination?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-tax-uncertain" value="yes" onchange="document.getElementById('nq-tax-uncertain-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-tax-uncertain" value="no" checked onchange="document.getElementById('nq-tax-uncertain-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-tax-uncertain-detail" style="display:none">
+            <label>Describe the uncertain tax positions</label>
+            <textarea id="nq-tax-uncertain-text" placeholder="Describe any uncertain positions or examinations..."></textarea>
+          </div>
+        </div>
+
+        <!-- 4. Debt / Notes Payable -->
+        <div class="note-group">
+          <div class="note-group-title">4. Debt and Notes Payable</div>
+          <div class="note-field">
+            <label>Does the Company have any outstanding debt, loans, or lines of credit?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-debt" value="yes" onchange="document.getElementById('nq-debt-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-debt" value="no" checked onchange="document.getElementById('nq-debt-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-debt-detail" style="display:none">
+            <label>Describe each debt instrument
+              <span class="hint">Include lender, original amount, balance, interest rate, maturity date, and any collateral or covenants</span>
+            </label>
+            <textarea id="nq-debt-text" rows="5" placeholder="e.g., The Company has a term loan with ABC Bank with an original principal of $500,000, bearing interest at 5.25% per annum, maturing December 2028. The loan is secured by substantially all assets of the Company. The outstanding balance at year-end was $325,000."></textarea>
+          </div>
+          <div class="note-field" id="nq-debt-detail" style="display:none">
+          </div>
+          <div class="note-field" style="display:none" id="nq-loc-detail-wrap">
+            <label>Describe any lines of credit
+              <span class="hint">Include lender, limit, balance drawn, rate, and expiration</span>
+            </label>
+            <textarea id="nq-loc-text" rows="3" placeholder="e.g., The Company maintains a $100,000 revolving line of credit with XYZ Bank at prime + 1.0%, expiring June 2026. At year-end, $45,000 was outstanding."></textarea>
+          </div>
+        </div>
+
+        <!-- 5. Leases (ASC 842) -->
+        <div class="note-group">
+          <div class="note-group-title">5. Leases</div>
+          <div class="note-field">
+            <label>Does the Company have any leases (office, equipment, vehicles)?
+              <span class="hint">Under ASC 842, most leases must be recognized on the balance sheet (private company adoption)</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-leases" value="yes" onchange="document.getElementById('nq-leases-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-leases" value="no" checked onchange="document.getElementById('nq-leases-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-leases-detail" style="display:none">
+            <label>Describe lease arrangements
+              <span class="hint">Include type (operating/finance), terms, annual/monthly payments, and expiration</span>
+            </label>
+            <textarea id="nq-leases-text" rows="4" placeholder="e.g., The Company leases office space under an operating lease expiring June 2028 with monthly payments of $4,000. The Company also leases vehicles under 36-month finance leases."></textarea>
+          </div>
+          <div class="note-field" id="nq-leases-detail" style="display:none">
+            <label>Has the Company elected the ASC 842 practical expedient for short-term leases (12 months or less)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-lease-shortterm" value="yes" checked> Yes</label>
+              <label><input type="radio" name="nq-lease-shortterm" value="no"> No</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Equity / Stockholders' Equity -->
+        <div class="note-group">
+          <div class="note-group-title">6. Equity / Stockholders' Equity</div>
+          <div class="note-field">
+            <label>Describe the equity structure
+              <span class="hint">Include authorized shares, classes of stock (common, preferred), par value, and issued/outstanding shares</span>
+            </label>
+            <textarea id="nq-equity-text" placeholder="e.g., The Company is authorized to issue 10,000 shares of common stock with no par value. As of the balance sheet date, 1,000 shares were issued and outstanding."></textarea>
+          </div>
+          <div class="note-field">
+            <label>Were any distributions, dividends, or ownership changes made during the period?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-distributions" value="yes" onchange="document.getElementById('nq-distributions-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-distributions" value="no" checked onchange="document.getElementById('nq-distributions-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-distributions-detail" style="display:none">
+            <label>Describe distributions or ownership changes</label>
+            <textarea id="nq-distributions-text" placeholder="e.g., During the year, the Company declared and paid shareholder distributions totaling $75,000."></textarea>
+          </div>
+        </div>
+
+        <!-- 7. Related Party Transactions -->
+        <div class="note-group">
+          <div class="note-group-title">7. Related Party Transactions</div>
+          <div class="note-field">
+            <label>Are there any transactions with owners, officers, family members, or related entities?
+              <span class="hint">e.g., loans to/from shareholders, lease of owner's property, management fees, guaranteed debt</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-related" value="yes" onchange="document.getElementById('nq-related-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-related" value="no" checked onchange="document.getElementById('nq-related-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-related-detail" style="display:none">
+            <label>Describe each related party transaction
+              <span class="hint">Include the nature of the relationship, description of the transaction, and dollar amounts</span>
+            </label>
+            <textarea id="nq-related-text" rows="4" placeholder="e.g., The Company leases its office space from the sole shareholder under a month-to-month arrangement at $3,000 per month. Total rent expense to the related party was $36,000 for the year."></textarea>
+          </div>
+        </div>
+
+        <!-- 8. Concentrations of Credit Risk -->
+        <div class="note-group">
+          <div class="note-group-title">8. Concentrations of Credit Risk</div>
+          <div class="note-field">
+            <label>Does the Company maintain cash balances in excess of FDIC insured limits ($250,000)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-fdic" value="yes"> Yes</label>
+              <label><input type="radio" name="nq-fdic" value="no" checked> No</label>
+            </div>
+          </div>
           <div class="note-field">
             <label>Does any single customer account for more than 10% of revenue?</label>
             <div class="radio-row">
@@ -856,10 +1030,8 @@
             </div>
           </div>
           <div class="note-field" id="nq-cust-conc-detail" style="display:none">
-            <label>Describe the concentration
-              <span class="hint">e.g., "One customer accounted for approximately 35% of revenue during the year."</span>
-            </label>
-            <textarea id="nq-cust-conc-text" placeholder="Describe customer concentration..."></textarea>
+            <label>Describe the customer concentration</label>
+            <textarea id="nq-cust-conc-text" placeholder="e.g., One customer accounted for approximately 35% of revenue during the year. Accounts receivable from this customer totaled $120,000 at year-end."></textarea>
           </div>
           <div class="note-field">
             <label>Does any single vendor/supplier account for a significant portion of purchases?</label>
@@ -874,40 +1046,9 @@
           </div>
         </div>
 
-        <!-- Note 4: Related Party Transactions -->
+        <!-- 9. Commitments and Contingencies -->
         <div class="note-group">
-          <div class="note-group-title">Note 4 — Related Party Transactions</div>
-          <div class="note-field">
-            <label>Are there any transactions with owners, officers, or related entities?
-              <span class="hint">e.g., loans to/from shareholders, lease of owner's property, management fees to a related entity</span>
-            </label>
-            <div class="radio-row">
-              <label><input type="radio" name="nq-related" value="yes" onchange="document.getElementById('nq-related-detail').style.display='block'"> Yes</label>
-              <label><input type="radio" name="nq-related" value="no" checked onchange="document.getElementById('nq-related-detail').style.display='none'"> No</label>
-            </div>
-          </div>
-          <div class="note-field" id="nq-related-detail" style="display:none">
-            <label>Describe the related party transactions</label>
-            <textarea id="nq-related-text" placeholder="e.g., The Company leases its office space from the sole shareholder under a month-to-month arrangement at $3,000 per month."></textarea>
-          </div>
-        </div>
-
-        <!-- Note 5: Commitments & Contingencies -->
-        <div class="note-group">
-          <div class="note-group-title">Note 5 — Commitments & Contingencies</div>
-          <div class="note-field">
-            <label>Does the company have any operating leases (office, equipment, vehicles)?</label>
-            <div class="radio-row">
-              <label><input type="radio" name="nq-leases" value="yes" onchange="document.getElementById('nq-leases-detail').style.display='block'"> Yes</label>
-              <label><input type="radio" name="nq-leases" value="no" checked onchange="document.getElementById('nq-leases-detail').style.display='none'"> No</label>
-            </div>
-          </div>
-          <div class="note-field" id="nq-leases-detail" style="display:none">
-            <label>Describe lease commitments
-              <span class="hint">Include terms, annual amounts, and expiration dates if known</span>
-            </label>
-            <textarea id="nq-leases-text" placeholder="e.g., The Company leases office space under a 5-year agreement expiring June 2028 with annual payments of $48,000."></textarea>
-          </div>
+          <div class="note-group-title">9. Commitments and Contingencies</div>
           <div class="note-field">
             <label>Are there any pending or threatened lawsuits, claims, or legal proceedings?</label>
             <div class="radio-row">
@@ -919,18 +1060,29 @@
             <label>Describe the litigation or claims</label>
             <textarea id="nq-litigation-text" placeholder="Describe pending litigation..."></textarea>
           </div>
+          <div class="note-field">
+            <label>Does the Company have any guarantees, purchase commitments, or other contractual obligations?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-other-commit" value="yes" onchange="document.getElementById('nq-other-commit-detail').style.display='block'"> Yes</label>
+              <label><input type="radio" name="nq-other-commit" value="no" checked onchange="document.getElementById('nq-other-commit-detail').style.display='none'"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-other-commit-detail" style="display:none">
+            <label>Describe the commitments</label>
+            <textarea id="nq-other-commit-text" placeholder="e.g., The Company has a 3-year service agreement requiring minimum annual purchases of $50,000."></textarea>
+          </div>
         </div>
 
-        <!-- Note 6: Subsequent Events -->
+        <!-- 10. Subsequent Events -->
         <div class="note-group">
-          <div class="note-group-title">Note 6 — Subsequent Events</div>
+          <div class="note-group-title">10. Subsequent Events</div>
           <div class="note-field">
             <label>Through what date has management evaluated subsequent events?</label>
             <input type="text" id="nq-subseq-date" placeholder="e.g., March 15, 2026" />
           </div>
           <div class="note-field">
             <label>Have any significant events occurred after the reporting period?
-              <span class="hint">e.g., major asset purchase, new loan, loss of key customer, natural disaster</span>
+              <span class="hint">e.g., major asset purchase, new loan, loss of key customer, natural disaster, ownership change</span>
             </label>
             <div class="radio-row">
               <label><input type="radio" name="nq-subseq" value="yes" onchange="document.getElementById('nq-subseq-detail').style.display='block'"> Yes</label>
@@ -943,12 +1095,12 @@
           </div>
         </div>
 
-        <!-- Note 7: Going Concern (conditional) -->
+        <!-- 11. Going Concern -->
         <div class="note-group">
-          <div class="note-group-title">Note 7 — Going Concern (if applicable)</div>
+          <div class="note-group-title">11. Going Concern (if applicable)</div>
           <div class="note-field">
             <label>Are there substantial doubts about the company's ability to continue as a going concern?
-              <span class="hint">e.g., recurring losses, negative working capital, loan covenant violations</span>
+              <span class="hint">e.g., recurring losses, negative working capital, loan covenant violations, inability to meet obligations</span>
             </label>
             <div class="radio-row">
               <label><input type="radio" name="nq-going-concern" value="yes" onchange="document.getElementById('nq-gc-detail').style.display='block'"> Yes</label>
@@ -957,7 +1109,7 @@
           </div>
           <div class="note-field" id="nq-gc-detail" style="display:none">
             <label>Describe the conditions and management's plans to address them</label>
-            <textarea id="nq-gc-text" placeholder="e.g., The Company has incurred recurring losses and has a working capital deficiency. Management plans to..."></textarea>
+            <textarea id="nq-gc-text" placeholder="e.g., The Company has incurred recurring losses and has a working capital deficiency. Management plans to secure additional financing and reduce operating costs."></textarea>
           </div>
         </div>
 
@@ -972,8 +1124,25 @@
       <div class="print-actions">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('notes-output-wrapper').style.display='none';document.getElementById('notes-questionnaire').style.display='block'">← Edit Answers</button>
         <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
       </div>
       <div class="statement" id="notes-statement"></div>
+    </div>
+  </div>
+
+  <!-- ===== DISCLOSURE CHECKLIST ===== -->
+  <div class="page" id="page-checklist">
+    <div class="print-actions">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+      <button class="btn btn-primary btn-sm" onclick="runDisclosureChecklist()">Run Checklist</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">Print</button>
+    </div>
+    <div class="statement" id="checklist-output">
+      <div class="stmt-header">
+        <div class="title">U.S. GAAP Disclosure Checklist</div>
+        <div class="period" style="font-size:0.85rem;color:var(--muted)">Click "Run Checklist" to analyze your statements and notes against GAAP disclosure requirements.</div>
+      </div>
     </div>
   </div>
 
@@ -1216,83 +1385,79 @@ function populateProjectSelect() {
 // ─── Notes Persistence ──────────────────────────────────────────────────────
 function collectNotesData() {
   const data = {};
-  // Text/select fields
   const textIds = [
     'nq-business-desc','nq-state','nq-formed','nq-entity-type','nq-basis',
-    'nq-revenue-recognition','nq-inventory','nq-depreciation','nq-useful-lives',
-    'nq-subseq-date'
+    'nq-revenue-recognition','nq-cash-equiv','nq-allowance-text','nq-inventory',
+    'nq-depreciation','nq-useful-lives','nq-intangibles-text','nq-advertising',
+    'nq-tax-status','nq-tax-uncertain-text',
+    'nq-debt-text','nq-loc-text','nq-leases-text',
+    'nq-equity-text','nq-distributions-text',
+    'nq-related-text','nq-cust-conc-text','nq-vendor-conc-text',
+    'nq-litigation-text','nq-other-commit-text',
+    'nq-subseq-date','nq-subseq-text','nq-gc-text'
   ];
   textIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) data[id] = el.value;
   });
-
-  // Radio buttons
   const radioNames = [
-    'nq-cust-conc','nq-vendor-conc','nq-related','nq-leases',
-    'nq-litigation','nq-subseq','nq-going-concern'
+    'nq-allowance','nq-intangibles','nq-tax-uncertain',
+    'nq-debt','nq-leases','nq-lease-shortterm',
+    'nq-distributions','nq-related','nq-fdic',
+    'nq-cust-conc','nq-vendor-conc','nq-litigation','nq-other-commit',
+    'nq-subseq','nq-going-concern'
   ];
   radioNames.forEach(name => {
     const checked = document.querySelector('input[name="' + name + '"]:checked');
     data[name] = checked ? checked.value : 'no';
   });
-
-  // Textarea details
-  const textareaIds = [
-    'nq-cust-conc-text','nq-vendor-conc-text','nq-related-text',
-    'nq-leases-text','nq-litigation-text','nq-subseq-text','nq-gc-text'
-  ];
-  textareaIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) data[id] = el.value;
-  });
-
   return data;
 }
 
 function loadNotesFromProject(notes) {
   if (!notes) return;
-
-  // Text/select fields
   const textIds = [
     'nq-business-desc','nq-state','nq-formed','nq-entity-type','nq-basis',
-    'nq-revenue-recognition','nq-inventory','nq-depreciation','nq-useful-lives',
-    'nq-subseq-date'
+    'nq-revenue-recognition','nq-cash-equiv','nq-allowance-text','nq-inventory',
+    'nq-depreciation','nq-useful-lives','nq-intangibles-text','nq-advertising',
+    'nq-tax-status','nq-tax-uncertain-text',
+    'nq-debt-text','nq-loc-text','nq-leases-text',
+    'nq-equity-text','nq-distributions-text',
+    'nq-related-text','nq-cust-conc-text','nq-vendor-conc-text',
+    'nq-litigation-text','nq-other-commit-text',
+    'nq-subseq-date','nq-subseq-text','nq-gc-text'
   ];
   textIds.forEach(id => {
     const el = document.getElementById(id);
     if (el && notes[id] !== undefined) el.value = notes[id];
   });
-
-  // Radio buttons + conditional detail divs
   const radioDetailMap = {
+    'nq-allowance': 'nq-allowance-detail',
+    'nq-intangibles': 'nq-intangibles-detail',
+    'nq-tax-uncertain': 'nq-tax-uncertain-detail',
+    'nq-debt': 'nq-debt-detail',
+    'nq-leases': 'nq-leases-detail',
+    'nq-distributions': 'nq-distributions-detail',
+    'nq-related': 'nq-related-detail',
     'nq-cust-conc': 'nq-cust-conc-detail',
     'nq-vendor-conc': 'nq-vendor-conc-detail',
-    'nq-related': 'nq-related-detail',
-    'nq-leases': 'nq-leases-detail',
     'nq-litigation': 'nq-litigation-detail',
+    'nq-other-commit': 'nq-other-commit-detail',
     'nq-subseq': 'nq-subseq-detail',
     'nq-going-concern': 'nq-gc-detail',
   };
-
+  const radioNoDetail = ['nq-fdic','nq-lease-shortterm'];
   Object.keys(radioDetailMap).forEach(name => {
     const val = notes[name] || 'no';
     const radios = document.querySelectorAll('input[name="' + name + '"]');
     radios.forEach(r => { r.checked = (r.value === val); });
     const detailDiv = document.getElementById(radioDetailMap[name]);
-    if (detailDiv) {
-      detailDiv.style.display = val === 'yes' ? 'block' : 'none';
-    }
+    if (detailDiv) detailDiv.style.display = val === 'yes' ? 'block' : 'none';
   });
-
-  // Textarea details
-  const textareaIds = [
-    'nq-cust-conc-text','nq-vendor-conc-text','nq-related-text',
-    'nq-leases-text','nq-litigation-text','nq-subseq-text','nq-gc-text'
-  ];
-  textareaIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && notes[id] !== undefined) el.value = notes[id];
+  radioNoDetail.forEach(name => {
+    const val = notes[name] || 'no';
+    const radios = document.querySelectorAll('input[name="' + name + '"]');
+    radios.forEach(r => { r.checked = (r.value === val); });
   });
 }
 
@@ -1916,7 +2081,7 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
-  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, notes: 4 };
+  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, notes: 4, checklist: 5 };
   document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
 
   if (name === 'income') buildIncomeStatement();
@@ -2668,86 +2833,173 @@ function generateNotes() {
     '<div class="period">' + esc(period) + '</div>' +
   '</div><div class="notes-output">';
 
-  // Note 1: Nature of Business
+  // ── Note: Nature of Operations ──
   const bizDesc = nqVal('nq-business-desc');
   const state = nqVal('nq-state');
   const formed = nqVal('nq-formed');
   const entityType = nqVal('nq-entity-type');
   if (bizDesc || state || entityType) {
     noteNum++;
-    html += '<h3>Note ' + noteNum + ' — Nature of Business</h3>';
+    html += '<h3>Note ' + noteNum + ' — Nature of Operations</h3>';
     let p = '';
     const an = /^([aeiou]|S\b|S )/i.test(entityType) ? 'an' : 'a';
     if (entityType && state && formed) {
-      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized in the State of ' + esc(state) + ', formed on ' + esc(formed) + '. ';
+      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized under the laws of the State of ' + esc(state) + ', formed on ' + esc(formed) + '. ';
     } else if (entityType && state) {
-      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized in the State of ' + esc(state) + '. ';
+      p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + ' organized under the laws of the State of ' + esc(state) + '. ';
     } else if (entityType) {
       p += esc(company) + ' (the "Company") is ' + an + ' ' + esc(entityType) + '. ';
+    } else {
+      p += esc(company) + ' (the "Company") ';
     }
     if (bizDesc) p += esc(bizDesc);
     html += '<p>' + p + '</p>';
   }
 
-  // Note 2: Accounting Policies
+  // ── Note: Summary of Significant Accounting Policies ──
   const basis = nqVal('nq-basis');
   const revRec = nqVal('nq-revenue-recognition');
+  const cashEquiv = nqVal('nq-cash-equiv');
+  const hasAllowance = nqRadio('nq-allowance') === 'yes';
+  const allowanceText = nqVal('nq-allowance-text');
   const inventory = nqVal('nq-inventory');
   const depreciation = nqVal('nq-depreciation');
   const usefulLives = nqVal('nq-useful-lives');
-  if (basis || revRec || inventory || depreciation) {
-    noteNum++;
-    html += '<h3>Note ' + noteNum + ' — Summary of Significant Accounting Policies</h3>';
+  const hasIntangibles = nqRadio('nq-intangibles') === 'yes';
+  const intangiblesText = nqVal('nq-intangibles-text');
+  const advertising = nqVal('nq-advertising');
 
-    if (basis) {
-      const basisLabels = {
-        'accrual': 'accrual basis of accounting in accordance with accounting principles generally accepted in the United States of America (U.S. GAAP)',
-        'cash': 'cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenue is recognized when received and expenses are recognized when paid',
-        'modified-cash': 'modified cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. This basis modifies the cash basis to record certain items on the accrual basis, such as depreciation',
-        'tax': 'income tax basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenues and expenses are recognized in accordance with applicable income tax regulations',
-      };
-      html += '<p><strong>Basis of Accounting</strong> — The Company prepares its financial statements on the ' + (basisLabels[basis] || esc(basis)) + '.</p>';
-    }
+  noteNum++;
+  html += '<h3>Note ' + noteNum + ' — Summary of Significant Accounting Policies</h3>';
 
-    if (revRec) {
-      html += '<p><strong>Revenue Recognition</strong> — ' + esc(revRec) + '</p>';
-    }
-
-    if (inventory) {
-      html += '<p><strong>Inventory</strong> — Inventory is valued at the lower of cost or net realizable value, with cost determined using the ' + esc(inventory) + ' method.</p>';
-    }
-
-    if (depreciation) {
-      const depLabels = {
-        'straight-line': 'straight-line method',
-        'declining balance': 'declining balance method',
-        'MACRS': 'Modified Accelerated Cost Recovery System (MACRS) for tax purposes',
-      };
-      let depText = 'Property and equipment are stated at cost less accumulated depreciation. Depreciation is computed using the ' + (depLabels[depreciation] || esc(depreciation)) + ' over the estimated useful lives of the assets.';
-      if (usefulLives) depText += ' Estimated useful lives are as follows: ' + esc(usefulLives) + '.';
-      html += '<p><strong>Property and Equipment</strong> — ' + depText + '</p>';
-    }
-
-    html += '<p><strong>Use of Estimates</strong> — The preparation of financial statements requires management to make estimates and assumptions that affect the reported amounts of assets and liabilities and disclosure of contingent assets and liabilities at the date of the financial statements and the reported amounts of revenues and expenses during the reporting period. Actual results could differ from those estimates.</p>';
+  if (basis) {
+    const basisLabels = {
+      'accrual': 'accrual basis of accounting in accordance with accounting principles generally accepted in the United States of America (U.S. GAAP)',
+      'cash': 'cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenue is recognized when received and expenses are recognized when paid',
+      'modified-cash': 'modified cash basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. This basis modifies the cash basis to record certain items on the accrual basis, such as depreciation and accounts payable',
+      'tax': 'income tax basis of accounting, which is a comprehensive basis of accounting other than U.S. GAAP. Under this basis, revenues and expenses are recognized in accordance with applicable income tax regulations',
+    };
+    html += '<p><strong>Basis of Accounting</strong> — The accompanying financial statements have been prepared on the ' + (basisLabels[basis] || esc(basis)) + '.</p>';
   }
 
-  // Note 3: Concentrations
-  const hasCustConc = nqRadio('nq-cust-conc') === 'yes';
-  const hasVendorConc = nqRadio('nq-vendor-conc') === 'yes';
-  const custConcText = nqVal('nq-cust-conc-text');
-  const vendorConcText = nqVal('nq-vendor-conc-text');
-  if (hasCustConc || hasVendorConc) {
-    noteNum++;
-    html += '<h3>Note ' + noteNum + ' — Concentrations</h3>';
-    if (hasCustConc && custConcText) {
-      html += '<p><strong>Revenue Concentration</strong> — ' + esc(custConcText) + '</p>';
-    }
-    if (hasVendorConc && vendorConcText) {
-      html += '<p><strong>Vendor Concentration</strong> — ' + esc(vendorConcText) + '</p>';
+  // Use of Estimates — always included
+  html += '<p><strong>Use of Estimates</strong> — The preparation of financial statements in conformity with ' + (basis === 'accrual' ? 'U.S. GAAP' : 'the basis of accounting described above') + ' requires management to make estimates and assumptions that affect the reported amounts of assets and liabilities and disclosure of contingent assets and liabilities at the date of the financial statements and the reported amounts of revenues and expenses during the reporting period. Significant estimates include, but are not limited to, the allowance for doubtful accounts, useful lives of property and equipment, and the assessment of contingencies. Actual results could differ from those estimates.</p>';
+
+  // Cash and cash equivalents
+  if (cashEquiv) {
+    html += '<p><strong>Cash and Cash Equivalents</strong> — ' + esc(cashEquiv) + '</p>';
+  } else {
+    html += '<p><strong>Cash and Cash Equivalents</strong> — The Company considers all highly liquid investments with an original maturity of three months or less when purchased to be cash equivalents.</p>';
+  }
+
+  // Revenue Recognition
+  if (revRec) {
+    html += '<p><strong>Revenue Recognition</strong> — ' + esc(revRec) + '</p>';
+  }
+
+  // Accounts Receivable / Allowance
+  if (hasAllowance && allowanceText) {
+    html += '<p><strong>Accounts Receivable</strong> — Accounts receivable are stated at the amount the Company expects to collect. ' + esc(allowanceText) + ' Receivables are written off when deemed uncollectible.</p>';
+  } else {
+    // Check if AR exists on balance sheet
+    var hasAR = rows(currentData, 'current-assets').some(function(r) { return /receivable/i.test(r.label); });
+    if (hasAR) {
+      html += '<p><strong>Accounts Receivable</strong> — Accounts receivable are stated at the amount the Company expects to collect. The Company evaluates the collectability of receivables on a regular basis and writes off amounts deemed uncollectible. Management has determined that an allowance for doubtful accounts is not necessary at the balance sheet date.</p>';
     }
   }
 
-  // Note 4: Related Party Transactions
+  // Inventory
+  if (inventory) {
+    html += '<p><strong>Inventory</strong> — Inventory is stated at the lower of cost or net realizable value. Cost is determined using the ' + esc(inventory) + ' method. The Company periodically reviews inventory for obsolescence and adjusts carrying values as necessary.</p>';
+  }
+
+  // Property & Equipment / Depreciation
+  if (depreciation) {
+    const depLabels = {
+      'straight-line': 'straight-line method',
+      'declining balance': 'declining balance method',
+      'MACRS': 'Modified Accelerated Cost Recovery System (MACRS) for tax purposes',
+    };
+    let depText = 'Property and equipment are recorded at cost less accumulated depreciation. Depreciation is computed using the ' + (depLabels[depreciation] || esc(depreciation)) + ' over the estimated useful lives of the respective assets.';
+    if (usefulLives) depText += ' Estimated useful lives are as follows: ' + esc(usefulLives) + '.';
+    depText += ' Expenditures for major improvements and additions are capitalized, while expenditures for maintenance and repairs are charged to expense as incurred. Upon retirement or disposal, the cost and accumulated depreciation are removed from the accounts, and any resulting gain or loss is reflected in the statements of operations.';
+    html += '<p><strong>Property and Equipment</strong> — ' + depText + '</p>';
+  }
+
+  // Intangible Assets
+  if (hasIntangibles && intangiblesText) {
+    html += '<p><strong>Intangible Assets</strong> — ' + esc(intangiblesText) + ' The Company reviews intangible assets for impairment whenever events or changes in circumstances indicate that the carrying amount may not be recoverable.</p>';
+  }
+
+  // Advertising
+  if (advertising === 'expensed') {
+    html += '<p><strong>Advertising Costs</strong> — Advertising costs are expensed as incurred.</p>';
+  } else if (advertising === 'capitalized') {
+    html += '<p><strong>Advertising Costs</strong> — Certain direct-response advertising costs are capitalized and amortized over the estimated period of benefit. All other advertising costs are expensed as incurred.</p>';
+  }
+
+  // ── Note: Income Taxes ──
+  const taxStatus = nqVal('nq-tax-status');
+  const hasTaxUncertain = nqRadio('nq-tax-uncertain') === 'yes';
+  const taxUncertainText = nqVal('nq-tax-uncertain-text');
+  if (taxStatus) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Income Taxes</h3>';
+
+    const taxLanguage = {
+      's-corp': 'The Company has elected to be taxed as an S Corporation under the Internal Revenue Code. Under this election, the Company\'s taxable income or loss is passed through to and reported on the individual income tax returns of the shareholders. Accordingly, no provision for federal income taxes has been recorded in the accompanying financial statements. The Company may be subject to certain state income taxes.',
+      'c-corp': 'The Company is subject to federal and state income taxes as a C Corporation. The Company accounts for income taxes under the asset and liability method, whereby deferred tax assets and liabilities are recognized for the future tax consequences attributable to temporary differences between the financial statement carrying amounts of existing assets and liabilities and their respective tax bases. Deferred tax assets and liabilities are measured using enacted tax rates expected to apply to taxable income in the years in which those temporary differences are expected to be recovered or settled.',
+      'llc-partner': 'The Company is organized as a limited liability company treated as a partnership for federal income tax purposes. As such, the Company\'s taxable income or loss is passed through to and reported on the individual income tax returns of its members. Accordingly, no provision for federal or state income taxes has been recorded in the accompanying financial statements.',
+      'llc-scorp': 'The Company is organized as a limited liability company that has elected to be taxed as an S Corporation under the Internal Revenue Code. Under this election, the Company\'s taxable income or loss is passed through to and reported on the individual income tax returns of its members. Accordingly, no provision for federal income taxes has been recorded in the accompanying financial statements.',
+      'sole-prop': 'The Company is a sole proprietorship, and all income and expenses are reported on the owner\'s individual income tax return. Accordingly, no provision for federal or state income taxes has been recorded in the accompanying financial statements.',
+      'nonprofit': 'The Company is a nonprofit organization exempt from federal income tax under Section 501(c)(3) of the Internal Revenue Code and applicable state statutes. Accordingly, no provision for income taxes has been recorded in the accompanying financial statements.',
+    };
+    html += '<p>' + (taxLanguage[taxStatus] || '') + '</p>';
+
+    if (hasTaxUncertain && taxUncertainText) {
+      html += '<p>' + esc(taxUncertainText) + '</p>';
+    } else {
+      html += '<p>The Company evaluates uncertain tax positions, if any, by applying a more-likely-than-not threshold for financial statement recognition. Management has evaluated the Company\'s tax positions and concluded that there are no uncertain tax positions requiring recognition as of the balance sheet date.</p>';
+    }
+  }
+
+  // ── Note: Debt / Notes Payable ──
+  const hasDebt = nqRadio('nq-debt') === 'yes';
+  const debtText = nqVal('nq-debt-text');
+  const locText = nqVal('nq-loc-text');
+  if (hasDebt && (debtText || locText)) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Debt and Notes Payable</h3>';
+    if (debtText) html += '<p>' + esc(debtText) + '</p>';
+    if (locText) html += '<p><strong>Lines of Credit</strong> — ' + esc(locText) + '</p>';
+  }
+
+  // ── Note: Leases ──
+  const hasLeases = nqRadio('nq-leases') === 'yes';
+  const leasesText = nqVal('nq-leases-text');
+  const leaseShortTerm = nqRadio('nq-lease-shortterm') === 'yes';
+  if (hasLeases && leasesText) {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Leases</h3>';
+    html += '<p>The Company determines if an arrangement is a lease at inception. ' + esc(leasesText) + '</p>';
+    if (leaseShortTerm) {
+      html += '<p>The Company has elected the practical expedient to not recognize right-of-use assets and lease liabilities for short-term leases with a term of 12 months or less. Short-term lease expense is recognized on a straight-line basis over the lease term.</p>';
+    }
+  }
+
+  // ── Note: Equity / Stockholders' Equity ──
+  const equityText = nqVal('nq-equity-text');
+  const hasDist = nqRadio('nq-distributions') === 'yes';
+  const distText = nqVal('nq-distributions-text');
+  if (equityText || (hasDist && distText)) {
+    noteNum++;
+    var eqTitle = (entityType && (entityType.indexOf('LLC') >= 0 || entityType.indexOf('Partnership') >= 0)) ? 'Members\' Equity' : 'Stockholders\' Equity';
+    html += '<h3>Note ' + noteNum + ' — ' + eqTitle + '</h3>';
+    if (equityText) html += '<p>' + esc(equityText) + '</p>';
+    if (hasDist && distText) html += '<p><strong>Distributions</strong> — ' + esc(distText) + '</p>';
+  }
+
+  // ── Note: Related Party Transactions ──
   const hasRelated = nqRadio('nq-related') === 'yes';
   const relatedText = nqVal('nq-related-text');
   if (hasRelated && relatedText) {
@@ -2756,26 +3008,45 @@ function generateNotes() {
     html += '<p>' + esc(relatedText) + '</p>';
   }
 
-  // Note 5: Commitments & Contingencies
-  const hasLeases = nqRadio('nq-leases') === 'yes';
-  const leasesText = nqVal('nq-leases-text');
-  const hasLitigation = nqRadio('nq-litigation') === 'yes';
-  const litigationText = nqVal('nq-litigation-text');
-  if (hasLeases || hasLitigation) {
+  // ── Note: Concentrations of Credit Risk ──
+  const hasFDIC = nqRadio('nq-fdic') === 'yes';
+  const hasCustConc = nqRadio('nq-cust-conc') === 'yes';
+  const hasVendorConc = nqRadio('nq-vendor-conc') === 'yes';
+  const custConcText = nqVal('nq-cust-conc-text');
+  const vendorConcText = nqVal('nq-vendor-conc-text');
+  if (hasFDIC || hasCustConc || hasVendorConc) {
     noteNum++;
-    html += '<h3>Note ' + noteNum + ' — Commitments and Contingencies</h3>';
-    if (hasLeases && leasesText) {
-      html += '<p><strong>Leases</strong> — ' + esc(leasesText) + '</p>';
+    html += '<h3>Note ' + noteNum + ' — Concentrations of Credit Risk</h3>';
+    if (hasFDIC) {
+      html += '<p><strong>Cash Deposits</strong> — The Company maintains its cash balances in financial institutions, which at times may exceed federally insured limits of $250,000 per depositor per institution. The Company has not experienced any losses on such accounts and management believes the Company is not exposed to any significant credit risk on its cash balances.</p>';
     }
-    if (hasLitigation && litigationText) {
-      html += '<p><strong>Litigation</strong> — ' + esc(litigationText) + '</p>';
+    if (hasCustConc && custConcText) {
+      html += '<p><strong>Revenue Concentration</strong> — ' + esc(custConcText) + '</p>';
     }
-    if (!hasLitigation) {
-      html += '<p><strong>Litigation</strong> — The Company is not aware of any pending or threatened litigation as of the date of these financial statements.</p>';
+    if (hasVendorConc && vendorConcText) {
+      html += '<p><strong>Vendor Concentration</strong> — ' + esc(vendorConcText) + '</p>';
     }
   }
 
-  // Note 6: Subsequent Events
+  // ── Note: Commitments and Contingencies ──
+  const hasLitigation = nqRadio('nq-litigation') === 'yes';
+  const litigationText = nqVal('nq-litigation-text');
+  const hasOtherCommit = nqRadio('nq-other-commit') === 'yes';
+  const otherCommitText = nqVal('nq-other-commit-text');
+  {
+    noteNum++;
+    html += '<h3>Note ' + noteNum + ' — Commitments and Contingencies</h3>';
+    if (hasLitigation && litigationText) {
+      html += '<p><strong>Litigation</strong> — ' + esc(litigationText) + '</p>';
+    } else {
+      html += '<p><strong>Litigation</strong> — In the normal course of business, the Company may be subject to various claims and legal proceedings. Management is not aware of any pending or threatened litigation that would have a material adverse effect on the Company\'s financial position, results of operations, or cash flows as of the date of these financial statements.</p>';
+    }
+    if (hasOtherCommit && otherCommitText) {
+      html += '<p><strong>Other Commitments</strong> — ' + esc(otherCommitText) + '</p>';
+    }
+  }
+
+  // ── Note: Subsequent Events ──
   const subseqDate = nqVal('nq-subseq-date');
   const hasSubseq = nqRadio('nq-subseq') === 'yes';
   const subseqText = nqVal('nq-subseq-text');
@@ -2783,7 +3054,7 @@ function generateNotes() {
     noteNum++;
     html += '<h3>Note ' + noteNum + ' — Subsequent Events</h3>';
     const evalDate = subseqDate || 'the date these financial statements were available to be issued';
-    html += '<p>Management has evaluated subsequent events through ' + esc(evalDate) + ', the date these financial statements were available to be issued.';
+    html += '<p>The Company has evaluated subsequent events through ' + esc(evalDate) + ', the date the financial statements were available to be issued.';
     if (hasSubseq && subseqText) {
       html += ' ' + esc(subseqText);
     } else {
@@ -2792,14 +3063,14 @@ function generateNotes() {
     html += '</p>';
   }
 
-  // Note 7: Going Concern
+  // ── Note: Going Concern (conditional) ──
   const hasGC = nqRadio('nq-going-concern') === 'yes';
   const gcText = nqVal('nq-gc-text');
   if (hasGC && gcText) {
     noteNum++;
     html += '<h3>Note ' + noteNum + ' — Going Concern</h3>';
     html += '<p>The accompanying financial statements have been prepared assuming that the Company will continue as a going concern. ' + esc(gcText) + '</p>';
-    html += '<p>The financial statements do not include any adjustments that might result from the outcome of this uncertainty.</p>';
+    html += '<p>The financial statements do not include any adjustments relating to the recoverability and classification of recorded asset amounts or the amounts and classification of liabilities that might be necessary should the Company be unable to continue as a going concern.</p>';
   }
 
   html += '</div>';
@@ -2809,6 +3080,163 @@ function generateNotes() {
   document.getElementById('notes-output-wrapper').style.display = 'block';
 
   saveNotesToProject();
+}
+
+// ─── Disclosure Checklist ──────────────────────────────────────────────────
+function runDisclosureChecklist() {
+  const m = meta();
+  const multi = hasPriorData();
+  const notesEl = document.getElementById('notes-statement');
+  const notesHTML = notesEl ? notesEl.innerHTML.toLowerCase() : '';
+  const hasNotes = notesHTML.length > 50;
+
+  // Helper: check if any line item label in a section matches a pattern
+  function hasItem(section, pattern) {
+    return rows(currentData, section).some(function(r) { return pattern.test(r.label); });
+  }
+  function hasAnyItems(section) { return rows(currentData, section).length > 0; }
+
+  // Helper: check if notes mention a keyword
+  function notesMention(keyword) {
+    if (!hasNotes) return false;
+    return notesHTML.indexOf(keyword.toLowerCase()) >= 0;
+  }
+
+  // ── Detect what's on the statements ──
+  var detections = [
+    { id: 'basis', label: 'Basis of Accounting', detected: true, required: true,
+      reason: 'Required for all financial statements',
+      disclosed: notesMention('basis of accounting') },
+    { id: 'estimates', label: 'Use of Estimates', detected: true, required: true,
+      reason: 'Required for all GAAP financial statements',
+      disclosed: notesMention('use of estimates') },
+    { id: 'cash', label: 'Cash and Cash Equivalents', detected: hasItem('current-assets', /cash/i), required: false,
+      reason: 'Cash detected in current assets',
+      disclosed: notesMention('cash equivalent') || notesMention('cash and cash') },
+    { id: 'revenue', label: 'Revenue Recognition (ASC 606)', detected: hasAnyItems('revenue'), required: false,
+      reason: 'Revenue items detected',
+      disclosed: notesMention('revenue recognition') || notesMention('revenue is recognized') },
+    { id: 'receivables', label: 'Accounts Receivable / Allowance', detected: hasItem('current-assets', /receivable/i), required: false,
+      reason: 'Receivables detected in current assets',
+      disclosed: notesMention('accounts receivable') || notesMention('allowance') },
+    { id: 'inventory', label: 'Inventory', detected: hasItem('current-assets', /inventor/i), required: false,
+      reason: 'Inventory detected in current assets',
+      disclosed: notesMention('inventory') },
+    { id: 'ppe', label: 'Property and Equipment', detected: hasItem('noncurrent-assets', /property|equipment|vehicle|building|furniture|machinery|computer|leasehold/i), required: false,
+      reason: 'Fixed assets detected in non-current assets',
+      disclosed: notesMention('property and equipment') || notesMention('depreciation') },
+    { id: 'intangibles', label: 'Intangible Assets / Goodwill', detected: hasItem('noncurrent-assets', /intangible|goodwill|patent|trademark|copyright|customer list|franchise|software/i), required: false,
+      reason: 'Intangible assets detected in non-current assets',
+      disclosed: notesMention('intangible') || notesMention('goodwill') || notesMention('amortiz') },
+    { id: 'debt', label: 'Debt / Notes Payable', detected: hasItem('current-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i) || hasItem('noncurrent-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i), required: false,
+      reason: 'Debt instruments detected in liabilities',
+      disclosed: notesMention('debt') || notesMention('notes payable') || notesMention('loan') || notesMention('line of credit') },
+    { id: 'leases', label: 'Leases (ASC 842)', detected: hasItem('current-liab', /lease/i) || hasItem('noncurrent-liab', /lease/i) || hasItem('noncurrent-assets', /right.?of.?use|rou|lease/i), required: false,
+      reason: 'Lease-related items detected on balance sheet',
+      disclosed: notesMention('lease') },
+    { id: 'taxes', label: 'Income Taxes', detected: true, required: true,
+      reason: 'Required — entity tax status must be disclosed',
+      disclosed: notesMention('income tax') || notesMention('tax') },
+    { id: 'equity', label: 'Equity / Stockholders\' Equity', detected: hasAnyItems('equity'), required: false,
+      reason: 'Equity items on balance sheet',
+      disclosed: notesMention('equity') || notesMention('stockholder') || notesMention('member') },
+    { id: 'related', label: 'Related Party Transactions', detected: true, required: true,
+      reason: 'Required disclosure — must confirm presence or absence',
+      disclosed: notesMention('related party') },
+    { id: 'concentrations', label: 'Concentrations of Credit Risk', detected: true, required: true,
+      reason: 'Required for entities with financial instruments',
+      disclosed: notesMention('concentration') || notesMention('credit risk') || notesMention('fdic') },
+    { id: 'contingencies', label: 'Commitments and Contingencies', detected: true, required: true,
+      reason: 'Required — must confirm presence or absence',
+      disclosed: notesMention('commitment') || notesMention('contingenc') || notesMention('litigation') },
+    { id: 'subsequent', label: 'Subsequent Events', detected: true, required: true,
+      reason: 'Required — evaluation date must be disclosed',
+      disclosed: notesMention('subsequent event') },
+    { id: 'goingconcern', label: 'Going Concern', detected: false, required: false,
+      reason: 'Required only if substantial doubt exists',
+      disclosed: notesMention('going concern') },
+  ];
+
+  // Check going concern indicators
+  var totalCA = sum(currentData, 'current-assets');
+  var totalCL = sum(currentData, 'current-liab');
+  var netIncome = sum(currentData, 'revenue') - sum(currentData, 'cogs') - sum(currentData, 'opex') + sum(currentData, 'other');
+  if (totalCL > totalCA || netIncome < 0) {
+    var gc = detections.find(function(d) { return d.id === 'goingconcern'; });
+    if (gc) {
+      gc.detected = true;
+      gc.required = true;
+      gc.reason = (totalCL > totalCA ? 'Negative working capital detected. ' : '') + (netIncome < 0 ? 'Net loss detected. ' : '') + 'Evaluate whether going concern disclosure is needed.';
+    }
+  }
+
+  // ── Render checklist ──
+  var html = '<div class="stmt-header">' +
+    '<div class="company">' + esc(m.company) + '</div>' +
+    '<div class="title">U.S. GAAP Disclosure Checklist</div>' +
+    '<div class="period">' + esc(m.period) + '</div>' +
+  '</div>';
+
+  if (!hasNotes) {
+    html += '<p style="color:var(--danger);font-weight:600;margin:16px 0">Notes have not been generated yet. Generate notes first, then run this checklist to compare against GAAP requirements.</p>';
+  }
+
+  var disclosed = 0, missing = 0, na = 0, warnings = 0;
+
+  html += '<table class="stmt-table" style="width:100%"><colgroup><col style="width:30%"><col style="width:15%"><col style="width:55%"></colgroup><tbody>';
+  html += '<tr style="font-size:0.78rem;font-weight:600;color:#64748b;border-bottom:2px solid #e1e5eb"><td>GAAP Disclosure Requirement</td><td style="text-align:center">Status</td><td>Details</td></tr>';
+
+  detections.forEach(function(d) {
+    var status, statusClass, detail;
+
+    if (!d.detected && !d.required) {
+      status = '— N/A';
+      statusClass = 'color:#94a3b8';
+      detail = 'Not applicable — item not detected on financial statements.';
+      na++;
+    } else if (d.disclosed) {
+      status = '&#10003; Disclosed';
+      statusClass = 'color:#16a34a;font-weight:600';
+      detail = d.reason;
+      disclosed++;
+    } else if (d.detected || d.required) {
+      if (hasNotes) {
+        status = '&#10007; Missing';
+        statusClass = 'color:#dc2626;font-weight:600';
+        detail = d.reason + ' — disclosure not found in generated notes. Update the Notes questionnaire to address this item.';
+        missing++;
+      } else {
+        status = '&#9888; Pending';
+        statusClass = 'color:#d97706;font-weight:600';
+        detail = d.reason + ' — generate notes to satisfy this requirement.';
+        warnings++;
+      }
+    }
+
+    html += '<tr style="border-bottom:1px solid #f1f5f9">';
+    html += '<td style="padding:10px 8px;font-weight:500">' + d.label + '</td>';
+    html += '<td style="padding:10px 8px;text-align:center;' + statusClass + '">' + status + '</td>';
+    html += '<td style="padding:10px 8px;font-size:0.83rem;color:#475569">' + detail + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+
+  // Summary bar
+  var total = detections.filter(function(d) { return d.detected || d.required; }).length;
+  html += '<div style="margin-top:24px;padding:16px 20px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;display:flex;gap:24px;flex-wrap:wrap">';
+  html += '<div style="font-weight:600;font-size:0.95rem">Summary</div>';
+  html += '<div style="color:#16a34a"><strong>' + disclosed + '</strong> Disclosed</div>';
+  if (missing > 0) html += '<div style="color:#dc2626"><strong>' + missing + '</strong> Missing</div>';
+  if (warnings > 0) html += '<div style="color:#d97706"><strong>' + warnings + '</strong> Pending</div>';
+  html += '<div style="color:#94a3b8"><strong>' + na + '</strong> N/A</div>';
+  if (total > 0) {
+    var pct = Math.round((disclosed / total) * 100);
+    html += '<div style="margin-left:auto;font-weight:600;font-size:1.1rem;color:' + (pct === 100 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626') + '">' + pct + '% Complete</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('checklist-output').innerHTML = html;
 }
 
 // ─── Authentication ─────────────────────────────────────────────────────────
