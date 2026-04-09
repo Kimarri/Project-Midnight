@@ -554,9 +554,9 @@
     .period-toggle input:checked + label { background: var(--primary); color: #fff; }
 
     /* ── Multi-period statement columns ──────────────────────────────── */
-    .stmt-table.multi-period .col-label { width: 50%; }
-    .stmt-table.multi-period .col-current { text-align: right; width: 25%; }
-    .stmt-table.multi-period .col-prior { text-align: right; width: 25%; }
+    .stmt-table.multi-period .col-label { width: 36%; }
+    .stmt-table.multi-period .col-current { text-align: right; width: 16%; }
+    .stmt-table.multi-period .col-prior { text-align: right; width: 16%; }
 
     /* ── Company Research panel ────────────────────────────────────── */
     .research-btn {
@@ -787,6 +787,251 @@
     body.dark-mode .pc-dropdown button { color: #cbd5e1; }
     body.dark-mode .pc-dropdown button:hover { background: #334155; }
 
+    /* ── Collapsible card sections ──────────────────────────────────── */
+    .card-collapsible .card-title {
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;
+    }
+    .card-collapsible .card-title::after {
+      content: '\25BE'; font-size: 0.75rem; color: var(--muted); transition: transform 0.2s;
+    }
+    .card-collapsible.collapsed .card-title::after { transform: rotate(-90deg); }
+    .card-collapsible .card-body { transition: max-height 0.3s ease, opacity 0.2s ease; overflow: hidden; }
+    .card-collapsible.collapsed .card-body { max-height: 0 !important; opacity: 0; padding: 0; overflow: hidden; }
+
+    /* ── Trial Balance Editor ────────────────────────────────────────── */
+    .tb-editor-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .tb-editor-table th {
+      text-align: left; padding: 8px 10px; font-size: 0.78rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--border); background: var(--bg);
+    }
+    .tb-editor-table th:nth-child(3), .tb-editor-table td:nth-child(3) { text-align: right; }
+    .tb-editor-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .tb-editor-table .tb-section-header td {
+      font-weight: 700; font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--primary); background: var(--bg);
+      padding-top: 14px;
+    }
+    .tb-editor-table .tb-total td { font-weight: 600; border-top: 1px solid var(--border); }
+    .tb-editor-table .tb-grand-total td { font-weight: 700; border-top: 2px solid var(--text); border-bottom: 2px solid var(--text); }
+    .tb-editor-table input[type="number"] {
+      width: 120px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.85rem; text-align: right; outline: none; font-family: inherit;
+    }
+    .tb-editor-table input[type="number"]:focus { border-color: var(--primary); }
+    .tb-editor-table input[type="text"] {
+      width: 100%; padding: 4px 8px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.85rem; outline: none; font-family: inherit;
+    }
+    .tb-editor-table input[type="text"]:focus { border-color: var(--primary); }
+    .tb-add-row { background: var(--bg); }
+    .tb-add-row td { padding: 8px 10px; }
+    .tb-add-row select {
+      padding: 4px 8px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.82rem; background: var(--card); color: var(--text); outline: none;
+    }
+    .tb-add-row select:focus { border-color: var(--primary); }
+    .tb-summary { display: flex; gap: 24px; margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+    .tb-summary strong { color: var(--text); }
+
+    /* ── Prior Year Balances ─────────────────────────────────────────── */
+    .py-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px;
+    }
+    @media (max-width: 600px) { .py-grid { grid-template-columns: 1fr; } }
+    .py-grid label {
+      font-size: 0.82rem; font-weight: 500; color: var(--text); display: block; margin-bottom: 3px;
+    }
+    .py-grid input[type="number"] {
+      width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 0.875rem; outline: none; font-family: inherit;
+    }
+    .py-grid input[type="number"]:focus { border-color: var(--primary); }
+    .py-section-title {
+      grid-column: 1 / -1; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--primary); margin-top: 8px; padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .py-warning {
+      background: #fefce8; border: 1px solid #fde68a; color: #92400e; border-radius: 7px;
+      padding: 10px 14px; font-size: 0.82rem; margin-bottom: 14px; line-height: 1.5;
+    }
+
+    /* ── Adjusting Journal Entries ───────────────────────────────────── */
+    .aje-entry {
+      border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 14px;
+      background: var(--card);
+    }
+    .aje-entry.out-of-balance { border-color: var(--red); background: #fef2f2; }
+    .aje-header {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .aje-header .aje-num {
+      font-weight: 700; font-size: 0.85rem; color: var(--primary); min-width: 60px;
+    }
+    .aje-header input[type="date"], .aje-header input[type="text"] {
+      padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px;
+      font-size: 0.82rem; outline: none; font-family: inherit;
+    }
+    .aje-header input:focus { border-color: var(--primary); }
+    .aje-lines-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 8px; }
+    .aje-lines-table th {
+      text-align: left; padding: 5px 8px; font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+    }
+    .aje-lines-table th:nth-child(4), .aje-lines-table th:nth-child(5),
+    .aje-lines-table td:nth-child(4), .aje-lines-table td:nth-child(5) { text-align: right; width: 110px; }
+    .aje-lines-table td { padding: 4px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .aje-lines-table input[type="text"], .aje-lines-table input[type="number"] {
+      width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-size: 0.82rem; outline: none; font-family: inherit;
+    }
+    .aje-lines-table input[type="number"] { text-align: right; }
+    .aje-lines-table input:focus { border-color: var(--primary); }
+    .aje-lines-table select {
+      width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-size: 0.82rem; background: var(--card); color: var(--text); outline: none;
+    }
+    .aje-lines-table select:focus { border-color: var(--primary); }
+    .aje-totals {
+      display: flex; gap: 20px; font-size: 0.82rem; color: var(--muted); padding: 4px 8px;
+    }
+    .aje-totals .balanced { color: var(--green); font-weight: 600; }
+    .aje-totals .unbalanced { color: var(--red); font-weight: 600; }
+    .aje-footer { display: flex; gap: 8px; align-items: center; }
+    .aje-summary {
+      margin-top: 14px; padding: 10px 14px; background: var(--bg); border-radius: 7px;
+      font-size: 0.85rem; color: var(--muted);
+    }
+    .aje-summary strong { color: var(--text); }
+    .aje-posted-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .aje-posted-badge.posted { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .aje-posted-badge.unposted { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+
+    body.dark-mode .tb-editor-table th { background: #0f172a; }
+    body.dark-mode .tb-editor-table td { border-color: #334155; }
+    body.dark-mode .tb-editor-table input[type="number"],
+    body.dark-mode .tb-editor-table input[type="text"],
+    body.dark-mode .tb-add-row select {
+      background: #0f172a; color: #e2e8f0; border-color: #475569;
+    }
+    body.dark-mode .tb-add-row { background: #0f172a; }
+    body.dark-mode .py-grid input[type="number"] { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    body.dark-mode .py-warning { background: #422006; border-color: #92400e; color: #fde68a; }
+    body.dark-mode .aje-entry { background: #1e293b; border-color: #334155; }
+    body.dark-mode .aje-entry.out-of-balance { background: #450a0a; border-color: #dc2626; }
+    body.dark-mode .aje-header input { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    body.dark-mode .aje-lines-table th { border-color: #475569; }
+    body.dark-mode .aje-lines-table td { border-color: #334155; }
+    body.dark-mode .aje-lines-table input,
+    body.dark-mode .aje-lines-table select {
+      background: #0f172a; color: #e2e8f0; border-color: #475569;
+    }
+    body.dark-mode .aje-summary { background: #0f172a; }
+
+    /* ── Financial Ratios Card ────────────────────────────────────── */
+    .ratios-card { margin-top: 20px; }
+    .ratios-card .card-title { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+    .ratios-card .card-title::after { content: '\25B8'; font-size: 0.8rem; color: var(--muted); transition: transform 0.2s; }
+    .ratios-card.expanded .card-title::after { transform: rotate(90deg); }
+    .ratios-grid { display: none; }
+    .ratios-card.expanded .ratios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-top: 14px; }
+    .ratio-item { padding: 12px; background: var(--bg); border-radius: 8px; }
+    .ratio-name { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .ratio-value { font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
+    .ratio-prior { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .ratio-change { font-size: 0.75rem; font-weight: 600; }
+    .ratio-change.favorable { color: var(--green); }
+    .ratio-change.unfavorable { color: var(--red); }
+    @media (max-width: 700px) {
+      .ratios-card.expanded .ratios-grid { grid-template-columns: 1fr; }
+    }
+    body.dark-mode .ratio-item { background: #0f172a; }
+
+    /* ── Ratios Dashboard ──────────────────────────────────────── */
+    .ratios-scorecard-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;
+    }
+    .ratios-scorecard {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 18px; text-align: center; position: relative; overflow: hidden;
+    }
+    .ratios-scorecard .sc-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .ratios-scorecard .sc-value {
+      font-size: 1.6rem; font-weight: 800; color: var(--text);
+    }
+    .ratios-scorecard .sc-sub {
+      font-size: 0.75rem; color: var(--muted); margin-top: 4px;
+    }
+    .ratios-scorecard .sc-badge {
+      display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px; margin-top: 6px;
+    }
+    .ratios-scorecard .sc-badge.good { background: #dcfce7; color: #166534; }
+    .ratios-scorecard .sc-badge.warning { background: #fef9c3; color: #854d0e; }
+    .ratios-scorecard .sc-badge.concern { background: #fee2e2; color: #991b1b; }
+    body.dark-mode .ratios-scorecard .sc-badge.good { background: #14532d; color: #86efac; }
+    body.dark-mode .ratios-scorecard .sc-badge.warning { background: #713f12; color: #fde047; }
+    body.dark-mode .ratios-scorecard .sc-badge.concern { background: #7f1d1d; color: #fca5a5; }
+    body.dark-mode .ratios-scorecard { background: #1e293b; border-color: #334155; }
+
+    .ratios-section-card { margin-bottom: 16px; }
+    .ratios-section-card.collapsed .ratios-section-body { display: none; }
+    .ratios-section-title {
+      cursor: pointer; display: flex; align-items: center; gap: 12px; user-select: none;
+    }
+    .ratios-section-title::before {
+      content: '\25BE'; font-size: 0.75rem; color: var(--muted); transition: transform 0.2s;
+    }
+    .ratios-section-card.collapsed .ratios-section-title::before { transform: rotate(-90deg); }
+    .ratios-section-hint {
+      font-size: 0.75rem; font-weight: 400; color: var(--muted); text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .ratios-section-body {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px; padding-top: 16px;
+    }
+    .ratio-detail {
+      background: var(--bg); border-radius: 8px; padding: 16px;
+    }
+    .ratio-detail .rd-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .ratio-detail .rd-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+    .ratio-detail .rd-value { font-size: 1.35rem; font-weight: 800; color: var(--text); margin: 6px 0; }
+    .ratio-detail .rd-formula { font-size: 0.7rem; color: var(--muted); font-style: italic; margin-bottom: 6px; }
+    .ratio-detail .rd-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 8px 0 4px; }
+    .ratio-detail .rd-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .ratio-detail .rd-bar-fill.good { background: var(--green); }
+    .ratio-detail .rd-bar-fill.warning { background: #eab308; }
+    .ratio-detail .rd-bar-fill.concern { background: var(--red); }
+    .ratio-detail .rd-prior { font-size: 0.72rem; color: var(--muted); }
+    .ratio-detail .rd-change { font-size: 0.72rem; font-weight: 600; }
+    .ratio-detail .rd-change.favorable { color: var(--green); }
+    .ratio-detail .rd-change.unfavorable { color: var(--red); }
+    body.dark-mode .ratio-detail { background: #0f172a; }
+
+    .insight-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid var(--border); font-size: 0.85rem; line-height: 1.5;
+    }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+    .insight-text strong { color: var(--text); }
+
+    @media (max-width: 700px) {
+      .ratios-scorecard-row { grid-template-columns: repeat(2, 1fr); }
+      .ratios-section-body { grid-template-columns: 1fr; }
+    }
+
+
     @media print {
       body { background: #fff !important; color: #000 !important; }
       header, .tabs, .actions, .print-actions, .card, .stmt-toolbar, .generate-bar { display: none !important; }
@@ -876,6 +1121,41 @@
   </div>
 </div>
 
+<!-- ===== SUBSCRIPTION GATE ===== -->
+<div class="login-screen" id="subscription-gate" style="display:none">
+  <div class="login-card" style="max-width:520px">
+    <div class="logo">
+      <h2>NoteFlow</h2>
+      <p>Professional Financial Statements, Simplified</p>
+    </div>
+    <div id="sub-gate-content">
+      <div class="form-title">Subscription Required</div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;line-height:1.5">
+        Your free trial has ended. Subscribe to continue using NoteFlow and access all features including statement generation, PDF exports, and unlimited projects.
+      </p>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:1.1rem;margin-bottom:8px">NoteFlow Professional</div>
+        <div style="font-size:1.6rem;font-weight:800;color:var(--primary)">$49<span style="font-size:0.8rem;font-weight:400;color:var(--muted)">/month</span></div>
+        <ul style="list-style:none;padding:0;margin:12px 0 0;font-size:0.82rem;color:var(--text)">
+          <li style="padding:4px 0">&#10003; Unlimited financial statement projects</li>
+          <li style="padding:4px 0">&#10003; PDF &amp; Excel exports</li>
+          <li style="padding:4px 0">&#10003; Prior year comparatives</li>
+          <li style="padding:4px 0">&#10003; Adjusting journal entries</li>
+          <li style="padding:4px 0">&#10003; Smart note suggestions</li>
+          <li style="padding:4px 0">&#10003; Company research engine</li>
+          <li style="padding:4px 0">&#10003; Client-side data encryption</li>
+        </ul>
+      </div>
+      <button class="login-btn" onclick="startCheckout()">Subscribe Now</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="handleSignOut()">Sign Out</button>
+    </div>
+    <div id="sub-trial-banner" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;color:#92400e;text-align:center">
+      <strong>Free Trial:</strong> <span id="trial-days-left">14</span> days remaining
+      <button class="btn btn-ghost btn-sm" onclick="dismissTrialBanner()" style="margin-left:8px;font-size:0.7rem">Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== DASHBOARD ===== -->
 <div class="dashboard" id="dashboard">
   <div class="dash-header">
@@ -909,6 +1189,7 @@
   </div>
   <div class="header-actions">
     <span class="save-indicator" id="save-indicator"></span>
+    <span class="security-badge" id="security-badge" title="Data encrypted with AES-256-GCM" style="font-size:0.7rem;color:#22c55e;margin-right:8px;display:none">&#128274; Encrypted</span>
     <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
     <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">◐</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openTemplate()">Formatting</button>
@@ -932,6 +1213,7 @@
   <div class="tab" onclick="switchTab('cashflow')">Cash Flows<span class="tab-badge" id="badge-cashflow"></span></div>
   <div class="tab" onclick="switchTab('notes')">Notes<span class="tab-badge" id="badge-notes"></span></div>
   <div class="tab" onclick="switchTab('checklist')">Disclosures<span class="tab-badge" id="badge-checklist"></span></div>
+  <div class="tab" onclick="switchTab('ratios')">Ratios<span class="tab-badge" id="badge-ratios"></span></div>
 </div>
 
 <div class="container">
@@ -972,6 +1254,72 @@
       </div>
 
       <div id="import-status"></div>
+    </div>
+
+    <!-- ===== TRIAL BALANCE EDITOR (Feature 3) ===== -->
+    <div class="card card-collapsible collapsed" id="tb-editor-card" style="margin-bottom:20px">
+      <div class="card-title" onclick="this.parentElement.classList.toggle('collapsed')">Trial Balance</div>
+      <div class="card-body">
+        <div id="tb-editor-content">
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">No trial balance data imported yet. Import a CSV above to populate this editor.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRIOR YEAR BALANCES (Feature 1) ===== -->
+    <div class="card card-collapsible collapsed" id="py-balances-card" style="margin-bottom:20px">
+      <div class="card-title" onclick="this.parentElement.classList.toggle('collapsed')">Prior Year Balances (Manual Entry)</div>
+      <div class="card-body">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+          If your client has prior year financial statements but no trial balance, enter the key balances below. These will be used for comparative presentation.
+        </p>
+        <div id="py-overwrite-warning" class="py-warning" style="display:none">
+          Prior period data already exists from a comparative CSV import. Saving manual balances will overwrite that data.
+        </div>
+        <div class="py-grid">
+          <div class="py-section-title">Balance Sheet</div>
+          <div><label>Total Current Assets</label><input type="number" id="py-current-assets" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Non-Current Assets</label><input type="number" id="py-noncurrent-assets" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Current Liabilities</label><input type="number" id="py-current-liab" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Non-Current Liabilities</label><input type="number" id="py-noncurrent-liab" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Equity</label><input type="number" id="py-equity" step="0.01" placeholder="0.00"></div>
+          <div></div>
+
+          <div class="py-section-title">Income Statement</div>
+          <div><label>Total Revenue</label><input type="number" id="py-revenue" step="0.01" placeholder="0.00"></div>
+          <div><label>Total COGS</label><input type="number" id="py-cogs" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Operating Expenses</label><input type="number" id="py-opex" step="0.01" placeholder="0.00"></div>
+          <div><label>Other Income/(Expense)</label><input type="number" id="py-other" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Income</label><input type="number" id="py-net-income" step="0.01" placeholder="0.00" disabled style="background:var(--bg);color:var(--muted)"></div>
+          <div></div>
+
+          <div class="py-section-title">Cash Flow</div>
+          <div><label>Net Cash from Operations</label><input type="number" id="py-cf-operating" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Cash from Investing</label><input type="number" id="py-cf-investing" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Cash from Financing</label><input type="number" id="py-cf-financing" step="0.01" placeholder="0.00"></div>
+          <div></div>
+        </div>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="savePriorYearBalances()">Save Prior Year Balances</button>
+          <button class="btn btn-danger btn-sm" onclick="clearPriorYearBalances()">Clear Prior Year</button>
+        </div>
+        <div id="py-status" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ===== ADJUSTING JOURNAL ENTRIES (Feature 2) ===== -->
+    <div class="card card-collapsible" id="aje-card" style="margin-bottom:20px">
+      <div class="card-title" onclick="this.parentElement.classList.toggle('collapsed')">Adjusting Journal Entries</div>
+      <div class="card-body">
+        <div id="aje-entries-container"></div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="addAJEEntry()">Add Entry</button>
+          <button class="btn btn-primary" onclick="postAllAJE()" id="aje-post-btn">Post All Adjustments</button>
+          <button class="btn btn-danger btn-sm" onclick="unpostAJE()" id="aje-unpost-btn" style="display:none">Unpost Adjustments</button>
+        </div>
+        <div id="aje-summary" class="aje-summary" style="display:none"></div>
+        <div id="aje-status" style="margin-top:10px"></div>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:20px">
@@ -1016,6 +1364,9 @@
     <div class="generate-bar">
       <button class="btn btn-primary" onclick="generateAll()">Generate Statements</button>
       <button class="btn btn-ghost" onclick="exportPackagePDF()">Export Full Package (PDF)</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportProjectJSON()" title="Download project as JSON backup" style="font-size:0.75rem">⬇ Export Project</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-project-file').click()" title="Import project from JSON backup" style="font-size:0.75rem">⬆ Import Project</button>
+      <input type="file" id="import-project-file" accept=".json" style="display:none" onchange="importProjectJSON(event)" />
       <div style="flex:1"></div>
       <button class="btn btn-danger btn-sm" onclick="confirmClearAll()" style="font-size:0.75rem">Clear All Data</button>
     </div>
@@ -1034,6 +1385,10 @@
       <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
     </div>
     <div class="statement" id="balance-statement"></div>
+    <div class="card ratios-card" id="balance-ratios-card">
+      <div class="card-title" onclick="this.parentElement.classList.toggle('expanded')">Financial Analysis</div>
+      <div class="ratios-grid" id="balance-ratios-grid"></div>
+    </div>
   </div>
 
   <!-- ===== INCOME STATEMENT ===== -->
@@ -1049,6 +1404,10 @@
       <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
     </div>
     <div class="statement" id="income-statement"></div>
+    <div class="card ratios-card" id="income-ratios-card">
+      <div class="card-title" onclick="this.parentElement.classList.toggle('expanded')">Financial Analysis</div>
+      <div class="ratios-grid" id="income-ratios-grid"></div>
+    </div>
   </div>
 
   <!-- ===== EQUITY ===== -->
@@ -1466,6 +1825,73 @@
     </div>
   </div>
 
+  <!-- ===== FINANCIAL RATIOS & ANALYTICS DASHBOARD ===== -->
+  <div class="page" id="page-ratios">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" onclick="buildRatiosDashboard()">Refresh Ratios</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">Print</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportRatiosPDF()">Export PDF</button>
+    </div>
+    <div class="stmt-empty" id="empty-ratios">
+      <div class="stmt-empty-icon">📊</div>
+      <p>No financial data yet.<br>Import a trial balance and generate statements to see your financial ratios and analytics.</p>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
+    </div>
+    <div id="ratios-dashboard" style="display:none">
+      <div class="statement" style="padding:24px">
+        <div class="stmt-header">
+          <div class="title" id="ratios-company-name">Financial Ratios & Analytics</div>
+          <div class="period" id="ratios-period"></div>
+        </div>
+      </div>
+
+      <!-- Summary Scorecards -->
+      <div class="ratios-scorecard-row" id="ratios-scorecards"></div>
+
+      <!-- Liquidity Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+          Liquidity Ratios
+          <span class="ratios-section-hint">Ability to meet short-term obligations</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-liquidity"></div>
+      </div>
+
+      <!-- Profitability Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+          Profitability Ratios
+          <span class="ratios-section-hint">Earnings performance and margins</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-profitability"></div>
+      </div>
+
+      <!-- Leverage / Solvency Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+          Leverage &amp; Solvency Ratios
+          <span class="ratios-section-hint">Long-term financial stability and debt capacity</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-leverage"></div>
+      </div>
+
+      <!-- Efficiency / Activity Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+          Efficiency &amp; Activity Ratios
+          <span class="ratios-section-hint">Asset utilization and operational efficiency</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-efficiency"></div>
+      </div>
+
+      <!-- Key Insights -->
+      <div class="card" id="ratios-insights-card" style="display:none">
+        <div class="card-title">Key Insights &amp; Observations</div>
+        <div id="ratios-insights"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 </div><!-- /app-wrapper -->
@@ -1588,7 +2014,167 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
+// ─── Firebase Configuration ──────────────────────────────────────────────────
+// Replace with your Firebase project credentials
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase (only if config is set)
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+const FIREBASE_ENABLED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+
+if (FIREBASE_ENABLED) {
+  firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+  firebaseAuth = firebase.auth();
+  firebaseDb = firebase.firestore();
+}
+
+// ─── Stripe Configuration ────────────────────────────────────────────────────
+const STRIPE_CONFIG = {
+  publishableKey: "YOUR_STRIPE_PUBLISHABLE_KEY",
+  pricingTableId: "YOUR_PRICING_TABLE_ID",
+  customerPortalUrl: "YOUR_CUSTOMER_PORTAL_URL"
+};
+const STRIPE_ENABLED = STRIPE_CONFIG.publishableKey !== 'YOUR_STRIPE_PUBLISHABLE_KEY';
+const TRIAL_DAYS = 14;
+
+// ─── Subscription Management ─────────────────────────────────────────────────
+function checkSubscription(callback) {
+  if (!STRIPE_ENABLED || !FIREBASE_ENABLED) { callback(true); return; }
+
+  var uid = firebaseAuth.currentUser ? firebaseAuth.currentUser.uid : null;
+  if (!uid) { callback(false); return; }
+
+  firebaseDb.collection('users').doc(uid).get()
+    .then(function(doc) {
+      if (!doc.exists) { callback(true); return; } // New user, allow (will create trial doc on signup)
+      var data = doc.data();
+      var status = data.subscriptionStatus || 'trial';
+
+      if (status === 'active' || status === 'trialing') {
+        callback(true);
+        return;
+      }
+
+      if (status === 'trial') {
+        var trialEnd = data.trialEndsAt ? new Date(data.trialEndsAt) : null;
+        if (trialEnd && trialEnd > new Date()) {
+          var daysLeft = Math.ceil((trialEnd - new Date()) / (24 * 60 * 60 * 1000));
+          showTrialBanner(daysLeft);
+          callback(true);
+          return;
+        }
+        // Trial expired
+        callback(false);
+        return;
+      }
+
+      // expired, cancelled, etc.
+      callback(false);
+    })
+    .catch(function(err) {
+      console.warn('Subscription check failed, allowing access:', err);
+      callback(true); // fail-open for now
+    });
+}
+
+function showTrialBanner(daysLeft) {
+  var banner = document.getElementById('sub-trial-banner');
+  if (banner) {
+    document.getElementById('trial-days-left').textContent = daysLeft;
+    banner.style.display = 'block';
+  }
+}
+
+function dismissTrialBanner() {
+  var banner = document.getElementById('sub-trial-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+function showSubscriptionGate() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('app-wrapper').classList.remove('visible');
+  document.getElementById('subscription-gate').style.display = 'flex';
+}
+
+function hideSubscriptionGate() {
+  document.getElementById('subscription-gate').style.display = 'none';
+}
+
+function startCheckout() {
+  if (!STRIPE_ENABLED) {
+    alert('Stripe is not configured. Set your Stripe publishable key in the STRIPE_CONFIG section.');
+    return;
+  }
+  // Redirect to Stripe Checkout or open pricing table
+  // This requires a backend endpoint — for now, show config instructions
+  alert('To enable payments:\n\n1. Create a Stripe account at stripe.com\n2. Set up a subscription product\n3. Create a Checkout Session endpoint (Firebase Cloud Function recommended)\n4. Replace STRIPE_CONFIG values in this file\n\nSee the NoteFlow deployment guide for details.');
+}
+
+// ─── Client-Side Encryption (AES-GCM) ───────────────────────────────────────
+const ENCRYPTION_ENABLED = true; // Set to false to disable encryption
+
+async function deriveEncryptionKey(email) {
+  var encoder = new TextEncoder();
+  var keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(email + '-noteflow-encryption-key'), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: encoder.encode('noteflow-salt-v1'), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptData(plaintext, email) {
+  if (!ENCRYPTION_ENABLED || !crypto.subtle) return plaintext;
+  try {
+    var key = await deriveEncryptionKey(email);
+    var encoder = new TextEncoder();
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoder.encode(plaintext));
+    // Combine IV + ciphertext and encode as base64
+    var combined = new Uint8Array(iv.length + encrypted.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    return 'ENC:' + btoa(String.fromCharCode.apply(null, combined));
+  } catch (e) {
+    console.warn('Encryption failed, storing plaintext:', e);
+    return plaintext;
+  }
+}
+
+async function decryptData(ciphertext, email) {
+  if (!ciphertext || !ciphertext.startsWith('ENC:') || !crypto.subtle) return ciphertext;
+  try {
+    var key = await deriveEncryptionKey(email);
+    var raw = atob(ciphertext.slice(4));
+    var bytes = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    var iv = bytes.slice(0, 12);
+    var data = bytes.slice(12);
+    var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+    return new TextDecoder().decode(decrypted);
+  } catch (e) {
+    console.warn('Decryption failed, returning raw data:', e);
+    return ciphertext;
+  }
+}
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 const SECTIONS = [
   'revenue','cogs','opex','other',
@@ -1666,27 +2252,32 @@ function saveProjectList(email, list) {
 function loadProject(id) {
   const raw = localStorage.getItem('fsgen-project-' + id);
   if (!raw) return;
-  try {
-    const proj = JSON.parse(raw);
-    currentProjectId = id;
 
-    // Load current data
-    SECTIONS.forEach(s => {
-      currentData[s] = (proj.currentData && proj.currentData[s]) ? proj.currentData[s] : [];
-      priorData[s] = (proj.priorData && proj.priorData[s]) ? proj.priorData[s] : [];
+  function applyProject(projJson) {
+    try {
+      const proj = JSON.parse(projJson);
+      currentProjectId = id;
+      SECTIONS.forEach(s => {
+        currentData[s] = (proj.currentData && proj.currentData[s]) ? proj.currentData[s] : [];
+        priorData[s] = (proj.priorData && proj.priorData[s]) ? proj.priorData[s] : [];
+      });
+      document.getElementById('companyName').value = proj.company || '';
+      document.getElementById('period').value = proj.period || '';
+      document.getElementById('priorPeriod').value = proj.priorPeriod || '';
+      document.getElementById('currency').value = proj.currency || '$';
+      if (proj.notes) {
+        loadNotesFromProject(proj.notes);
+      }
+    } catch (e) { /* ignore corrupt project */ }
+  }
+
+  if (raw.startsWith('ENC:') && currentUserEmail) {
+    decryptData(raw, currentUserEmail).then(function(decrypted) {
+      applyProject(decrypted);
     });
-
-    // Load UI fields
-    document.getElementById('companyName').value = proj.company || '';
-    document.getElementById('period').value = proj.period || '';
-    document.getElementById('priorPeriod').value = proj.priorPeriod || '';
-    document.getElementById('currency').value = proj.currency || '$';
-
-    // Load notes questionnaire answers
-    if (proj.notes) {
-      loadNotesFromProject(proj.notes);
-    }
-  } catch (e) { /* ignore corrupt project */ }
+  } else {
+    applyProject(raw);
+  }
 }
 
 function saveProject() {
@@ -1705,7 +2296,14 @@ function saveProject() {
     proj.currentData[s] = currentData[s];
     proj.priorData[s] = priorData[s];
   });
-  localStorage.setItem('fsgen-project-' + currentProjectId, JSON.stringify(proj));
+  var projJson = JSON.stringify(proj);
+  if (ENCRYPTION_ENABLED && currentUserEmail) {
+    encryptData(projJson, currentUserEmail).then(function(encrypted) {
+      localStorage.setItem('fsgen-project-' + currentProjectId, encrypted);
+    });
+  } else {
+    localStorage.setItem('fsgen-project-' + currentProjectId, projJson);
+  }
 
   // Track patterns for learning intelligence
   if (typeof trackProjectPatterns === 'function') {
@@ -1824,6 +2422,98 @@ function populateProjectSelect() {
     if (p.id === currentProjectId) opt.selected = true;
     sel.appendChild(opt);
   });
+}
+
+// ─── Project Export / Import (JSON Backup) ─────────────────────────────────
+function exportProjectJSON() {
+  if (!currentProjectId) { alert('No project loaded.'); return; }
+  saveProject(); // ensure latest state is saved
+
+  function performExport(projJson) {
+    var proj = JSON.parse(projJson);
+    var list = getProjectList(currentUserEmail);
+    var entry = list.find(function(p) { return p.id === currentProjectId; });
+    var exportData = {
+      _noteflow: true,
+      _version: 1,
+      _exportedAt: new Date().toISOString(),
+      projectName: entry ? entry.name : 'Unnamed',
+      project: proj
+    };
+
+    // Include AJE data if present
+    var ajeKey = 'fsgen-aje-' + currentProjectId;
+    var ajeRaw = localStorage.getItem(ajeKey);
+    if (ajeRaw) {
+      try { exportData.adjustingEntries = JSON.parse(ajeRaw); } catch(e) {}
+    }
+
+    var blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var safeName = (exportData.projectName || 'project').replace(/[^a-zA-Z0-9_-]/g, '_');
+    a.download = 'NoteFlow_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  var raw = localStorage.getItem('fsgen-project-' + currentProjectId);
+  if (!raw) { alert('No project data found.'); return; }
+
+  if (raw.startsWith('ENC:') && currentUserEmail) {
+    decryptData(raw, currentUserEmail).then(function(decrypted) {
+      performExport(decrypted);
+    });
+  } else {
+    performExport(raw);
+  }
+}
+
+function importProjectJSON(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  event.target.value = ''; // reset so same file can be re-imported
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!data._noteflow || !data.project) {
+        alert('Invalid NoteFlow project file. Please select a file exported from NoteFlow.');
+        return;
+      }
+
+      var importName = data.projectName || 'Imported Project';
+      if (!confirm('Import project "' + importName + '"?\n\nThis will create a new project with the imported data.')) return;
+
+      // Create new project entry
+      var newId = genId();
+      var list = getProjectList(currentUserEmail);
+      list.push({ id: newId, name: importName, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      saveProjectList(currentUserEmail, list);
+
+      // Save project data
+      localStorage.setItem('fsgen-project-' + newId, JSON.stringify(data.project));
+
+      // Restore AJE data if present
+      if (data.adjustingEntries) {
+        localStorage.setItem('fsgen-aje-' + newId, JSON.stringify(data.adjustingEntries));
+      }
+
+      // Switch to imported project
+      if (currentProjectId) saveProject();
+      loadProject(newId);
+      populateProjectSelect();
+      alert('Project "' + importName + '" imported successfully.');
+
+    } catch (err) {
+      alert('Error reading file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ─── Notes Persistence ──────────────────────────────────────────────────────
@@ -2534,7 +3224,7 @@ function buildBalanceSheet() {
   html += tr('TOTAL LIABILITIES & EQUITY', false, totalLiabEquity, multi ? pTotalLiabEquity : null, true, '', multi);
 
   const diff = totalAssets - totalLiabEquity;
-  const cols = multi ? 4 : 3;
+  const cols = multi ? 5 : 3;
   if (Math.abs(diff) > 0.01) {
     html += '<tr><td colspan="' + cols + '" style="padding:12px 8px;font-size:0.8rem;color:var(--red)">' +
       'Warning: Balance sheet does not balance by ' + cur() + fmt(Math.abs(diff)) + '. Check your entries.' +
@@ -3002,6 +3692,8 @@ function applyImport(tbRows, accountMap, targetData) {
   }
 
   saveProject();
+  buildTrialBalanceEditor();
+  loadPriorYearFields();
   pendingUnmapped = unmapped;
   pendingTargetData = targetData;
 
@@ -3143,6 +3835,8 @@ function applyComparativeMappings() {
   if (added === 0) { showStatus('error', 'No sections assigned. Use the dropdowns to map accounts first.'); return; }
   pendingComparativeUnmapped = [];
   saveProject();
+  buildTrialBalanceEditor();
+  loadPriorYearFields();
   const total = SECTIONS.reduce(function(n, s) { return n + currentData[s].length + priorData[s].length; }, 0);
   showStatus('success', '<strong>' + added + ' account' + (added !== 1 ? 's' : '') + ' mapped (both periods).</strong> ' + total + ' total accounts loaded.');
 }
@@ -3195,6 +3889,7 @@ function applyMappings() {
   pendingUnmapped = [];
   pendingTargetData = null;
   saveProject();
+  buildTrialBalanceEditor();
   const total = SECTIONS.reduce(function(n, s) { return n + currentData[s].length + priorData[s].length; }, 0);
   showStatus('success', '<strong>' + added + ' account' + (added !== 1 ? 's' : '') + ' mapped and imported.</strong> ' + total + ' total accounts loaded.');
 }
@@ -3256,21 +3951,342 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
-  const tabs = { input: 0, balance: 1, income: 2, equity: 3, cashflow: 4, notes: 5, checklist: 6 };
+  const tabs = { input: 0, balance: 1, income: 2, equity: 3, cashflow: 4, notes: 5, checklist: 6, ratios: 7 };
   document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
 
-  if (name === 'income') { buildIncomeStatement(); applyTemplateToStatements(); }
-  if (name === 'balance') { buildBalanceSheet(); applyTemplateToStatements(); }
+  if (name === 'income') { buildIncomeStatement(); applyTemplateToStatements(); buildFinancialRatios(); }
+  if (name === 'balance') { buildBalanceSheet(); applyTemplateToStatements(); buildFinancialRatios(); }
   if (name === 'cashflow') { buildCashFlow(); applyTemplateToStatements(); }
   if (name === 'equity') { buildEquityStatement(); applyTemplateToStatements(); }
   if (name === 'notes') renderSuggestions();
   if (name === 'checklist') runDisclosureChecklist(); // #15 auto-run
+  if (name === 'ratios') { buildRatiosDashboard(); }
 
   // #14 Toggle empty states
   updateEmptyStates();
   // #3 Update tab badges
   updateTabBadges();
 }
+
+// ─── Feature 3: Trial Balance Editor ─────────────────────────────────────────
+
+var SECTION_LABELS = {
+  'revenue': 'Revenue', 'cogs': 'Cost of Goods Sold', 'opex': 'Operating Expenses',
+  'other': 'Other Income / Expense', 'current-assets': 'Current Assets',
+  'noncurrent-assets': 'Non-Current Assets', 'current-liab': 'Current Liabilities',
+  'noncurrent-liab': 'Non-Current Liabilities', 'equity': "Shareholders' Equity",
+  'cf-operating': 'Operating Activities', 'cf-investing': 'Investing Activities',
+  'cf-financing': 'Financing Activities'
+};
+
+function buildTrialBalanceEditor() {
+  var container = document.getElementById('tb-editor-content');
+  var card = document.getElementById('tb-editor-card');
+  var hasData = false;
+  SECTIONS.forEach(function(s) { if (currentData[s] && currentData[s].length > 0) hasData = true; });
+  if (!hasData) {
+    container.innerHTML = '<p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">No trial balance data imported yet. Import a CSV above to populate this editor.</p>';
+    if (!card.classList.contains('collapsed')) card.classList.add('collapsed');
+    return;
+  }
+  card.classList.remove('collapsed');
+  var html = '<table class="tb-editor-table"><thead><tr><th>Section</th><th>Account Name</th><th>Amount</th><th style="width:80px">Actions</th></tr></thead><tbody>';
+  var grandTotal = 0;
+  SECTIONS.forEach(function(sec) {
+    var items = currentData[sec];
+    if (!items || items.length === 0) return;
+    html += '<tr class="tb-section-header"><td colspan="4">' + esc(SECTION_LABELS[sec] || sec) + '</td></tr>';
+    var secTotal = 0;
+    items.forEach(function(item, idx) {
+      var amt = parseFloat(item.amount) || 0;
+      secTotal += amt;
+      html += '<tr class="tb-item" data-section="' + sec + '" data-idx="' + idx + '">';
+      html += '<td style="font-size:0.78rem;color:var(--muted)">' + esc(SECTION_LABELS[sec] || sec) + '</td>';
+      html += '<td><span class="tb-label-display">' + esc(item.label) + '</span></td>';
+      html += '<td style="text-align:right"><span class="tb-amt-display">' + fmt(amt) + '</span></td>';
+      html += '<td style="text-align:center">';
+      html += '<button class="btn btn-ghost btn-sm" onclick="tbEditRow(\'' + sec + '\',' + idx + ')" title="Edit" style="padding:3px 7px;font-size:0.75rem">&#9998;</button> ';
+      html += '<button class="btn btn-danger btn-sm" onclick="tbDeleteRow(\'' + sec + '\',' + idx + ')" title="Delete" style="padding:3px 7px;font-size:0.75rem">&times;</button>';
+      html += '</td></tr>';
+    });
+    html += '<tr class="tb-total"><td></td><td style="text-align:right;font-size:0.82rem">Section Total:</td><td style="text-align:right">' + fmt(secTotal) + '</td><td></td></tr>';
+    grandTotal += secTotal;
+  });
+  html += '<tr class="tb-add-row"><td><select id="tb-add-section"><option value="">Section...</option>';
+  SECTIONS.forEach(function(s) { html += '<option value="' + s + '">' + esc(SECTION_LABELS[s] || s) + '</option>'; });
+  html += '</select></td><td><input type="text" id="tb-add-label" placeholder="Account name"></td>';
+  html += '<td><input type="number" id="tb-add-amount" step="0.01" placeholder="0.00"></td>';
+  html += '<td style="text-align:center"><button class="btn btn-primary btn-sm" onclick="tbAddRow()" style="padding:4px 10px;font-size:0.78rem">Add</button></td></tr>';
+  html += '<tr class="tb-grand-total"><td></td><td style="text-align:right">Grand Total:</td><td style="text-align:right">' + fmt(grandTotal) + '</td><td></td></tr>';
+  html += '</tbody></table>';
+  var totalItems = 0;
+  SECTIONS.forEach(function(s) { totalItems += (currentData[s] ? currentData[s].length : 0); });
+  html += '<div class="tb-summary"><span><strong>' + totalItems + '</strong> line items</span><span>Grand Total: <strong>' + fmt(grandTotal) + '</strong></span></div>';
+  html += '<div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="generateAll()">Refresh Statements</button></div>';
+  container.innerHTML = html;
+}
+
+function tbEditRow(section, idx) {
+  var items = currentData[section];
+  if (!items || !items[idx]) return;
+  var item = items[idx];
+  var rows = document.querySelectorAll('.tb-item[data-section="' + section + '"][data-idx="' + idx + '"]');
+  if (rows.length === 0) return;
+  var row = rows[0]; var cells = row.children;
+  cells[1].innerHTML = '<input type="text" value="' + esc(item.label) + '" id="tb-edit-label-' + section + '-' + idx + '" style="width:100%">';
+  cells[2].innerHTML = '<input type="number" value="' + (item.amount || 0) + '" id="tb-edit-amt-' + section + '-' + idx + '" step="0.01" style="width:120px">';
+  cells[3].innerHTML = '<button class="btn btn-primary btn-sm" onclick="tbSaveRow(\'' + section + '\',' + idx + ')" style="padding:3px 7px;font-size:0.72rem">Save</button> <button class="btn btn-ghost btn-sm" onclick="buildTrialBalanceEditor()" style="padding:3px 7px;font-size:0.72rem">Cancel</button>';
+}
+
+function tbSaveRow(section, idx) {
+  var labelEl = document.getElementById('tb-edit-label-' + section + '-' + idx);
+  var amtEl = document.getElementById('tb-edit-amt-' + section + '-' + idx);
+  if (!labelEl || !amtEl) return;
+  var label = labelEl.value.trim(); var amt = parseFloat(amtEl.value) || 0;
+  if (!label) { alert('Account name cannot be empty.'); return; }
+  currentData[section][idx] = { label: label, amount: amt };
+  saveProject(); buildTrialBalanceEditor();
+}
+
+function tbDeleteRow(section, idx) {
+  if (!confirm('Remove this line item?')) return;
+  currentData[section].splice(idx, 1);
+  saveProject(); buildTrialBalanceEditor();
+}
+
+function tbAddRow() {
+  var section = document.getElementById('tb-add-section').value;
+  var label = document.getElementById('tb-add-label').value.trim();
+  var amt = parseFloat(document.getElementById('tb-add-amount').value) || 0;
+  if (!section) { alert('Please select a section.'); return; }
+  if (!label) { alert('Please enter an account name.'); return; }
+  if (!currentData[section]) currentData[section] = [];
+  currentData[section].push({ label: label, amount: amt });
+  saveProject(); buildTrialBalanceEditor();
+}
+
+// ─── Feature 1: Prior Year Balances ──────────────────────────────────────────
+
+var PY_FIELDS = [
+  { id: 'py-current-assets', section: 'current-assets', label: 'Prior Year Current Assets' },
+  { id: 'py-noncurrent-assets', section: 'noncurrent-assets', label: 'Prior Year Non-Current Assets' },
+  { id: 'py-current-liab', section: 'current-liab', label: 'Prior Year Current Liabilities' },
+  { id: 'py-noncurrent-liab', section: 'noncurrent-liab', label: 'Prior Year Non-Current Liabilities' },
+  { id: 'py-equity', section: 'equity', label: 'Prior Year Equity' },
+  { id: 'py-revenue', section: 'revenue', label: 'Prior Year Revenue' },
+  { id: 'py-cogs', section: 'cogs', label: 'Prior Year COGS' },
+  { id: 'py-opex', section: 'opex', label: 'Prior Year Operating Expenses' },
+  { id: 'py-other', section: 'other', label: 'Prior Year Other Income/Expense' },
+  { id: 'py-cf-operating', section: 'cf-operating', label: 'Prior Year Cash from Operations' },
+  { id: 'py-cf-investing', section: 'cf-investing', label: 'Prior Year Cash from Investing' },
+  { id: 'py-cf-financing', section: 'cf-financing', label: 'Prior Year Cash from Financing' }
+];
+
+function checkPriorDataExists() {
+  var hasData = false;
+  SECTIONS.forEach(function(s) { if (priorData[s] && priorData[s].length > 0) hasData = true; });
+  var warn = document.getElementById('py-overwrite-warning');
+  if (warn) warn.style.display = hasData ? 'block' : 'none';
+}
+
+function savePriorYearBalances() {
+  PY_FIELDS.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    var val = parseFloat(el ? el.value : 0) || 0;
+    priorData[f.section] = val !== 0 ? [{ label: f.label, amount: val }] : [];
+  });
+  saveProject();
+  var statusEl = document.getElementById('py-status');
+  if (statusEl) {
+    statusEl.innerHTML = '<div class="import-status success">Prior year balances saved successfully.</div>';
+    setTimeout(function() { statusEl.innerHTML = ''; }, 3000);
+  }
+  checkPriorDataExists();
+}
+
+function clearPriorYearBalances() {
+  if (!confirm('Clear all prior year balance data?')) return;
+  SECTIONS.forEach(function(s) { priorData[s] = []; });
+  PY_FIELDS.forEach(function(f) { var el = document.getElementById(f.id); if (el) el.value = ''; });
+  saveProject();
+  var statusEl = document.getElementById('py-status');
+  if (statusEl) {
+    statusEl.innerHTML = '<div class="import-status info">Prior year balances cleared.</div>';
+    setTimeout(function() { statusEl.innerHTML = ''; }, 3000);
+  }
+  checkPriorDataExists();
+}
+
+function loadPriorYearFields() {
+  PY_FIELDS.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    if (!el) return;
+    if (priorData[f.section] && priorData[f.section].length > 0) {
+      var total = 0;
+      priorData[f.section].forEach(function(item) { total += parseFloat(item.amount) || 0; });
+      el.value = total || '';
+    } else { el.value = ''; }
+  });
+  checkPriorDataExists();
+}
+
+// ─── Feature 2: Adjusting Journal Entries ────────────────────────────────────
+
+var ajeEntries = [];
+var ajePosted = false;
+var ajePrePostData = null;
+
+function buildSectionOptionsHTML() {
+  var html = '<option value="">Select section...</option>';
+  SECTION_GROUPS.forEach(function(g) {
+    html += '<optgroup label="' + esc(g.label) + '">';
+    g.options.forEach(function(o) { html += '<option value="' + o.value + '">' + esc(o.text) + '</option>'; });
+    html += '</optgroup>';
+  });
+  return html;
+}
+
+function addAJEEntry() {
+  var num = ajeEntries.length + 1;
+  ajeEntries.push({ id: 'aje-' + Date.now() + '-' + num, number: num, date: '', memo: '', lines: [{ account: '', section: '', debit: 0, credit: 0 }] });
+  renderAJEEntries(); saveProject();
+}
+
+function removeAJEEntry(entryIdx) {
+  if (!confirm('Remove AJE-' + (entryIdx + 1) + '?')) return;
+  ajeEntries.splice(entryIdx, 1);
+  ajeEntries.forEach(function(e, i) { e.number = i + 1; });
+  renderAJEEntries(); saveProject();
+}
+
+function addAJELine(entryIdx) {
+  ajeEntries[entryIdx].lines.push({ account: '', section: '', debit: 0, credit: 0 });
+  renderAJEEntries(); saveProject();
+}
+
+function removeAJELine(entryIdx, lineIdx) {
+  if (ajeEntries[entryIdx].lines.length <= 1) return;
+  ajeEntries[entryIdx].lines.splice(lineIdx, 1);
+  renderAJEEntries(); saveProject();
+}
+
+function ajeFieldChange(entryIdx, field, value) {
+  ajeEntries[entryIdx][field] = value; saveProject();
+}
+
+function ajeLineChange(entryIdx, lineIdx, field, value) {
+  if (field === 'debit' || field === 'credit') ajeEntries[entryIdx].lines[lineIdx][field] = parseFloat(value) || 0;
+  else ajeEntries[entryIdx].lines[lineIdx][field] = value;
+  renderAJEEntries(); saveProject();
+}
+
+function renderAJEEntries() {
+  var container = document.getElementById('aje-entries-container');
+  var secOpts = buildSectionOptionsHTML();
+  var html = '', totalDebits = 0, totalCredits = 0;
+  ajeEntries.forEach(function(entry, eIdx) {
+    var eD = 0, eC = 0;
+    entry.lines.forEach(function(ln) { eD += parseFloat(ln.debit) || 0; eC += parseFloat(ln.credit) || 0; });
+    totalDebits += eD; totalCredits += eC;
+    var balanced = Math.abs(eD - eC) < 0.005;
+    var oob = (!balanced && (eD > 0 || eC > 0)) ? ' out-of-balance' : '';
+    html += '<div class="aje-entry' + oob + '"><div class="aje-header">';
+    html += '<span class="aje-num">AJE-' + entry.number + '</span>';
+    html += '<input type="date" value="' + (entry.date || '') + '" onchange="ajeFieldChange(' + eIdx + ',\'date\',this.value)">';
+    html += '<input type="text" value="' + esc(entry.memo || '') + '" onchange="ajeFieldChange(' + eIdx + ',\'memo\',this.value)" placeholder="Memo / Description" style="flex:1;min-width:150px">';
+    if (ajePosted) html += '<span class="aje-posted-badge posted">Posted</span>';
+    html += '<button class="btn btn-danger btn-sm" onclick="removeAJEEntry(' + eIdx + ')" style="margin-left:auto">Remove</button></div>';
+    html += '<table class="aje-lines-table"><thead><tr><th>Account</th><th>Section</th><th style="width:80px"></th><th>Debit</th><th>Credit</th></tr></thead><tbody>';
+    entry.lines.forEach(function(ln, lIdx) {
+      html += '<tr><td><input type="text" value="' + esc(ln.account || '') + '" onchange="ajeLineChange(' + eIdx + ',' + lIdx + ',\'account\',this.value)" placeholder="Account name"></td>';
+      html += '<td><select onchange="ajeLineChange(' + eIdx + ',' + lIdx + ',\'section\',this.value)">' + secOpts.replace('value="' + ln.section + '"', 'value="' + ln.section + '" selected') + '</select></td>';
+      html += '<td style="text-align:center">';
+      if (entry.lines.length > 1) html += '<button class="btn btn-ghost btn-sm" onclick="removeAJELine(' + eIdx + ',' + lIdx + ')" style="padding:2px 6px;font-size:0.7rem">&times;</button>';
+      html += '</td><td><input type="number" value="' + (ln.debit || '') + '" onchange="ajeLineChange(' + eIdx + ',' + lIdx + ',\'debit\',this.value)" step="0.01" placeholder="0.00"></td>';
+      html += '<td><input type="number" value="' + (ln.credit || '') + '" onchange="ajeLineChange(' + eIdx + ',' + lIdx + ',\'credit\',this.value)" step="0.01" placeholder="0.00"></td></tr>';
+    });
+    html += '</tbody></table><div class="aje-footer"><button class="btn btn-ghost btn-sm" onclick="addAJELine(' + eIdx + ')">Add Line</button>';
+    html += '<div class="aje-totals" style="margin-left:auto"><span>Debits: <strong>' + fmt(eD) + '</strong></span><span>Credits: <strong>' + fmt(eC) + '</strong></span>';
+    if (eD > 0 || eC > 0) html += balanced ? '<span class="balanced">Balanced</span>' : '<span class="unbalanced">Out of Balance (' + fmt(Math.abs(eD - eC)) + ')</span>';
+    html += '</div></div></div>';
+  });
+  container.innerHTML = html;
+  var summaryEl = document.getElementById('aje-summary');
+  if (ajeEntries.length > 0) {
+    summaryEl.style.display = 'block';
+    var cSym = document.getElementById('currency') ? document.getElementById('currency').value : '$';
+    summaryEl.innerHTML = '<strong>' + ajeEntries.length + '</strong> entries, <strong>' + cSym + fmt(totalDebits) + '</strong> total debits' + (ajePosted ? ' &mdash; <span class="aje-posted-badge posted">Posted</span>' : '');
+  } else { summaryEl.style.display = 'none'; }
+  document.getElementById('aje-unpost-btn').style.display = ajePosted ? 'inline-block' : 'none';
+}
+
+function postAllAJE() {
+  if (ajeEntries.length === 0) { alert('No journal entries to post.'); return; }
+  var errors = [];
+  ajeEntries.forEach(function(entry) {
+    var d = 0, c = 0;
+    entry.lines.forEach(function(ln) { d += parseFloat(ln.debit) || 0; c += parseFloat(ln.credit) || 0; });
+    if (Math.abs(d - c) >= 0.005) errors.push('AJE-' + entry.number + ' is out of balance');
+    entry.lines.forEach(function(ln, i) { if (!ln.section) errors.push('AJE-' + entry.number + ', line ' + (i + 1) + ': missing section'); });
+  });
+  if (errors.length > 0) { alert('Cannot post:\n\n' + errors.join('\n')); return; }
+  ajePrePostData = {};
+  SECTIONS.forEach(function(s) { ajePrePostData[s] = JSON.parse(JSON.stringify(currentData[s])); });
+  var posted = 0;
+  ajeEntries.forEach(function(entry) {
+    entry.lines.forEach(function(ln) {
+      var sec = ln.section, net = (parseFloat(ln.debit) || 0) - (parseFloat(ln.credit) || 0);
+      if (net === 0) return;
+      var found = false;
+      for (var i = 0; i < currentData[sec].length; i++) {
+        if (currentData[sec][i].label === ln.account) { currentData[sec][i].amount = (parseFloat(currentData[sec][i].amount) || 0) + net; found = true; break; }
+      }
+      if (!found) currentData[sec].push({ label: ln.account || ('AJE-' + entry.number + ' Adjustment'), amount: net });
+    });
+    posted++;
+  });
+  ajePosted = true; saveProject(); renderAJEEntries(); buildTrialBalanceEditor();
+  var st = document.getElementById('aje-status');
+  st.innerHTML = '<div class="import-status success">Successfully posted ' + posted + ' adjusting entries.</div>';
+  setTimeout(function() { st.innerHTML = ''; }, 4000);
+}
+
+function unpostAJE() {
+  if (!ajePosted) return;
+  if (!confirm('Reverse all posted adjustments?')) return;
+  if (ajePrePostData) SECTIONS.forEach(function(s) { if (ajePrePostData[s]) currentData[s] = JSON.parse(JSON.stringify(ajePrePostData[s])); });
+  ajePosted = false; ajePrePostData = null;
+  saveProject(); renderAJEEntries(); buildTrialBalanceEditor();
+  var st = document.getElementById('aje-status');
+  st.innerHTML = '<div class="import-status info">Adjustments reversed.</div>';
+  setTimeout(function() { st.innerHTML = ''; }, 4000);
+}
+
+// ─── Save/Load integration for new features ─────────────────────────────────
+var _featureSaveProject = saveProject;
+saveProject = function() {
+  _featureSaveProject();
+  if (currentProjectId) localStorage.setItem('fsgen-aje-' + currentProjectId, JSON.stringify({ entries: ajeEntries, posted: ajePosted, prePostData: ajePrePostData }));
+};
+
+var _featureLoadProject = loadProject;
+loadProject = function(id) {
+  _featureLoadProject(id);
+  try {
+    var raw = localStorage.getItem('fsgen-aje-' + id);
+    if (raw) { var d = JSON.parse(raw); ajeEntries = d.entries || []; ajePosted = d.posted || false; ajePrePostData = d.prePostData || null; }
+    else { ajeEntries = []; ajePosted = false; ajePrePostData = null; }
+  } catch(e) { ajeEntries = []; ajePosted = false; ajePrePostData = null; }
+  renderAJEEntries(); loadPriorYearFields(); buildTrialBalanceEditor();
+};
+
+var _featureCreateProject = createProject;
+createProject = function(name) {
+  var id = _featureCreateProject(name);
+  ajeEntries = []; ajePosted = false; ajePrePostData = null;
+  renderAJEEntries(); loadPriorYearFields(); buildTrialBalanceEditor();
+  return id;
+};
 
 function generateAll() {
   buildBalanceSheet();
@@ -3280,6 +4296,7 @@ function generateAll() {
   applyTemplateToStatements();
   updateEmptyStates();
   updateTabBadges();
+  buildTrialBalanceEditor();
   switchTab('balance');
 }
 
@@ -3295,6 +4312,9 @@ function clearAll() {
   const name = document.getElementById('zone-combined-name');
   if (hint) hint.textContent = 'Drop CSV here or click to browse';
   if (name) name.textContent = '';
+  // Reset new features
+  ajeEntries = []; ajePosted = false; ajePrePostData = null;
+  renderAJEEntries(); loadPriorYearFields(); buildTrialBalanceEditor();
   saveProject();
 }
 
@@ -3787,64 +4807,7 @@ function exportPackagePDF() {
            lbl === 'Net Change in Cash';
   }
 
-  // ── 3. INDEPENDENT AUDITOR'S REPORT (template) ──
-  startPage(doc, "Independent Auditor's Report");
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 41, 59);
-  doc.text("Independent Auditor's Report", pageW / 2, margin + 20, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(60);
-  var auditY = margin + 60;
-  var auditLines = [
-    'To the Board of Directors and Shareholders of ' + m.company + ':',
-    '',
-    'Opinion',
-    '',
-    'We have audited the accompanying financial statements of ' + m.company + ',',
-    'which comprise the balance sheet as of ' + (m.period || '[period end]') + ', and the related',
-    'statements of income, changes in equity, and cash flows for the period then ended,',
-    'and the related notes to the financial statements.',
-    '',
-    'In our opinion, the financial statements referred to above present fairly, in all material',
-    'respects, the financial position of ' + m.company + ' as of',
-    (m.period || '[period end]') + ', and the results of its operations and its cash flows for the',
-    'period then ended in accordance with accounting principles generally accepted in the',
-    'United States of America.',
-    '',
-    'Basis for Opinion',
-    '',
-    'We conducted our audit in accordance with auditing standards generally accepted in the',
-    'United States of America (GAAS). Our responsibilities under those standards are further',
-    'described in the Auditor\'s Responsibilities for the Audit of the Financial Statements section',
-    'of our report. We are required to be independent of ' + m.company + ' and to',
-    'meet our other ethical responsibilities, in accordance with the relevant ethical requirements',
-    'relating to our audit. We believe that the audit evidence we have obtained is sufficient and',
-    'appropriate to provide a basis for our audit opinion.',
-    '',
-    '',
-    '',
-    '________________________________________',
-    '[Firm Name]',
-    '[City, State]',
-    '[Date]'
-  ];
-  auditLines.forEach(function(line) {
-    if (line === 'Opinion' || line === 'Basis for Opinion') {
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 41, 59);
-    }
-    doc.text(line, margin, auditY);
-    if (line === 'Opinion' || line === 'Basis for Opinion') {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(60);
-    }
-    auditY += 16;
-  });
-
-  // ── 4. BALANCE SHEET ──
+  // ── 3. BALANCE SHEET ──
   // Build data using same logic as Excel export
   var bsAoa = [];
   var totalCA = sum(currentData, 'current-assets'), totalNCA = sum(currentData, 'noncurrent-assets');
@@ -4833,23 +5796,44 @@ function handleSignUp() {
   const name = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim().toLowerCase();
   const pass = document.getElementById('signup-password').value;
-  const confirm = document.getElementById('signup-confirm').value;
+  const confirm_pass = document.getElementById('signup-confirm').value;
 
   if (!name) { authMsg('signup-msg', 'error', 'Please enter your name.'); return; }
   if (!email || !email.includes('@')) { authMsg('signup-msg', 'error', 'Please enter a valid email.'); return; }
   if (pass.length < 6) { authMsg('signup-msg', 'error', 'Password must be at least 6 characters.'); return; }
-  if (pass !== confirm) { authMsg('signup-msg', 'error', 'Passwords do not match.'); return; }
+  if (pass !== confirm_pass) { authMsg('signup-msg', 'error', 'Passwords do not match.'); return; }
 
-  const users = getUsers();
-  if (users[email]) { authMsg('signup-msg', 'error', 'An account with this email already exists.'); return; }
-
-  users[email] = { name: name, password: pass };
-  saveUsers(users);
-
-  authMsg('signup-msg', 'success', 'Account created! Redirecting...');
-  setTimeout(function() {
-    loginSession(email, name);
-  }, 800);
+  if (FIREBASE_ENABLED) {
+    authMsg('signup-msg', 'info', 'Creating account...');
+    firebaseAuth.createUserWithEmailAndPassword(email, pass)
+      .then(function(cred) {
+        return cred.user.updateProfile({ displayName: name });
+      })
+      .then(function() {
+        // Store display name in Firestore for later retrieval
+        if (firebaseDb) {
+          firebaseDb.collection('users').doc(firebaseAuth.currentUser.uid).set({
+            name: name, email: email, createdAt: new Date().toISOString(), subscriptionStatus: 'trial', trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+          }, { merge: true });
+        }
+        authMsg('signup-msg', 'success', 'Account created! Redirecting...');
+        setTimeout(function() { loginSession(email, name); }, 800);
+      })
+      .catch(function(err) {
+        var msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.'
+          : err.code === 'auth/weak-password' ? 'Password is too weak.'
+          : err.message;
+        authMsg('signup-msg', 'error', msg);
+      });
+  } else {
+    // Fallback: localStorage auth
+    const users = getUsers();
+    if (users[email]) { authMsg('signup-msg', 'error', 'An account with this email already exists.'); return; }
+    users[email] = { name: name, password: pass };
+    saveUsers(users);
+    authMsg('signup-msg', 'success', 'Account created! Redirecting...');
+    setTimeout(function() { loginSession(email, name); }, 800);
+  }
 }
 
 function handleSignIn() {
@@ -4859,34 +5843,59 @@ function handleSignIn() {
   if (!email) { authMsg('signin-msg', 'error', 'Please enter your email.'); return; }
   if (!pass) { authMsg('signin-msg', 'error', 'Please enter your password.'); return; }
 
-  const users = getUsers();
-  const user = users[email];
-  if (!user || user.password !== pass) {
-    authMsg('signin-msg', 'error', 'Invalid email or password.');
-    return;
+  if (FIREBASE_ENABLED) {
+    authMsg('signin-msg', 'info', 'Signing in...');
+    firebaseAuth.signInWithEmailAndPassword(email, pass)
+      .then(function(cred) {
+        var name = cred.user.displayName || email;
+        loginSession(email, name);
+      })
+      .catch(function(err) {
+        var msg = err.code === 'auth/user-not-found' ? 'No account found with this email.'
+          : err.code === 'auth/wrong-password' ? 'Invalid email or password.'
+          : err.code === 'auth/invalid-credential' ? 'Invalid email or password.'
+          : err.message;
+        authMsg('signin-msg', 'error', msg);
+      });
+  } else {
+    const users = getUsers();
+    const user = users[email];
+    if (!user || user.password !== pass) {
+      authMsg('signin-msg', 'error', 'Invalid email or password.');
+      return;
+    }
+    loginSession(email, user.name);
   }
-
-  loginSession(email, user.name);
 }
 
 function handleForgotPassword() {
   const email = document.getElementById('forgot-email').value.trim().toLowerCase();
-  const pass = document.getElementById('forgot-password').value;
-  const confirm = document.getElementById('forgot-confirm').value;
 
-  if (!email || !email.includes('@')) { authMsg('forgot-msg', 'error', 'Please enter a valid email.'); return; }
-
-  const users = getUsers();
-  if (!users[email]) { authMsg('forgot-msg', 'error', 'No account found with this email.'); return; }
-
-  if (pass.length < 6) { authMsg('forgot-msg', 'error', 'New password must be at least 6 characters.'); return; }
-  if (pass !== confirm) { authMsg('forgot-msg', 'error', 'Passwords do not match.'); return; }
-
-  users[email].password = pass;
-  saveUsers(users);
-
-  authMsg('forgot-msg', 'success', 'Password updated! Redirecting to sign in...');
-  setTimeout(function() { showAuthView('signin'); }, 1200);
+  if (FIREBASE_ENABLED) {
+    if (!email || !email.includes('@')) { authMsg('forgot-msg', 'error', 'Please enter a valid email.'); return; }
+    authMsg('forgot-msg', 'info', 'Sending reset email...');
+    firebaseAuth.sendPasswordResetEmail(email)
+      .then(function() {
+        authMsg('forgot-msg', 'success', 'Password reset email sent! Check your inbox.');
+        setTimeout(function() { showAuthView('signin'); }, 2000);
+      })
+      .catch(function(err) {
+        var msg = err.code === 'auth/user-not-found' ? 'No account found with this email.' : err.message;
+        authMsg('forgot-msg', 'error', msg);
+      });
+  } else {
+    const pass = document.getElementById('forgot-password').value;
+    const confirm_pass = document.getElementById('forgot-confirm').value;
+    if (!email || !email.includes('@')) { authMsg('forgot-msg', 'error', 'Please enter a valid email.'); return; }
+    const users = getUsers();
+    if (!users[email]) { authMsg('forgot-msg', 'error', 'No account found with this email.'); return; }
+    if (pass.length < 6) { authMsg('forgot-msg', 'error', 'New password must be at least 6 characters.'); return; }
+    if (pass !== confirm_pass) { authMsg('forgot-msg', 'error', 'Passwords do not match.'); return; }
+    users[email].password = pass;
+    saveUsers(users);
+    authMsg('forgot-msg', 'success', 'Password updated! Redirecting to sign in...');
+    setTimeout(function() { showAuthView('signin'); }, 1200);
+  }
 }
 
 function loginSession(email, name) {
@@ -4923,7 +5932,19 @@ function loginSession(email, name) {
     }
   }
 
-  showDashboard();
+  // Show security badge if encryption is enabled
+  var badge = document.getElementById('security-badge');
+  if (badge && ENCRYPTION_ENABLED) badge.style.display = 'inline';
+
+  // Check subscription before showing dashboard
+  checkSubscription(function(hasAccess) {
+    if (hasAccess) {
+      hideSubscriptionGate();
+      showDashboard();
+    } else {
+      showSubscriptionGate();
+    }
+  });
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
@@ -5026,13 +6047,19 @@ function dashDeleteProject(id, name) {
 
 function handleSignOut() {
   if (currentProjectId) saveProject();
+  if (FIREBASE_ENABLED && firebaseAuth) {
+    firebaseAuth.signOut();
+  }
   localStorage.removeItem(AUTH_SESSION_KEY);
   currentUserEmail = null;
   currentUserName = null;
   currentProjectId = null;
   document.getElementById('app-wrapper').classList.remove('visible');
   document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('subscription-gate').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
+  var badge = document.getElementById('security-badge');
+  if (badge) badge.style.display = 'none';
   showAuthView('signin');
 }
 
@@ -5045,17 +6072,27 @@ function showApp(name) {
 
 // Check session on load
 (function checkSession() {
-  const session = localStorage.getItem(AUTH_SESSION_KEY);
-  if (session) {
-    try {
-      const parsed = JSON.parse(session);
-      if (parsed.email) {
-        loginSession(parsed.email, parsed.name || parsed.email);
-        return;
+  if (FIREBASE_ENABLED) {
+    firebaseAuth.onAuthStateChanged(function(user) {
+      if (user) {
+        loginSession(user.email, user.displayName || user.email);
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
       }
-    } catch(e) {}
+    });
+  } else {
+    const session = localStorage.getItem(AUTH_SESSION_KEY);
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.email) {
+          loginSession(parsed.email, parsed.name || parsed.email);
+          return;
+        }
+      } catch(e) {}
+    }
+    document.getElementById('login-screen').style.display = 'flex';
   }
-  document.getElementById('login-screen').style.display = 'flex';
 })();
 
 // ─── Company Research Engine ────────────────────────────────────────────────
@@ -5521,12 +6558,146 @@ function updateEmptyStates() {
     emptyEl.style.display = hasContent ? 'none' : 'block';
     stmtEl.style.display = hasContent ? 'block' : 'none';
   });
+  // Ratios dashboard empty state
+  var hasAnyData = SECTIONS.some(function(s) { return rows(currentData, s).length > 0; });
+  var ratiosEmpty = document.getElementById('empty-ratios');
+  var ratiosDash = document.getElementById('ratios-dashboard');
+  if (ratiosEmpty) ratiosEmpty.style.display = hasAnyData ? 'none' : 'block';
+  if (ratiosDash) ratiosDash.style.display = hasAnyData ? 'block' : 'none';
 }
 
 // Run on load to set initial empty states
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(updateEmptyStates, 100);
 });
+
+// ─── Financial Ratios & Analytics ──────────────────────────────────────────
+function buildFinancialRatios() {
+  var multi = hasPriorData();
+
+  // Helper: safe division
+  function safeDiv(num, den) {
+    if (den === 0 || den === null || den === undefined) return null;
+    return num / den;
+  }
+  function safePct(num, den) {
+    var r = safeDiv(num, den);
+    return r === null ? null : r * 100;
+  }
+
+  // Helper: format ratio value
+  function fmtRatio(val, suffix) {
+    if (val === null || val === undefined || !isFinite(val)) return 'N/A';
+    suffix = suffix || '';
+    if (suffix === '%') return val.toFixed(1) + '%';
+    if (suffix === '$') return cur() + fmt(val);
+    return val.toFixed(2);
+  }
+
+  // Helper: build one ratio item HTML
+  function ratioItem(name, curVal, priorVal, suffix, favorableUp) {
+    var curDisplay = fmtRatio(curVal, suffix);
+    var html = '<div class="ratio-item"><div class="ratio-name">' + esc(name) + '</div>';
+    html += '<div class="ratio-value">' + curDisplay + '</div>';
+    if (multi && priorVal !== null && priorVal !== undefined && isFinite(priorVal)) {
+      var priorDisplay = fmtRatio(priorVal, suffix);
+      html += '<div class="ratio-prior">Prior: ' + priorDisplay + '</div>';
+      if (curVal !== null && isFinite(curVal)) {
+        var diff = curVal - priorVal;
+        if (Math.abs(diff) > 0.001) {
+          var isUp = diff > 0;
+          var isFavorable = favorableUp ? isUp : !isUp;
+          var arrow = isUp ? '\u2191' : '\u2193';
+          var cls = isFavorable ? 'favorable' : 'unfavorable';
+          html += '<div class="ratio-change ' + cls + '">' + arrow + ' ' + Math.abs(diff).toFixed(2) + (suffix === '%' ? '%' : '') + '</div>';
+        }
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // ── Balance Sheet Ratios ──
+  var bsGrid = document.getElementById('balance-ratios-grid');
+  var bsCard = document.getElementById('balance-ratios-card');
+  if (bsGrid && bsCard) {
+    var totalCA = sum(currentData, 'current-assets');
+    var totalCL = sum(currentData, 'current-liab');
+    var totalNCA = sum(currentData, 'noncurrent-assets');
+    var totalNCL = sum(currentData, 'noncurrent-liab');
+    var totalAssets = totalCA + totalNCA;
+    var totalLiab = totalCL + totalNCL;
+    var totalEquity = sum(currentData, 'equity');
+
+    var pCA = 0, pCL = 0, pNCA = 0, pNCL = 0, pAssets = 0, pLiab = 0, pEquity = 0;
+    if (multi) {
+      pCA = sum(priorData, 'current-assets');
+      pCL = sum(priorData, 'current-liab');
+      pNCA = sum(priorData, 'noncurrent-assets');
+      pNCL = sum(priorData, 'noncurrent-liab');
+      pAssets = pCA + pNCA;
+      pLiab = pCL + pNCL;
+      pEquity = sum(priorData, 'equity');
+    }
+
+    // Try to find inventory for quick ratio
+    var inventoryAmt = 0, pInventoryAmt = 0;
+    rows(currentData, 'current-assets').forEach(function(r) {
+      if (/inventor/i.test(r.label)) inventoryAmt += parseFloat(r.amount) || 0;
+    });
+    if (multi) {
+      rows(priorData, 'current-assets').forEach(function(r) {
+        if (/inventor/i.test(r.label)) pInventoryAmt += parseFloat(r.amount) || 0;
+      });
+    }
+
+    var bsHtml = '';
+    bsHtml += ratioItem('Current Ratio', safeDiv(totalCA, totalCL), multi ? safeDiv(pCA, pCL) : null, '', true);
+    bsHtml += ratioItem('Quick Ratio', safeDiv(totalCA - inventoryAmt, totalCL), multi ? safeDiv(pCA - pInventoryAmt, pCL) : null, '', true);
+    bsHtml += ratioItem('Debt-to-Equity', safeDiv(totalLiab, totalEquity), multi ? safeDiv(pLiab, pEquity) : null, '', false);
+    bsHtml += ratioItem('Working Capital', totalCA - totalCL, multi ? (pCA - pCL) : null, '$', true);
+    bsHtml += ratioItem('Debt Ratio', safeDiv(totalLiab, totalAssets), multi ? safeDiv(pLiab, pAssets) : null, '', false);
+    bsHtml += ratioItem('Equity Ratio', safeDiv(totalEquity, totalAssets), multi ? safeDiv(pEquity, pAssets) : null, '', true);
+    bsGrid.innerHTML = bsHtml;
+
+    // Show card only if there is data
+    bsCard.style.display = (totalAssets !== 0 || totalLiab !== 0) ? 'block' : 'none';
+  }
+
+  // ── Income Statement Ratios ──
+  var isGrid = document.getElementById('income-ratios-grid');
+  var isCard = document.getElementById('income-ratios-card');
+  if (isGrid && isCard) {
+    var revenue = sum(currentData, 'revenue');
+    var cogs = sum(currentData, 'cogs');
+    var grossProfit = revenue - cogs;
+    var opex = sum(currentData, 'opex');
+    var opIncome = grossProfit - opex;
+    var other = sum(currentData, 'other');
+    var netIncome = opIncome + other;
+
+    var pRevenue = 0, pCogs = 0, pGP = 0, pOpex2 = 0, pOpInc = 0, pOther2 = 0, pNI = 0;
+    if (multi) {
+      pRevenue = sum(priorData, 'revenue');
+      pCogs = sum(priorData, 'cogs');
+      pGP = pRevenue - pCogs;
+      pOpex2 = sum(priorData, 'opex');
+      pOpInc = pGP - pOpex2;
+      pOther2 = sum(priorData, 'other');
+      pNI = pOpInc + pOther2;
+    }
+
+    var isHtml = '';
+    isHtml += ratioItem('Gross Profit Margin', safePct(grossProfit, revenue), multi ? safePct(pGP, pRevenue) : null, '%', true);
+    isHtml += ratioItem('Operating Margin', safePct(opIncome, revenue), multi ? safePct(pOpInc, pRevenue) : null, '%', true);
+    isHtml += ratioItem('Net Profit Margin', safePct(netIncome, revenue), multi ? safePct(pNI, pRevenue) : null, '%', true);
+    isHtml += ratioItem('Operating Expense Ratio', safePct(opex, revenue), multi ? safePct(pOpex2, pRevenue) : null, '%', false);
+    isHtml += ratioItem('COGS Ratio', safePct(cogs, revenue), multi ? safePct(pCogs, pRevenue) : null, '%', false);
+    isGrid.innerHTML = isHtml;
+
+    isCard.style.display = (revenue !== 0) ? 'block' : 'none';
+  }
+}
 
 // Allow Enter key to submit forms
 document.querySelectorAll('#auth-signin input').forEach(function(el) {
