@@ -332,6 +332,38 @@
     .notes-output h3:first-child { margin-top: 0; }
     .notes-output p { margin-bottom: 8px; color: #334155; }
 
+    /* ── Comparative note tables ─────────────────────────────────────── */
+    .note-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.85rem; }
+    .note-table th { background: #f8fafc; font-weight: 600; text-align: right; padding: 6px 10px; border-bottom: 2px solid #e1e5eb; }
+    .note-table th:first-child { text-align: left; width: 45%; }
+    .note-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
+    .note-table td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    .note-table .nt-total td { font-weight: 600; border-top: 1px solid #cbd5e1; }
+
+    /* ── Firm Profile modal ──────────────────────────────────────────── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--card); border-radius:12px; padding:28px 32px; max-width:560px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+    .modal-box h2 { font-size:1.1rem; margin-bottom:16px; color:var(--text); }
+    .modal-box .note-field { margin-bottom:12px; }
+    .modal-box .note-field label { font-size:0.82rem; font-weight:600; display:block; margin-bottom:4px; }
+
+    /* ── Statement Template ──────────────────────────────────────────── */
+    .tpl-row { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; }
+    .tpl-row .tpl-col { flex:1; min-width:140px; }
+    .tpl-row label { font-size:0.78rem; font-weight:600; color:var(--muted); display:block; margin-bottom:4px; }
+    .tpl-row select, .tpl-row input[type="color"] { width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:0.82rem; }
+    .tpl-row input[type="color"] { height:34px; padding:2px; cursor:pointer; }
+    .tpl-preview { background:#fff; border:1px solid var(--border); border-radius:8px; padding:16px; margin:16px 0; font-size:0.85rem; }
+
+    /* ── Smart suggestions banner ────────────────────────────────────── */
+    .suggestion-card { border:1px solid #93c5fd; background:#eff6ff; border-radius:8px; padding:14px 18px; margin-bottom:12px; }
+    .suggestion-card .sg-title { font-weight:600; font-size:0.85rem; color:#1d4ed8; margin-bottom:4px; }
+    .suggestion-card .sg-text { font-size:0.8rem; color:#1e40af; line-height:1.5; }
+    .suggestion-card .sg-actions { margin-top:8px; display:flex; gap:8px; }
+    .suggestion-card .sg-btn { font-size:0.72rem; padding:4px 10px; border-radius:5px; border:1px solid #93c5fd; background:#fff; color:#2563eb; cursor:pointer; }
+    .suggestion-card .sg-btn:hover { background:#dbeafe; }
+
     /* ── Login screen ─────────────────────────────────────────────────── */
     .login-screen {
       min-height: 100vh;
@@ -621,6 +653,7 @@
     <h1>NoteFlow</h1>
     <div class="user-area">
       <span id="dash-user-display"></span>
+      <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openFirmProfile()">Firm Profile</button>
       <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
     </div>
   </div>
@@ -646,6 +679,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openTemplate()">Formatting</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="goToDashboard()">All Projects</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
   </div>
@@ -763,6 +797,7 @@
 
   <!-- ===== NOTES ===== -->
   <div class="page" id="page-notes">
+    <div id="note-suggestions" style="display:none;margin-bottom:16px"></div>
     <div class="card" id="notes-questionnaire">
       <div class="card-title">Financial Statement Notes — Questionnaire</div>
       <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.5">
@@ -1150,6 +1185,121 @@
 
 </div><!-- /app-wrapper -->
 
+<!-- ===== FIRM PROFILE MODAL ===== -->
+<div class="modal-overlay" id="firm-profile-modal">
+  <div class="modal-box">
+    <h2>Firm Profile — Default Settings</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">These defaults auto-populate when you create a new project. The system learns from your choices over time.</p>
+    <div class="note-field"><label>Entity Type</label>
+      <select id="fp-entity-type"><option value="">— Select —</option><option value="S Corporation">S Corporation</option><option value="C Corporation">C Corporation</option><option value="Limited Liability Company (LLC)">LLC</option><option value="Partnership">Partnership</option><option value="Sole Proprietorship">Sole Proprietorship</option><option value="Nonprofit Organization">Nonprofit</option></select>
+    </div>
+    <div class="note-field"><label>State</label><input type="text" id="fp-state" placeholder="e.g., Georgia" /></div>
+    <div class="note-field"><label>Basis of Accounting</label>
+      <select id="fp-basis"><option value="">— Select —</option><option value="accrual">Accrual (U.S. GAAP)</option><option value="cash">Cash basis</option><option value="modified-cash">Modified cash</option><option value="tax">Tax basis</option></select>
+    </div>
+    <div class="note-field"><label>Depreciation Method</label>
+      <select id="fp-depreciation"><option value="">— Select —</option><option value="straight-line">Straight-line</option><option value="declining balance">Declining balance</option><option value="MACRS">MACRS</option></select>
+    </div>
+    <div class="note-field"><label>Tax Status</label>
+      <select id="fp-tax-status"><option value="">— Select —</option><option value="s-corp">S Corp (pass-through)</option><option value="c-corp">C Corp (entity-level)</option><option value="llc-partner">LLC / Partnership</option><option value="llc-scorp">LLC taxed as S Corp</option><option value="sole-prop">Sole Proprietorship</option><option value="nonprofit">Tax-exempt</option></select>
+    </div>
+    <div class="note-field"><label>Inventory Method</label>
+      <select id="fp-inventory"><option value="">N/A</option><option value="FIFO">FIFO</option><option value="weighted average">Weighted Average</option><option value="specific identification">Specific Identification</option></select>
+    </div>
+    <div class="note-field"><label>Useful Lives</label><input type="text" id="fp-useful-lives" placeholder="e.g., Vehicles: 5yr, Equipment: 7yr" /></div>
+    <div class="note-field"><label>Default Revenue Recognition</label><textarea id="fp-revenue-rec" rows="2" placeholder="e.g., Revenue is recognized at the point in time when control transfers to the customer."></textarea></div>
+    <div class="note-field"><label>Default Cash Equivalents</label><textarea id="fp-cash-equiv" rows="2" placeholder="e.g., Highly liquid investments with original maturity of three months or less."></textarea></div>
+    <div class="actions" style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="saveFirmProfileFromForm()">Save Profile</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeFirmProfile()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATEMENT TEMPLATE MODAL ===== -->
+<div class="modal-overlay" id="template-modal">
+  <div class="modal-box" style="max-width:640px">
+    <h2>Statement Formatting Template</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Customize how your financial statements appear. Changes apply to all statements and exports.</p>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Font Family</label>
+        <select id="tpl-font-family">
+          <option value="system-ui, -apple-system, sans-serif">System Default</option>
+          <option value="'Times New Roman', Georgia, serif">Times New Roman (Serif)</option>
+          <option value="Georgia, 'Times New Roman', serif">Georgia (Serif)</option>
+          <option value="Garamond, 'Times New Roman', serif">Garamond (Serif)</option>
+          <option value="'Courier New', monospace">Courier New (Monospace)</option>
+          <option value="Arial, Helvetica, sans-serif">Arial (Sans-serif)</option>
+          <option value="Calibri, 'Segoe UI', sans-serif">Calibri (Sans-serif)</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Body Font Size</label>
+        <select id="tpl-body-size">
+          <option value="0.8rem">Small</option>
+          <option value="0.9rem" selected>Medium</option>
+          <option value="1rem">Large</option>
+          <option value="1.1rem">Extra Large</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Company Name Alignment</label>
+        <select id="tpl-company-align">
+          <option value="center" selected>Center</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Spacing</label>
+        <select id="tpl-spacing">
+          <option value="compact">Compact</option>
+          <option value="normal" selected>Normal</option>
+          <option value="spacious">Spacious</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Negative Numbers</label>
+        <select id="tpl-negative-style">
+          <option value="parentheses" selected>Parentheses — (1,000.00)</option>
+          <option value="minus">Minus sign — -1,000.00</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Decimal Places</label>
+        <select id="tpl-decimals">
+          <option value="0">0</option>
+          <option value="2" selected>2</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Total Line Style</label>
+        <select id="tpl-total-line">
+          <option value="single">Single underline</option>
+          <option value="double" selected>Double underline</option>
+          <option value="bold">Bold border</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Section Header Color</label>
+        <input type="color" id="tpl-section-color" value="#64748b" />
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Header Text Color</label>
+        <input type="color" id="tpl-header-color" value="#1e293b" />
+      </div>
+      <div class="tpl-col"><label>Negative Amount Color</label>
+        <input type="color" id="tpl-negative-color" value="#dc2626" />
+      </div>
+    </div>
+    <div class="actions" style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="saveTemplateFromForm()">Save Template</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetTemplate()">Reset Defaults</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeTemplate()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
@@ -1272,6 +1422,11 @@ function saveProject() {
   });
   localStorage.setItem('fsgen-project-' + currentProjectId, JSON.stringify(proj));
 
+  // Track patterns for learning intelligence
+  if (typeof trackProjectPatterns === 'function') {
+    try { trackProjectPatterns(); } catch(e) { /* ignore */ }
+  }
+
   // Update project index updatedAt
   const list = getProjectList(currentUserEmail);
   const entry = list.find(p => p.id === currentProjectId);
@@ -1291,6 +1446,10 @@ function createProject(name) {
   document.getElementById('period').value = '';
   document.getElementById('priorPeriod').value = '';
   document.getElementById('currency').value = '$';
+
+  // Apply firm defaults and smart defaults to new project
+  applyFirmProfileToNewProject();
+  applySmartDefaults();
 
   // Save blank project
   saveProject();
@@ -1469,8 +1628,14 @@ function saveNotesToProject() {
 const cur = () => document.getElementById('currency').value || '$';
 
 function fmt(n) {
-  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n < 0 ? '(' + abs + ')' : abs;
+  var tpl = (typeof getActiveTemplate === 'function') ? getActiveTemplate() : { decimals: 2, negativeStyle: 'parentheses' };
+  var dec = (tpl.decimals != null) ? tpl.decimals : 2;
+  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  if (n < 0) {
+    if (tpl.negativeStyle === 'minus') return '-' + abs;
+    return '(' + abs + ')';
+  }
+  return abs;
 }
 
 function sum(dataObj, section) {
@@ -1576,6 +1741,347 @@ function columnHeaders(multi) {
     '</tr>';
   }
   return '';
+}
+
+// ─── Statement Template System ─────────────────────────────────────────────
+const DEFAULT_TEMPLATE = {
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  bodySize: "0.9rem",
+  companyAlign: "center",
+  spacing: "normal",
+  negativeStyle: "parentheses",
+  decimals: 2,
+  totalLine: "double",
+  sectionColor: "#64748b",
+  headerColor: "#1e293b",
+  negativeColor: "#dc2626"
+};
+
+function loadTemplate() {
+  try { return Object.assign({}, DEFAULT_TEMPLATE, JSON.parse(localStorage.getItem('noteflow-template-' + currentUserEmail))); }
+  catch(e) { return Object.assign({}, DEFAULT_TEMPLATE); }
+}
+function saveTemplate(tpl) {
+  localStorage.setItem('noteflow-template-' + currentUserEmail, JSON.stringify(tpl));
+}
+function getActiveTemplate() { return loadTemplate(); }
+
+function applyTemplateToStatements() {
+  var tpl = getActiveTemplate();
+  document.querySelectorAll('.statement').forEach(function(el) {
+    el.style.fontFamily = tpl.fontFamily;
+    el.style.fontSize = tpl.bodySize;
+  });
+  document.querySelectorAll('.stmt-header').forEach(function(el) {
+    el.style.textAlign = tpl.companyAlign;
+    el.style.color = tpl.headerColor;
+  });
+  document.querySelectorAll('.section-header td').forEach(function(el) {
+    el.style.color = tpl.sectionColor;
+  });
+  document.querySelectorAll('.negative').forEach(function(el) {
+    el.style.color = tpl.negativeColor;
+  });
+  var spacingPad = tpl.spacing === 'compact' ? '3px 8px' : tpl.spacing === 'spacious' ? '10px 8px' : '6px 8px';
+  document.querySelectorAll('.stmt-table td').forEach(function(el) {
+    el.style.padding = spacingPad;
+  });
+  var totalBorder = tpl.totalLine === 'double' ? '3px double #1e293b' : tpl.totalLine === 'bold' ? '2px solid #1e293b' : '1px solid #1e293b';
+  document.querySelectorAll('.grand-total td').forEach(function(el) {
+    el.style.borderTop = totalBorder;
+  });
+}
+
+function openTemplate() {
+  var tpl = loadTemplate();
+  document.getElementById('tpl-font-family').value = tpl.fontFamily;
+  document.getElementById('tpl-body-size').value = tpl.bodySize;
+  document.getElementById('tpl-company-align').value = tpl.companyAlign;
+  document.getElementById('tpl-spacing').value = tpl.spacing;
+  document.getElementById('tpl-negative-style').value = tpl.negativeStyle;
+  document.getElementById('tpl-decimals').value = String(tpl.decimals);
+  document.getElementById('tpl-total-line').value = tpl.totalLine;
+  document.getElementById('tpl-section-color').value = tpl.sectionColor;
+  document.getElementById('tpl-header-color').value = tpl.headerColor;
+  document.getElementById('tpl-negative-color').value = tpl.negativeColor;
+  document.getElementById('template-modal').classList.add('open');
+}
+function closeTemplate() { document.getElementById('template-modal').classList.remove('open'); }
+function resetTemplate() {
+  saveTemplate(DEFAULT_TEMPLATE);
+  openTemplate();
+}
+function saveTemplateFromForm() {
+  var tpl = {
+    fontFamily: document.getElementById('tpl-font-family').value,
+    bodySize: document.getElementById('tpl-body-size').value,
+    companyAlign: document.getElementById('tpl-company-align').value,
+    spacing: document.getElementById('tpl-spacing').value,
+    negativeStyle: document.getElementById('tpl-negative-style').value,
+    decimals: parseInt(document.getElementById('tpl-decimals').value) || 2,
+    totalLine: document.getElementById('tpl-total-line').value,
+    sectionColor: document.getElementById('tpl-section-color').value,
+    headerColor: document.getElementById('tpl-header-color').value,
+    negativeColor: document.getElementById('tpl-negative-color').value
+  };
+  saveTemplate(tpl);
+  closeTemplate();
+  buildIncomeStatement(); buildBalanceSheet(); buildCashFlow();
+}
+
+// ─── Firm Profile ──────────────────────────────────────────────────────────
+function loadFirmProfile() {
+  try { return JSON.parse(localStorage.getItem('noteflow-firmprofile-' + currentUserEmail)) || {}; }
+  catch(e) { return {}; }
+}
+function saveFirmProfile(profile) {
+  localStorage.setItem('noteflow-firmprofile-' + currentUserEmail, JSON.stringify(profile));
+}
+function openFirmProfile() {
+  var p = loadFirmProfile();
+  document.getElementById('fp-entity-type').value = p.entityType || '';
+  document.getElementById('fp-state').value = p.state || '';
+  document.getElementById('fp-basis').value = p.basis || '';
+  document.getElementById('fp-depreciation').value = p.depreciation || '';
+  document.getElementById('fp-tax-status').value = p.taxStatus || '';
+  document.getElementById('fp-inventory').value = p.inventory || '';
+  document.getElementById('fp-useful-lives').value = p.usefulLives || '';
+  document.getElementById('fp-revenue-rec').value = p.revenueRec || '';
+  document.getElementById('fp-cash-equiv').value = p.cashEquiv || '';
+  document.getElementById('firm-profile-modal').classList.add('open');
+}
+function closeFirmProfile() { document.getElementById('firm-profile-modal').classList.remove('open'); }
+function saveFirmProfileFromForm() {
+  var p = {
+    entityType: document.getElementById('fp-entity-type').value,
+    state: document.getElementById('fp-state').value,
+    basis: document.getElementById('fp-basis').value,
+    depreciation: document.getElementById('fp-depreciation').value,
+    taxStatus: document.getElementById('fp-tax-status').value,
+    inventory: document.getElementById('fp-inventory').value,
+    usefulLives: document.getElementById('fp-useful-lives').value,
+    revenueRec: document.getElementById('fp-revenue-rec').value,
+    cashEquiv: document.getElementById('fp-cash-equiv').value
+  };
+  saveFirmProfile(p);
+  closeFirmProfile();
+  alert('Firm profile saved. New projects will use these defaults.');
+}
+
+function applyFirmProfileToNewProject() {
+  var p = loadFirmProfile();
+  if (!p || Object.keys(p).length === 0) return;
+  if (p.entityType) { var el = document.getElementById('nq-entity-type'); if (el) el.value = p.entityType; }
+  if (p.state) { var el = document.getElementById('nq-state'); if (el) el.value = p.state; }
+  if (p.basis) { var el = document.getElementById('nq-basis'); if (el) el.value = p.basis; }
+  if (p.depreciation) { var el = document.getElementById('nq-depreciation'); if (el) el.value = p.depreciation; }
+  if (p.taxStatus) { var el = document.getElementById('nq-tax-status'); if (el) el.value = p.taxStatus; }
+  if (p.inventory) { var el = document.getElementById('nq-inventory'); if (el) el.value = p.inventory; }
+  if (p.usefulLives) { var el = document.getElementById('nq-useful-lives'); if (el) el.value = p.usefulLives; }
+  if (p.revenueRec) { var el = document.getElementById('nq-revenue-recognition'); if (el) el.value = p.revenueRec; }
+  if (p.cashEquiv) { var el = document.getElementById('nq-cash-equiv'); if (el) el.value = p.cashEquiv; }
+}
+
+// ─── Learning / Pattern Intelligence ───────────────────────────────────────
+function loadPatterns() {
+  try { return JSON.parse(localStorage.getItem('noteflow-patterns-' + currentUserEmail)) || { fieldCounts: {}, projectCount: 0 }; }
+  catch(e) { return { fieldCounts: {}, projectCount: 0 }; }
+}
+function savePatterns(p) {
+  localStorage.setItem('noteflow-patterns-' + currentUserEmail, JSON.stringify(p));
+}
+
+function trackProjectPatterns() {
+  var patterns = loadPatterns();
+  var notes = collectNotesData();
+  patterns.projectCount = (patterns.projectCount || 0) + 1;
+  if (!patterns.fieldCounts) patterns.fieldCounts = {};
+  Object.keys(notes).forEach(function(key) {
+    var val = notes[key];
+    if (!val) return;
+    if (!patterns.fieldCounts[key]) patterns.fieldCounts[key] = {};
+    patterns.fieldCounts[key][val] = (patterns.fieldCounts[key][val] || 0) + 1;
+  });
+  patterns.lastTracked = new Date().toISOString();
+  savePatterns(patterns);
+}
+
+function getSmartDefaults() {
+  var patterns = loadPatterns();
+  var defaults = {};
+  if ((patterns.projectCount || 0) < 2) return defaults;
+  var fc = patterns.fieldCounts || {};
+  Object.keys(fc).forEach(function(field) {
+    var counts = fc[field];
+    var total = Object.values(counts).reduce(function(a, b) { return a + b; }, 0);
+    var entries = Object.entries(counts).sort(function(a, b) { return b[1] - a[1]; });
+    if (entries.length > 0 && entries[0][1] / total >= 0.6) {
+      defaults[field] = entries[0][0];
+    }
+  });
+  return defaults;
+}
+
+function applySmartDefaults() {
+  var defaults = getSmartDefaults();
+  Object.keys(defaults).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && !el.value) el.value = defaults[id];
+    var radio = document.querySelector('input[name="' + id + '"]');
+    if (radio) {
+      var target = document.querySelector('input[name="' + id + '"][value="' + defaults[id] + '"]');
+      if (target) target.checked = true;
+    }
+  });
+}
+
+// ─── Smart Suggestions ─────────────────────────────────────────────────────
+var LINE_ITEM_RULES = [
+  { pattern: /depreciation/i, sections: ['opex','noncurrent-assets'], field: 'nq-depreciation', title: 'Depreciation Policy',
+    msg: 'Depreciation expense detected on your statements. Ensure the depreciation method and useful lives are disclosed.' },
+  { pattern: /amortization/i, sections: ['opex','noncurrent-assets'], field: 'nq-intangibles', title: 'Intangible Assets',
+    msg: 'Amortization detected. Consider disclosing intangible asset details and amortization policy.' },
+  { pattern: /lease|right.of.use|rou/i, sections: ['current-liab','noncurrent-liab','noncurrent-assets'], field: 'nq-leases', title: 'Lease Disclosures (ASC 842)',
+    msg: 'Lease-related items detected on your balance sheet. ASC 842 disclosures are likely required.' },
+  { pattern: /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing/i, sections: ['current-liab','noncurrent-liab'], field: 'nq-debt', title: 'Debt Disclosures',
+    msg: 'Debt instruments detected in liabilities. Disclose terms, rates, maturity, and any covenants.' },
+  { pattern: /inventor/i, sections: ['current-assets'], field: 'nq-inventory', title: 'Inventory Valuation',
+    msg: 'Inventory detected on balance sheet. Disclose the valuation method (FIFO, weighted average, etc.).' },
+  { pattern: /goodwill|intangible|patent|trademark|copyright|franchise|customer.?list/i, sections: ['noncurrent-assets'], field: 'nq-intangibles', title: 'Intangible Assets / Goodwill',
+    msg: 'Intangible assets detected. Disclose amortization policy and impairment testing approach.' },
+  { pattern: /receivable/i, sections: ['current-assets'], field: 'nq-allowance', title: 'Accounts Receivable',
+    msg: 'Accounts receivable on balance sheet. Consider disclosing allowance for doubtful accounts methodology.' },
+];
+
+function generateSuggestions() {
+  var suggestions = [];
+  var dismissed = JSON.parse(localStorage.getItem('noteflow-dismissed-' + currentUserEmail) || '[]');
+
+  LINE_ITEM_RULES.forEach(function(rule) {
+    if (dismissed.indexOf(rule.field) >= 0) return;
+    var found = false;
+    rule.sections.forEach(function(section) {
+      if (rows(currentData, section).some(function(r) { return rule.pattern.test(r.label); })) {
+        found = true;
+      }
+    });
+    if (!found) return;
+
+    var el = document.getElementById(rule.field);
+    var isSelect = el && el.tagName === 'SELECT';
+    var isTextarea = el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT');
+    var addressed = false;
+    if (isSelect && el.value) addressed = true;
+    if (isTextarea && el.value.trim()) addressed = true;
+    var radio = document.querySelector('input[name="' + rule.field + '"]:checked');
+    if (radio && radio.value === 'yes') addressed = true;
+
+    if (!addressed) {
+      suggestions.push(rule);
+    }
+  });
+
+  return suggestions;
+}
+
+function renderSuggestions() {
+  var suggestions = generateSuggestions();
+  var container = document.getElementById('note-suggestions');
+  if (!container) return;
+  if (suggestions.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+  var html = '';
+  suggestions.forEach(function(s) {
+    html += '<div class="suggestion-card">';
+    html += '<div class="sg-title">' + esc(s.title) + '</div>';
+    html += '<div class="sg-text">' + esc(s.msg) + '</div>';
+    html += '<div class="sg-actions">';
+    html += '<button class="sg-btn" onclick="scrollToNoteField(\'' + s.field + '\')">Address Now</button>';
+    html += '<button class="sg-btn" onclick="dismissSuggestion(\'' + s.field + '\')">Dismiss</button>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function scrollToNoteField(field) {
+  var el = document.getElementById(field);
+  if (!el) {
+    el = document.querySelector('input[name="' + field + '"]');
+  }
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus();
+  }
+}
+
+function dismissSuggestion(field) {
+  var dismissed = JSON.parse(localStorage.getItem('noteflow-dismissed-' + currentUserEmail) || '[]');
+  if (dismissed.indexOf(field) === -1) dismissed.push(field);
+  localStorage.setItem('noteflow-dismissed-' + currentUserEmail, JSON.stringify(dismissed));
+  renderSuggestions();
+}
+
+// ─── Comparative Note Table Builder ────────────────────────────────────────
+function buildNoteTable(tableRows) {
+  var m = meta();
+  var c = cur();
+  var tpl = getActiveTemplate();
+  var multi = hasPriorData();
+  var html = '<table class="note-table">';
+  html += '<thead><tr><th></th><th>' + esc(m.period || 'Current') + '</th>';
+  if (multi) html += '<th>' + esc(m.priorPeriod || 'Prior') + '</th>';
+  html += '</tr></thead><tbody>';
+  tableRows.forEach(function(r) {
+    var cls = r.isTotal ? 'nt-total' : '';
+    html += '<tr class="' + cls + '">';
+    html += '<td>' + esc(r.label) + '</td>';
+    html += '<td>' + c + fmt(r.current) + '</td>';
+    if (multi) html += '<td>' + c + fmt(r.prior) + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildComparativeSection(sectionKey, labelFilter) {
+  var multi = hasPriorData();
+  var curItems = rows(currentData, sectionKey);
+  if (labelFilter) curItems = curItems.filter(function(r) { return labelFilter.test(r.label); });
+  if (curItems.length === 0) return '';
+
+  var tableRows = [];
+  var curTotal = 0, priorTotal = 0;
+  curItems.forEach(function(r) {
+    var amt = parseFloat(r.amount) || 0;
+    curTotal += amt;
+    var priorAmt = 0;
+    if (multi) {
+      var priorItems = rows(priorData, sectionKey);
+      if (labelFilter) priorItems = priorItems.filter(function(p) { return labelFilter.test(p.label); });
+      var match = priorItems.find(function(p) { return p.label === r.label; });
+      if (match) priorAmt = parseFloat(match.amount) || 0;
+    }
+    priorTotal += priorAmt;
+    tableRows.push({ label: r.label, current: amt, prior: priorAmt });
+  });
+
+  if (multi) {
+    var priorItems = rows(priorData, sectionKey);
+    if (labelFilter) priorItems = priorItems.filter(function(p) { return labelFilter.test(p.label); });
+    priorItems.forEach(function(p) {
+      if (!curItems.find(function(c) { return c.label === p.label; })) {
+        var amt = parseFloat(p.amount) || 0;
+        priorTotal += amt;
+        tableRows.push({ label: p.label, current: 0, prior: amt });
+      }
+    });
+  }
+
+  tableRows.push({ label: 'Total', current: curTotal, prior: priorTotal, isTotal: true });
+  return buildNoteTable(tableRows);
 }
 
 // ─── Income Statement ───────────────────────────────────────────────────────
@@ -2084,15 +2590,17 @@ function switchTab(name) {
   const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, notes: 4, checklist: 5 };
   document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
 
-  if (name === 'income') buildIncomeStatement();
-  if (name === 'balance') buildBalanceSheet();
-  if (name === 'cashflow') buildCashFlow();
+  if (name === 'income') { buildIncomeStatement(); applyTemplateToStatements(); }
+  if (name === 'balance') { buildBalanceSheet(); applyTemplateToStatements(); }
+  if (name === 'cashflow') { buildCashFlow(); applyTemplateToStatements(); }
+  if (name === 'notes') renderSuggestions();
 }
 
 function generateAll() {
   buildIncomeStatement();
   buildBalanceSheet();
   buildCashFlow();
+  applyTemplateToStatements();
   switchTab('income');
 }
 
@@ -2924,6 +3432,11 @@ function generateNotes() {
     if (usefulLives) depText += ' Estimated useful lives are as follows: ' + esc(usefulLives) + '.';
     depText += ' Expenditures for major improvements and additions are capitalized, while expenditures for maintenance and repairs are charged to expense as incurred. Upon retirement or disposal, the cost and accumulated depreciation are removed from the accounts, and any resulting gain or loss is reflected in the statements of operations.';
     html += '<p><strong>Property and Equipment</strong> — ' + depText + '</p>';
+    // Comparative PP&E table
+    var ppeTable = buildComparativeSection('noncurrent-assets', /property|equipment|furniture|vehicle|building|land|leasehold|computer|machinery/i);
+    if (ppeTable) {
+      html += '<p>Property and equipment consisted of the following:</p>' + ppeTable;
+    }
   }
 
   // Intangible Assets
@@ -2972,6 +3485,14 @@ function generateNotes() {
     html += '<h3>Note ' + noteNum + ' — Debt and Notes Payable</h3>';
     if (debtText) html += '<p>' + esc(debtText) + '</p>';
     if (locText) html += '<p><strong>Lines of Credit</strong> — ' + esc(locText) + '</p>';
+    // Comparative debt table
+    var debtTable = buildComparativeSection('current-liab', /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing/i);
+    var debtTableLT = buildComparativeSection('noncurrent-liab', /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing/i);
+    if (debtTable || debtTableLT) {
+      html += '<p>Outstanding debt obligations consisted of the following:</p>';
+      if (debtTable) html += debtTable;
+      if (debtTableLT) html += debtTableLT;
+    }
   }
 
   // ── Note: Leases ──
@@ -2997,6 +3518,11 @@ function generateNotes() {
     html += '<h3>Note ' + noteNum + ' — ' + eqTitle + '</h3>';
     if (equityText) html += '<p>' + esc(equityText) + '</p>';
     if (hasDist && distText) html += '<p><strong>Distributions</strong> — ' + esc(distText) + '</p>';
+    // Comparative equity table
+    var eqTable = buildComparativeSection('equity');
+    if (eqTable) {
+      html += '<p>Components of ' + eqTitle.toLowerCase() + ' consisted of the following:</p>' + eqTable;
+    }
   }
 
   // ── Note: Related Party Transactions ──
