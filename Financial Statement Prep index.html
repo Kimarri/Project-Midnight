@@ -558,9 +558,149 @@
     .stmt-table.multi-period .col-current { text-align: right; width: 25%; }
     .stmt-table.multi-period .col-prior { text-align: right; width: 25%; }
 
+    /* ── #1 Mobile tabs horizontal scroll ────────────────────────────── */
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { white-space: nowrap; flex-shrink: 0; }
+
+    /* ── #2 Responsive header / hamburger ─────────────────────────────── */
+    .header-actions { display: flex; align-items: center; gap: 14px; }
+    .hamburger-btn {
+      display: none; background: none; border: 1px solid #475569; color: #94a3b8;
+      border-radius: 6px; padding: 6px 9px; cursor: pointer; font-size: 1.1rem; line-height: 1;
+    }
+    .hamburger-btn:hover { background: #1e293b; color: #e2e8f0; }
+    .mobile-menu {
+      display: none; position: absolute; right: 16px; top: 100%; background: #1e293b;
+      border: 1px solid #334155; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      z-index: 50; overflow: hidden; min-width: 180px;
+    }
+    .mobile-menu.open { display: block; }
+    .mobile-menu button {
+      display: block; width: 100%; text-align: left; padding: 12px 16px; border: none;
+      background: none; color: #cbd5e1; font-size: 0.85rem; cursor: pointer;
+    }
+    .mobile-menu button:hover { background: #334155; color: #fff; }
+    .mobile-menu button.danger { color: #fca5a5; }
+    .mobile-menu button.danger:hover { background: #7f1d1d; color: #fff; }
+
+    @media (max-width: 768px) {
+      .hamburger-btn { display: block; }
+      .header-actions .btn, .header-actions span#user-display { display: none; }
+      header { position: relative; }
+    }
+
+    /* ── #3 Tab completion badges ─────────────────────────────────────── */
+    .tab { position: relative; }
+    .tab-badge {
+      position: absolute; top: 4px; right: 4px; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--green); display: none;
+    }
+    .tab-badge.active { display: block; }
+    .tab-badge.partial { background: #f59e0b; }
+
+    /* ── #6 Enhanced tab active state ─────────────────────────────────── */
+    .tab.active {
+      color: #fff; border-bottom-color: var(--primary);
+      background: rgba(37, 99, 235, 0.12); border-radius: 6px 6px 0 0;
+    }
+
+    /* ── #8 Auto-save indicator ──────────────────────────────────────── */
+    .save-indicator {
+      font-size: 0.72rem; color: #64748b; transition: all 0.3s ease;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .save-indicator.saved { color: #16a34a; }
+    .save-indicator.saving { color: #f59e0b; }
+
+    /* ── #9 Accordion note groups ────────────────────────────────────── */
+    .note-group-title {
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; transition: color 0.15s; user-select: none;
+    }
+    .note-group-title:hover { color: var(--primary-dark); }
+    .note-group-title::after {
+      content: '▾'; font-size: 0.75rem; color: var(--muted); transition: transform 0.2s;
+    }
+    .note-group.collapsed .note-group-title::after { transform: rotate(-90deg); }
+    .note-group-body { transition: max-height 0.3s ease, opacity 0.2s ease; overflow: hidden; }
+    .note-group.collapsed .note-group-body { max-height: 0 !important; opacity: 0; padding: 0; }
+
+    /* ── #12 Persistent statement toolbar ─────────────────────────────── */
+    .stmt-toolbar {
+      position: sticky; top: 0; z-index: 10; background: var(--bg);
+      padding: 10px 0; display: flex; gap: 10px; justify-content: flex-end;
+      border-bottom: 1px solid var(--border); margin-bottom: 16px;
+    }
+
+    /* ── #14 Empty state for statement tabs ───────────────────────────── */
+    .stmt-empty {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .stmt-empty .stmt-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+    .stmt-empty p { font-size: 0.92rem; margin-bottom: 16px; line-height: 1.6; }
+    .stmt-empty .btn { margin-top: 4px; }
+
+    /* ── #7 Sticky generate bar on Import tab ────────────────────────── */
+    .generate-bar {
+      position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--border);
+      padding: 14px 22px; display: flex; gap: 10px; align-items: center;
+      margin: 0 -20px -28px; border-radius: 0 0 10px 10px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.05); z-index: 5;
+    }
+    .generate-bar .btn-primary { padding: 10px 24px; font-size: 0.95rem; }
+
+    /* ── #5 Dark mode ────────────────────────────────────────────────── */
+    .dark-toggle {
+      background: none; border: 1px solid #475569; color: #94a3b8; border-radius: 6px;
+      padding: 5px 9px; cursor: pointer; font-size: 0.85rem; line-height: 1;
+    }
+    .dark-toggle:hover { background: #1e293b; color: #e2e8f0; }
+
+    body.dark-mode {
+      --bg: #0f172a; --card: #1e293b; --border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8; --primary: #3b82f6;
+      --primary-dark: #2563eb; --header-bg: #0f172a;
+    }
+    body.dark-mode header { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); }
+    body.dark-mode .tabs { background: #0f172a; border-color: #1e293b; }
+    body.dark-mode .project-bar { background: #020617; }
+    body.dark-mode .import-zone { background: #1e293b; border-color: #475569; }
+    body.dark-mode .import-zone:hover, body.dark-mode .import-zone.drag-over { background: #1e3a5f; border-color: var(--primary); }
+    body.dark-mode .import-zone.has-file { background: #1e3a5f; }
+    body.dark-mode .meta-row input, body.dark-mode .note-field input[type="text"],
+    body.dark-mode .note-field textarea, body.dark-mode .note-field select {
+      background: #0f172a; color: #e2e8f0; border-color: #475569;
+    }
+    body.dark-mode .stmt-table .item td { border-color: #334155; }
+    body.dark-mode .stmt-table .section-header td { color: #94a3b8; }
+    body.dark-mode .stmt-table .subtotal td { border-color: #475569; }
+    body.dark-mode .stmt-table .grand-total td { border-color: #e2e8f0; color: #f1f5f9; }
+    body.dark-mode .login-screen { background: linear-gradient(135deg, #0f172a 0%, #020617 100%); }
+    body.dark-mode .login-card, body.dark-mode .modal-box { background: #1e293b; }
+    body.dark-mode .login-field input { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    body.dark-mode .dashboard { background: #0f172a; }
+    body.dark-mode .project-card { background: #1e293b; border-color: #334155; }
+    body.dark-mode .project-card:hover { border-color: var(--primary); }
+    body.dark-mode .suggestion-card { background: #1e3a5f; border-color: #2563eb; }
+    body.dark-mode .suggestion-card .sg-title { color: #93c5fd; }
+    body.dark-mode .suggestion-card .sg-text { color: #bfdbfe; }
+    body.dark-mode .note-table th { background: #0f172a; }
+    body.dark-mode .note-table td { border-color: #334155; }
+    body.dark-mode .notes-output p { color: #cbd5e1; }
+    body.dark-mode .generate-bar { background: #1e293b; border-color: #475569; box-shadow: 0 -4px 12px rgba(0,0,0,0.2); }
+    body.dark-mode .stmt-toolbar { background: #0f172a; border-color: #334155; }
+    body.dark-mode .pc-dropdown { background: #1e293b; border-color: #475569; }
+    body.dark-mode .pc-dropdown button { color: #cbd5e1; }
+    body.dark-mode .pc-dropdown button:hover { background: #334155; }
+
     @media print {
-      body { background: #fff; }
-      header, .tabs, .actions, .print-actions, .card { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+      header, .tabs, .actions, .print-actions, .card, .stmt-toolbar, .generate-bar { display: none !important; }
       .page { display: block !important; }
       .statement { border: none; padding: 0; }
       .page.active .statement { display: block; }
@@ -574,7 +714,7 @@
   <div class="login-card">
     <div class="logo">
       <h2>NoteFlow</h2>
-      <p>Professional Financial Reports</p>
+      <p>Professional Financial Statements, Simplified</p>
     </div>
 
     <!-- Sign In -->
@@ -653,6 +793,7 @@
     <h1>NoteFlow</h1>
     <div class="user-area">
       <span id="dash-user-display"></span>
+      <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">◐</button>
       <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openFirmProfile()">Firm Profile</button>
       <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
     </div>
@@ -675,24 +816,33 @@
 <header>
   <div>
     <h1 id="app-project-name" style="cursor:pointer" onclick="goToDashboard()">NoteFlow</h1>
-    <span>Import. Map. Generate.</span>
+    <span>Professional Financial Statements, Simplified</span>
   </div>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="header-actions">
+    <span class="save-indicator" id="save-indicator"></span>
     <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
+    <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">◐</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openTemplate()">Formatting</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="goToDashboard()">All Projects</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="handleSignOut()">Sign Out</button>
+    <button class="hamburger-btn" onclick="toggleMobileMenu()" title="Menu">☰</button>
+    <div class="mobile-menu" id="mobile-menu">
+      <button onclick="toggleDarkMode();toggleMobileMenu()">◐ Dark Mode</button>
+      <button onclick="openTemplate();toggleMobileMenu()">Formatting</button>
+      <button onclick="goToDashboard();toggleMobileMenu()">All Projects</button>
+      <button class="danger" onclick="handleSignOut()">Sign Out</button>
+    </div>
   </div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('input')">Import & Setup</div>
-  <div class="tab" onclick="switchTab('income')">Income Statement</div>
-  <div class="tab" onclick="switchTab('balance')">Balance Sheet</div>
-  <div class="tab" onclick="switchTab('cashflow')">Cash Flow</div>
-  <div class="tab" onclick="switchTab('equity')">Equity</div>
-  <div class="tab" onclick="switchTab('notes')">Notes</div>
-  <div class="tab" onclick="switchTab('checklist')">Disclosure Checklist</div>
+<div class="tabs" id="tab-bar">
+  <div class="tab active" onclick="switchTab('input')">Import<span class="tab-badge" id="badge-input"></span></div>
+  <div class="tab" onclick="switchTab('balance')">Balance Sheet<span class="tab-badge" id="badge-balance"></span></div>
+  <div class="tab" onclick="switchTab('income')">Income Statement<span class="tab-badge" id="badge-income"></span></div>
+  <div class="tab" onclick="switchTab('equity')">Equity<span class="tab-badge" id="badge-equity"></span></div>
+  <div class="tab" onclick="switchTab('cashflow')">Cash Flows<span class="tab-badge" id="badge-cashflow"></span></div>
+  <div class="tab" onclick="switchTab('notes')">Notes<span class="tab-badge" id="badge-notes"></span></div>
+  <div class="tab" onclick="switchTab('checklist')">Disclosures<span class="tab-badge" id="badge-checklist"></span></div>
 </div>
 
 <div class="container">
@@ -759,55 +909,72 @@
       </div>
     </div>
 
-    <div class="actions">
+    <div class="generate-bar">
       <button class="btn btn-primary" onclick="generateAll()">Generate Statements</button>
-      <button class="btn btn-ghost" onclick="exportPackagePDF()" style="margin-left:8px">Export Full Package (PDF)</button>
-      <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear All Data</button>
+      <button class="btn btn-ghost" onclick="exportPackagePDF()">Export Full Package (PDF)</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-danger btn-sm" onclick="confirmClearAll()" style="font-size:0.75rem">Clear All Data</button>
     </div>
-  </div>
-
-  <!-- ===== INCOME STATEMENT ===== -->
-  <div class="page" id="page-income">
-    <div class="print-actions">
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
-      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
-      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
-      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
-    </div>
-    <div class="statement" id="income-statement"></div>
   </div>
 
   <!-- ===== BALANCE SHEET ===== -->
   <div class="page" id="page-balance">
-    <div class="print-actions">
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+    <div class="stmt-toolbar">
       <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
       <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-balance">
+      <div class="stmt-empty-icon">☰</div>
+      <p>No balance sheet data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Balance Sheet.</p>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
     </div>
     <div class="statement" id="balance-statement"></div>
   </div>
 
-  <!-- ===== CASH FLOW ===== -->
-  <div class="page" id="page-cashflow">
-    <div class="print-actions">
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+  <!-- ===== INCOME STATEMENT ===== -->
+  <div class="page" id="page-income">
+    <div class="stmt-toolbar">
       <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
       <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
     </div>
-    <div class="statement" id="cashflow-statement"></div>
+    <div class="stmt-empty" id="empty-income">
+      <div class="stmt-empty-icon">☰</div>
+      <p>No income statement data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Income Statement.</p>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
+    </div>
+    <div class="statement" id="income-statement"></div>
   </div>
 
   <!-- ===== EQUITY ===== -->
   <div class="page" id="page-equity">
-    <div class="print-actions">
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+    <div class="stmt-toolbar">
       <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
       <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
     </div>
+    <div class="stmt-empty" id="empty-equity">
+      <div class="stmt-empty-icon">☰</div>
+      <p>No equity statement data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Equity Statement.</p>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
+    </div>
     <div class="statement" id="equity-statement"></div>
+  </div>
+
+  <!-- ===== CASH FLOWS ===== -->
+  <div class="page" id="page-cashflow">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-cashflow">
+      <div class="stmt-empty-icon">☰</div>
+      <p>No cash flow data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Cash Flow Statement.</p>
+      <button class="btn btn-primary btn-sm" onclick="switchTab('input')">Go to Import</button>
+    </div>
+    <div class="statement" id="cashflow-statement"></div>
   </div>
 
   <!-- ===== NOTES ===== -->
@@ -1171,8 +1338,8 @@
     </div>
 
     <div id="notes-output-wrapper" style="display:none">
-      <div class="print-actions">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('notes-output-wrapper').style.display='none';document.getElementById('notes-questionnaire').style.display='block'">← Edit Answers</button>
+      <div class="stmt-toolbar">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('notes-output-wrapper').style.display='none';document.getElementById('notes-questionnaire').style.display='block'">Edit Answers</button>
         <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
         <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
         <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
@@ -1181,16 +1348,15 @@
     </div>
   </div>
 
-  <!-- ===== DISCLOSURE CHECKLIST ===== -->
+  <!-- ===== DISCLOSURES ===== -->
   <div class="page" id="page-checklist">
-    <div class="print-actions">
-      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
-      <button class="btn btn-primary btn-sm" onclick="runDisclosureChecklist()">Run Checklist</button>
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" onclick="runDisclosureChecklist()">Re-run Checklist</button>
       <button class="btn btn-ghost btn-sm" onclick="window.print()">Print</button>
     </div>
     <div class="statement" id="checklist-output">
       <div class="stmt-header">
-        <div class="title">U.S. GAAP Disclosure Checklist</div>
+        <div class="title">U.S. GAAP Disclosure Review</div>
         <div class="period" style="font-size:0.85rem;color:var(--muted)">Click "Run Checklist" to analyze your statements and notes against GAAP disclosure requirements.</div>
       </div>
     </div>
@@ -2986,7 +3152,7 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
-  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, equity: 4, notes: 5, checklist: 6 };
+  const tabs = { input: 0, balance: 1, income: 2, equity: 3, cashflow: 4, notes: 5, checklist: 6 };
   document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
 
   if (name === 'income') { buildIncomeStatement(); applyTemplateToStatements(); }
@@ -2994,15 +3160,23 @@ function switchTab(name) {
   if (name === 'cashflow') { buildCashFlow(); applyTemplateToStatements(); }
   if (name === 'equity') { buildEquityStatement(); applyTemplateToStatements(); }
   if (name === 'notes') renderSuggestions();
+  if (name === 'checklist') runDisclosureChecklist(); // #15 auto-run
+
+  // #14 Toggle empty states
+  updateEmptyStates();
+  // #3 Update tab badges
+  updateTabBadges();
 }
 
 function generateAll() {
-  buildIncomeStatement();
   buildBalanceSheet();
-  buildCashFlow();
+  buildIncomeStatement();
   buildEquityStatement();
+  buildCashFlow();
   applyTemplateToStatements();
-  switchTab('income');
+  updateEmptyStates();
+  updateTabBadges();
+  switchTab('balance');
 }
 
 // ─── Clear ──────────────────────────────────────────────────────────────────
@@ -3324,16 +3498,16 @@ function exportToExcel() {
     return aoa;
   }
 
-  // Build sheets
-  const isData = buildISData();
-  const wsIS = XLSX.utils.aoa_to_sheet(isData);
-  wsIS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
-  XLSX.utils.book_append_sheet(wb, wsIS, 'Income Statement');
-
+  // Build sheets (standard financial statement order)
   const bsData = buildBSData();
   const wsBS = XLSX.utils.aoa_to_sheet(bsData);
   wsBS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
   XLSX.utils.book_append_sheet(wb, wsBS, 'Balance Sheet');
+
+  const isData = buildISData();
+  const wsIS = XLSX.utils.aoa_to_sheet(isData);
+  wsIS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsIS, 'Income Statement');
 
   const eqData = buildEquityData();
   const wsEq = XLSX.utils.aoa_to_sheet(eqData);
@@ -3343,7 +3517,7 @@ function exportToExcel() {
   const cfData = buildCFData();
   const wsCF = XLSX.utils.aoa_to_sheet(cfData);
   wsCF['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
-  XLSX.utils.book_append_sheet(wb, wsCF, 'Cash Flow');
+  XLSX.utils.book_append_sheet(wb, wsCF, 'Cash Flows');
 
   const notesData = buildNotesData();
   const wsNotes = XLSX.utils.aoa_to_sheet(notesData);
@@ -4723,6 +4897,160 @@ function showApp(name) {
   }
   document.getElementById('login-screen').style.display = 'flex';
 })();
+
+// ─── #2 Mobile hamburger menu ───────────────────────────────────────────────
+function toggleMobileMenu() {
+  var menu = document.getElementById('mobile-menu');
+  if (menu) menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('mobile-menu');
+  if (menu && menu.classList.contains('open') && !e.target.closest('.header-actions')) {
+    menu.classList.remove('open');
+  }
+});
+
+// ─── #5 Dark mode toggle ───────────────────────────────────────────────────
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('noteflow-dark-mode', document.body.classList.contains('dark-mode') ? '1' : '0');
+}
+(function initDarkMode() {
+  if (localStorage.getItem('noteflow-dark-mode') === '1') {
+    document.body.classList.add('dark-mode');
+  }
+})();
+
+// ─── #8 Auto-save indicator ────────────────────────────────────────────────
+var _origSaveProject = typeof saveProject === 'function' ? saveProject : null;
+if (_origSaveProject) {
+  saveProject = function() {
+    var indicator = document.getElementById('save-indicator');
+    if (indicator) { indicator.textContent = 'Saving...'; indicator.className = 'save-indicator saving'; }
+    _origSaveProject.apply(this, arguments);
+    setTimeout(function() {
+      if (indicator) { indicator.textContent = 'Saved'; indicator.className = 'save-indicator saved'; }
+      setTimeout(function() {
+        if (indicator) { indicator.textContent = ''; indicator.className = 'save-indicator'; }
+      }, 2000);
+    }, 300);
+  };
+}
+
+// ─── #9 Accordion note groups ──────────────────────────────────────────────
+(function initAccordion() {
+  document.querySelectorAll('.note-group').forEach(function(group) {
+    var title = group.querySelector('.note-group-title');
+    if (!title) return;
+    // Wrap content after title in a body div
+    var body = document.createElement('div');
+    body.className = 'note-group-body';
+    var children = Array.from(group.children).filter(function(c) { return c !== title; });
+    children.forEach(function(c) { body.appendChild(c); });
+    group.appendChild(body);
+    // Start expanded
+    body.style.maxHeight = body.scrollHeight + 200 + 'px';
+    // Toggle on click
+    title.addEventListener('click', function() {
+      group.classList.toggle('collapsed');
+      if (group.classList.contains('collapsed')) {
+        body.style.maxHeight = '0';
+      } else {
+        body.style.maxHeight = body.scrollHeight + 200 + 'px';
+      }
+    });
+  });
+})();
+
+// ─── #10 Confirm before clearing data ──────────────────────────────────────
+function confirmClearAll() {
+  if (confirm('Are you sure you want to clear all imported data? This cannot be undone.')) {
+    clearAll();
+  }
+}
+
+// ─── #11 Keyboard shortcuts ────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  // Only when app is visible, not in input fields
+  var appVisible = document.getElementById('app-wrapper') &&
+                   document.getElementById('app-wrapper').classList.contains('visible');
+  if (!appVisible) return;
+  var inInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
+
+  // Ctrl/Cmd + G = Generate Statements
+  if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+    e.preventDefault(); generateAll();
+  }
+  // Ctrl/Cmd + P = Print (let browser handle, but ensure right page)
+  // Ctrl/Cmd + E = Export Excel
+  if ((e.ctrlKey || e.metaKey) && e.key === 'e' && !inInput) {
+    e.preventDefault(); exportToExcel();
+  }
+  // Ctrl/Cmd + Shift + E = Export PDF Package
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+    e.preventDefault(); exportPackagePDF();
+  }
+  // Number keys 1-7 navigate tabs (only when not in input)
+  if (!inInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    var tabKeys = { '1': 'input', '2': 'balance', '3': 'income', '4': 'equity', '5': 'cashflow', '6': 'notes', '7': 'checklist' };
+    if (tabKeys[e.key]) { e.preventDefault(); switchTab(tabKeys[e.key]); }
+  }
+});
+
+// ─── #3 Tab completion badges ──────────────────────────────────────────────
+function updateTabBadges() {
+  var hasData = SECTIONS.some(function(s) { return currentData[s] && currentData[s].length > 0; });
+  // Import badge: green if data imported
+  setBadge('badge-input', hasData ? 'complete' : 'none');
+  // Statement badges: green if statement has been built (has content)
+  setBadge('badge-balance', document.getElementById('balance-statement').innerHTML.trim() ? 'complete' : 'none');
+  setBadge('badge-income', document.getElementById('income-statement').innerHTML.trim() ? 'complete' : 'none');
+  setBadge('badge-equity', document.getElementById('equity-statement').innerHTML.trim() ? 'complete' : 'none');
+  setBadge('badge-cashflow', document.getElementById('cashflow-statement').innerHTML.trim() ? 'complete' : 'none');
+  // Notes badge: green if generated, yellow if questionnaire has some answers
+  var notesEl = document.getElementById('notes-statement');
+  var notesGenerated = notesEl && notesEl.innerHTML.trim();
+  var notesWrapper = document.getElementById('notes-output-wrapper');
+  var notesVisible = notesWrapper && notesWrapper.style.display !== 'none';
+  if (notesVisible && notesGenerated) {
+    setBadge('badge-notes', 'complete');
+  } else {
+    var hasAnyNotes = document.querySelector('.notes-form textarea') &&
+      Array.from(document.querySelectorAll('.notes-form textarea, .notes-form select, .notes-form input[type="text"]'))
+        .some(function(el) { return el.value && el.value.trim(); });
+    setBadge('badge-notes', hasAnyNotes ? 'partial' : 'none');
+  }
+  // Checklist badge
+  var checklistEl = document.getElementById('checklist-output');
+  var hasChecklist = checklistEl && checklistEl.querySelector('.checklist-item');
+  setBadge('badge-checklist', hasChecklist ? 'complete' : 'none');
+}
+
+function setBadge(id, state) {
+  var badge = document.getElementById(id);
+  if (!badge) return;
+  badge.classList.remove('active', 'partial');
+  if (state === 'complete') { badge.classList.add('active'); }
+  else if (state === 'partial') { badge.classList.add('active', 'partial'); }
+}
+
+// ─── #14 Empty state management ────────────────────────────────────────────
+function updateEmptyStates() {
+  var stmts = ['balance', 'income', 'equity', 'cashflow'];
+  stmts.forEach(function(name) {
+    var stmtEl = document.getElementById(name + '-statement');
+    var emptyEl = document.getElementById('empty-' + name);
+    if (!stmtEl || !emptyEl) return;
+    var hasContent = stmtEl.innerHTML.trim().length > 0;
+    emptyEl.style.display = hasContent ? 'none' : 'block';
+    stmtEl.style.display = hasContent ? 'block' : 'none';
+  });
+}
+
+// Run on load to set initial empty states
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(updateEmptyStates, 100);
+});
 
 // Allow Enter key to submit forms
 document.querySelectorAll('#auth-signin input').forEach(function(el) {
