@@ -558,6 +558,33 @@
     .stmt-table.multi-period .col-current { text-align: right; width: 25%; }
     .stmt-table.multi-period .col-prior { text-align: right; width: 25%; }
 
+    /* ── GAAP reference badges on checklist ─────────────────────────── */
+    .checklist-label { display: block; }
+    .asc-ref {
+      display: inline-block; margin-top: 4px; font-size: 0.7rem; font-weight: 600;
+      color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 4px; padding: 2px 7px; text-decoration: none;
+      cursor: pointer; position: relative; letter-spacing: 0.01em;
+      transition: all 0.15s;
+    }
+    .asc-ref:hover {
+      background: #dbeafe; border-color: #93c5fd; color: #1d4ed8;
+    }
+    .asc-ref::after {
+      content: attr(title); position: absolute; left: 0; top: calc(100% + 6px);
+      background: #1e293b; color: #e2e8f0; font-size: 0.75rem; font-weight: 400;
+      padding: 10px 14px; border-radius: 8px; width: 340px; line-height: 1.5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 100;
+      opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none; white-space: normal; letter-spacing: normal;
+    }
+    .asc-ref:hover::after { opacity: 1; visibility: visible; }
+    /* Ensure tooltip doesn't overflow right edge */
+    .asc-ref { position: relative; }
+    body.dark-mode .asc-ref { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
+    body.dark-mode .asc-ref:hover { background: #1e40af; color: #bfdbfe; }
+    body.dark-mode .asc-ref::after { background: #0f172a; border: 1px solid #334155; }
+
     /* ── #1 Mobile tabs horizontal scroll ────────────────────────────── */
     .tabs {
       overflow-x: auto;
@@ -4501,55 +4528,106 @@ function runDisclosureChecklist() {
   var detections = [
     { id: 'basis', label: 'Basis of Accounting', detected: true, required: true,
       reason: 'Required for all financial statements',
-      disclosed: notesMention('basis of accounting') },
+      disclosed: notesMention('basis of accounting'),
+      asc: 'ASC 235-10-50',
+      guidance: 'Requires disclosure of the basis of accounting used (accrual, cash, tax, etc.). If a special-purpose framework is used, the nature of the framework must be described.',
+      url: 'https://asc.fasb.org/235' },
     { id: 'estimates', label: 'Use of Estimates', detected: true, required: true,
       reason: 'Required for all GAAP financial statements',
-      disclosed: notesMention('use of estimates') },
+      disclosed: notesMention('use of estimates'),
+      asc: 'ASC 275-10-50',
+      guidance: 'Requires disclosure that the preparation of financial statements in conformity with GAAP requires management to make estimates and assumptions that affect reported amounts. Must state that actual results could differ.',
+      url: 'https://asc.fasb.org/275' },
     { id: 'cash', label: 'Cash and Cash Equivalents', detected: hasItem('current-assets', /cash/i), required: false,
       reason: 'Cash detected in current assets',
-      disclosed: notesMention('cash equivalent') || notesMention('cash and cash') },
+      disclosed: notesMention('cash equivalent') || notesMention('cash and cash'),
+      asc: 'ASC 230-10-50',
+      guidance: 'Requires disclosure of the policy for determining which items are treated as cash equivalents (generally instruments with original maturities of three months or less). Must disclose any restrictions on cash balances.',
+      url: 'https://asc.fasb.org/230' },
     { id: 'revenue', label: 'Revenue Recognition (ASC 606)', detected: hasAnyItems('revenue'), required: false,
       reason: 'Revenue items detected',
-      disclosed: notesMention('revenue recognition') || notesMention('revenue is recognized') },
+      disclosed: notesMention('revenue recognition') || notesMention('revenue is recognized'),
+      asc: 'ASC 606-10-50',
+      guidance: 'Requires disclosure of the nature, amount, timing, and uncertainty of revenue and cash flows from contracts with customers. Must describe performance obligations, significant judgments, and contract balances.',
+      url: 'https://asc.fasb.org/606' },
     { id: 'receivables', label: 'Accounts Receivable / Allowance', detected: hasItem('current-assets', /receivable/i), required: false,
       reason: 'Receivables detected in current assets',
-      disclosed: notesMention('accounts receivable') || notesMention('allowance') },
+      disclosed: notesMention('accounts receivable') || notesMention('allowance'),
+      asc: 'ASC 310-10-50 / ASC 326-20',
+      guidance: 'Requires disclosure of the methodology used to estimate the allowance for credit losses (CECL model under ASC 326). Must describe major categories of receivables, significant concentrations, and credit quality information.',
+      url: 'https://asc.fasb.org/326' },
     { id: 'inventory', label: 'Inventory', detected: hasItem('current-assets', /inventor/i), required: false,
       reason: 'Inventory detected in current assets',
-      disclosed: notesMention('inventory') },
+      disclosed: notesMention('inventory'),
+      asc: 'ASC 330-10-50',
+      guidance: 'Requires disclosure of the basis of stating inventories (FIFO, weighted average, etc.) and whether stated at cost or lower of cost and net realizable value. Must disclose significant write-downs or reversals.',
+      url: 'https://asc.fasb.org/330' },
     { id: 'ppe', label: 'Property and Equipment', detected: hasItem('noncurrent-assets', /property|equipment|vehicle|building|furniture|machinery|computer|leasehold/i), required: false,
       reason: 'Fixed assets detected in non-current assets',
-      disclosed: notesMention('property and equipment') || notesMention('depreciation') },
+      disclosed: notesMention('property and equipment') || notesMention('depreciation'),
+      asc: 'ASC 360-10-50',
+      guidance: 'Requires disclosure of depreciation method, useful lives or rates, balances of major classes of depreciable assets, accumulated depreciation, and depreciation expense for the period. Must disclose impairments if applicable.',
+      url: 'https://asc.fasb.org/360' },
     { id: 'intangibles', label: 'Intangible Assets / Goodwill', detected: hasItem('noncurrent-assets', /intangible|goodwill|patent|trademark|copyright|customer list|franchise|software/i), required: false,
       reason: 'Intangible assets detected in non-current assets',
-      disclosed: notesMention('intangible') || notesMention('goodwill') || notesMention('amortiz') },
+      disclosed: notesMention('intangible') || notesMention('goodwill') || notesMention('amortiz'),
+      asc: 'ASC 350-20-50 / ASC 350-30-50',
+      guidance: 'Goodwill: disclose carrying amount, impairment testing approach, and any impairment losses (ASC 350-20). Finite-lived intangibles: disclose amortization method, useful lives, gross carrying amounts, accumulated amortization, and estimated future amortization expense (ASC 350-30).',
+      url: 'https://asc.fasb.org/350' },
     { id: 'debt', label: 'Debt / Notes Payable', detected: hasItem('current-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i) || hasItem('noncurrent-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i), required: false,
       reason: 'Debt instruments detected in liabilities',
-      disclosed: notesMention('debt') || notesMention('notes payable') || notesMention('loan') || notesMention('line of credit') },
+      disclosed: notesMention('debt') || notesMention('notes payable') || notesMention('loan') || notesMention('line of credit'),
+      asc: 'ASC 470-10-50',
+      guidance: 'Requires disclosure of terms, interest rates, maturity dates, collateral, and covenants for all significant debt instruments. Must present aggregate maturities for the five years following the balance sheet date. Disclose any defaults or covenant violations.',
+      url: 'https://asc.fasb.org/470' },
     { id: 'leases', label: 'Leases (ASC 842)', detected: hasItem('current-liab', /lease/i) || hasItem('noncurrent-liab', /lease/i) || hasItem('noncurrent-assets', /right.?of.?use|rou|lease/i), required: false,
       reason: 'Lease-related items detected on balance sheet',
-      disclosed: notesMention('lease') },
+      disclosed: notesMention('lease'),
+      asc: 'ASC 842-20-50 / ASC 842-30-50',
+      guidance: 'Lessees must disclose ROU assets and lease liabilities, lease cost components, weighted-average remaining lease term, discount rate, and a maturity analysis of lease liabilities. Must distinguish operating from finance leases. Practical expedient elections must be disclosed.',
+      url: 'https://asc.fasb.org/842' },
     { id: 'taxes', label: 'Income Taxes', detected: true, required: true,
       reason: 'Required — entity tax status must be disclosed',
-      disclosed: notesMention('income tax') || notesMention('tax') },
+      disclosed: notesMention('income tax') || notesMention('tax'),
+      asc: 'ASC 740-10-50',
+      guidance: 'Requires disclosure of the nature of income tax expense, deferred tax assets/liabilities, uncertain tax positions (UTPs), and open tax years. Pass-through entities must disclose their tax status and that income taxes are the responsibility of individual owners/members.',
+      url: 'https://asc.fasb.org/740' },
     { id: 'equity', label: 'Equity / Stockholders\' Equity', detected: hasAnyItems('equity'), required: false,
       reason: 'Equity items on balance sheet',
-      disclosed: notesMention('equity') || notesMention('stockholder') || notesMention('member') },
+      disclosed: notesMention('equity') || notesMention('stockholder') || notesMention('member'),
+      asc: 'ASC 505-10-50',
+      guidance: 'Requires disclosure of authorized, issued, and outstanding shares for each class of stock, par or stated value, dividend rates, and any preferences or restrictions. Must disclose changes in equity accounts during the period.',
+      url: 'https://asc.fasb.org/505' },
     { id: 'related', label: 'Related Party Transactions', detected: true, required: true,
       reason: 'Required disclosure — must confirm presence or absence',
-      disclosed: notesMention('related party') },
+      disclosed: notesMention('related party'),
+      asc: 'ASC 850-10-50',
+      guidance: 'Requires disclosure of the nature of the relationship, a description of transactions, dollar amounts, and any amounts due to/from related parties. Must disclose even if transactions are at arm\'s length terms. Common relationships: owners, officers, family members, affiliated entities.',
+      url: 'https://asc.fasb.org/850' },
     { id: 'concentrations', label: 'Concentrations of Credit Risk', detected: true, required: true,
       reason: 'Required for entities with financial instruments',
-      disclosed: notesMention('concentration') || notesMention('credit risk') || notesMention('fdic') },
+      disclosed: notesMention('concentration') || notesMention('credit risk') || notesMention('fdic'),
+      asc: 'ASC 825-10-50 / ASC 275-10-50',
+      guidance: 'Requires disclosure of all significant concentrations of credit risk from financial instruments (including cash deposits exceeding FDIC limits). Must disclose concentrations in revenue sources, customer base, suppliers, geographic areas, or labor markets that make the entity vulnerable to near-term severe impact.',
+      url: 'https://asc.fasb.org/825' },
     { id: 'contingencies', label: 'Commitments and Contingencies', detected: true, required: true,
       reason: 'Required — must confirm presence or absence',
-      disclosed: notesMention('commitment') || notesMention('contingenc') || notesMention('litigation') },
+      disclosed: notesMention('commitment') || notesMention('contingenc') || notesMention('litigation'),
+      asc: 'ASC 450-20-50 / ASC 440-10-50',
+      guidance: 'Loss contingencies (ASC 450): must disclose the nature of the contingency and either an accrual or an estimate of the possible loss (or range). Commitments (ASC 440): must disclose material purchase commitments, guarantees, and other contractual obligations not recognized on the balance sheet.',
+      url: 'https://asc.fasb.org/450' },
     { id: 'subsequent', label: 'Subsequent Events', detected: true, required: true,
       reason: 'Required — evaluation date must be disclosed',
-      disclosed: notesMention('subsequent event') },
+      disclosed: notesMention('subsequent event'),
+      asc: 'ASC 855-10-50',
+      guidance: 'Requires disclosure of the date through which subsequent events have been evaluated. Recognized events (Type I): adjust the financial statements. Non-recognized events (Type II): disclose the nature and financial impact. Must distinguish between recognized and non-recognized events.',
+      url: 'https://asc.fasb.org/855' },
     { id: 'goingconcern', label: 'Going Concern', detected: false, required: false,
       reason: 'Required only if substantial doubt exists',
-      disclosed: notesMention('going concern') },
+      disclosed: notesMention('going concern'),
+      asc: 'ASC 205-40',
+      guidance: 'Management must evaluate whether there is substantial doubt about the entity\'s ability to continue as a going concern for one year from the financial statement issuance date. If substantial doubt exists, must disclose the conditions, management\'s plans, and whether those plans alleviate the doubt.',
+      url: 'https://asc.fasb.org/205' },
   ];
 
   // Check going concern indicators
@@ -4608,8 +4686,13 @@ function runDisclosureChecklist() {
       }
     }
 
-    html += '<tr style="border-bottom:1px solid #f1f5f9">';
-    html += '<td style="padding:10px 8px;font-weight:500">' + d.label + '</td>';
+    html += '<tr class="checklist-item" style="border-bottom:1px solid #f1f5f9">';
+    html += '<td style="padding:10px 8px;font-weight:500">';
+    html += '<span class="checklist-label">' + d.label + '</span>';
+    if (d.asc) {
+      html += '<a href="' + d.url + '" target="_blank" rel="noopener" class="asc-ref" title="' + esc(d.guidance) + '">' + esc(d.asc) + '</a>';
+    }
+    html += '</td>';
     html += '<td style="padding:10px 8px;text-align:center;' + statusClass + '">' + status + '</td>';
     html += '<td style="padding:10px 8px;font-size:0.83rem;color:#475569">' + detail + '</td>';
     html += '</tr>';
