@@ -4137,6 +4137,173 @@ function generateNotes() {
 }
 
 // ─── Disclosure Checklist ──────────────────────────────────────────────────
+// ─── Default Disclosure Language for Missing Items ─────────────────────────
+function getDefaultDisclosureText(id, m, dataContext) {
+  var company = esc(m.company || 'The Company');
+  var period = esc(m.period || 'the reporting period');
+  var defaults = {
+    'basis': '<h3>Note — Basis of Accounting</h3>' +
+      '<p>The accompanying financial statements of ' + company + ' have been prepared on the accrual basis of accounting in accordance with accounting principles generally accepted in the United States of America (U.S. GAAP).</p>',
+
+    'estimates': '<h3>Note — Use of Estimates</h3>' +
+      '<p>The preparation of financial statements in conformity with U.S. GAAP requires management to make estimates and assumptions that affect the reported amounts of assets and liabilities and disclosure of contingent assets and liabilities at the date of the financial statements and the reported amounts of revenues and expenses during the reporting period. Actual results could differ from those estimates.</p>',
+
+    'cash': '<h3>Note — Cash and Cash Equivalents</h3>' +
+      '<p>The Company considers all highly liquid investments with an original maturity of three months or less when purchased to be cash equivalents. Cash balances are maintained in financial institutions, which at times may exceed federally insured limits.</p>',
+
+    'revenue': '<h3>Note — Revenue Recognition</h3>' +
+      '<p>The Company recognizes revenue in accordance with ASC 606. Revenue is recognized when control of promised goods or services is transferred to customers, in an amount that reflects the consideration the Company expects to be entitled to in exchange for those goods or services.</p>',
+
+    'receivables': '<h3>Note — Accounts Receivable</h3>' +
+      '<p>Accounts receivable are stated at the amount the Company expects to collect. The Company evaluates the collectability of receivables on a regular basis and establishes an allowance for doubtful accounts when deemed necessary based on historical experience and current economic conditions. Receivables are written off when deemed uncollectible.</p>',
+
+    'inventory': '<h3>Note — Inventory</h3>' +
+      '<p>Inventory is stated at the lower of cost or net realizable value. The Company periodically reviews inventory for obsolescence and writes down inventory to its net realizable value when the carrying amount exceeds the estimated selling price less costs to complete and sell.</p>',
+
+    'ppe': '<h3>Note — Property and Equipment</h3>' +
+      '<p>Property and equipment are recorded at cost less accumulated depreciation. Depreciation is computed using the straight-line method over the estimated useful lives of the respective assets. Expenditures for major improvements and additions are capitalized, while expenditures for maintenance and repairs are charged to expense as incurred. Upon retirement or disposal, the cost and accumulated depreciation are removed from the accounts, and any resulting gain or loss is reflected in the statements of operations.</p>' +
+      (dataContext.ppeTable || ''),
+
+    'intangibles': '<h3>Note — Intangible Assets</h3>' +
+      '<p>Intangible assets with finite useful lives are amortized over their estimated useful lives on a straight-line basis. The Company reviews intangible assets for impairment whenever events or changes in circumstances indicate that the carrying amount may not be recoverable. Goodwill and indefinite-lived intangible assets are tested for impairment annually or more frequently if indicators of impairment exist.</p>',
+
+    'debt': '<h3>Note — Debt and Notes Payable</h3>' +
+      '<p>The Company\'s outstanding debt obligations are recorded at their principal amount. Interest expense is recognized as incurred. The Company was in compliance with all applicable debt covenants as of the balance sheet date.</p>' +
+      (dataContext.debtTable || ''),
+
+    'leases': '<h3>Note — Leases</h3>' +
+      '<p>The Company determines if an arrangement is a lease at inception. Operating lease right-of-use assets and liabilities are recognized at the lease commencement date based on the present value of lease payments over the lease term. The Company has elected the practical expedient to not recognize right-of-use assets and lease liabilities for short-term leases with a term of 12 months or less.</p>',
+
+    'taxes': '<h3>Note — Income Taxes</h3>' +
+      '<p>The Company evaluates uncertain tax positions using a more-likely-than-not threshold for financial statement recognition. Management has evaluated the Company\'s tax positions and concluded that there are no uncertain tax positions requiring recognition as of the balance sheet date. The Company\'s tax returns remain subject to examination by taxing authorities for the standard statute of limitations period.</p>',
+
+    'equity': '<h3>Note — Equity</h3>' +
+      '<p>The following table summarizes the components of equity:</p>' +
+      (dataContext.equityTable || ''),
+
+    'related': '<h3>Note — Related Party Transactions</h3>' +
+      '<p>The Company has evaluated its relationships with related parties. There were no material related party transactions during ' + period + ' that require disclosure.</p>',
+
+    'concentrations': '<h3>Note — Concentrations of Credit Risk</h3>' +
+      '<p>Financial instruments that potentially subject the Company to concentrations of credit risk consist principally of cash deposits and accounts receivable. The Company maintains its cash balances in financial institutions, which at times may exceed federally insured limits of $250,000 per depositor per institution. The Company has not experienced any losses on such accounts and management believes the Company is not exposed to any significant credit risk on its cash balances.</p>',
+
+    'contingencies': '<h3>Note — Commitments and Contingencies</h3>' +
+      '<p>In the normal course of business, the Company may be subject to various claims and legal proceedings. Management is not aware of any pending or threatened litigation that would have a material adverse effect on the Company\'s financial position, results of operations, or cash flows as of the date of these financial statements.</p>',
+
+    'subsequent': '<h3>Note — Subsequent Events</h3>' +
+      '<p>The Company has evaluated subsequent events through the date the financial statements were available to be issued. No material subsequent events have occurred since the balance sheet date that require recognition or disclosure in the financial statements.</p>',
+
+    'goingconcern': '<h3>Note — Going Concern</h3>' +
+      '<p>The accompanying financial statements have been prepared assuming that the Company will continue as a going concern. Management has evaluated the Company\'s ability to continue as a going concern and believes that the Company\'s existing resources and ongoing operations are sufficient to fund its operations for at least twelve months from the date these financial statements are issued.</p>',
+  };
+  return defaults[id] || '';
+}
+
+function addMissingDisclosures() {
+  var notesEl = document.getElementById('notes-statement');
+  if (!notesEl) return;
+
+  var m = meta();
+  // Build comparative tables for context
+  var dataContext = {
+    ppeTable: buildComparativeSection('noncurrent-assets', /property|equipment|furniture|vehicle|building|land|leasehold|computer|machinery/i),
+    debtTable: (buildComparativeSection('current-liab', /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing/i) || '') +
+               (buildComparativeSection('noncurrent-liab', /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing/i) || ''),
+    equityTable: buildComparativeSection('equity'),
+  };
+
+  var notesHTML = notesEl.innerHTML.toLowerCase();
+  var hasNotes = notesHTML.length > 50;
+  if (!hasNotes) {
+    // Generate notes first if none exist
+    generateNotes();
+    notesHTML = notesEl.innerHTML.toLowerCase();
+  }
+
+  // Re-run detections to find what's still missing
+  function notesMention(keyword) { return notesHTML.indexOf(keyword.toLowerCase()) >= 0; }
+  function hasItem(section, pattern) {
+    return rows(currentData, section).some(function(r) { return pattern.test(r.label); });
+  }
+  function hasAnyItems(section) { return rows(currentData, section).length > 0; }
+
+  var checks = [
+    { id: 'basis', detected: true, required: true, disclosed: notesMention('basis of accounting') },
+    { id: 'estimates', detected: true, required: true, disclosed: notesMention('use of estimates') },
+    { id: 'cash', detected: hasItem('current-assets', /cash/i), disclosed: notesMention('cash equivalent') || notesMention('cash and cash') },
+    { id: 'revenue', detected: hasAnyItems('revenue'), disclosed: notesMention('revenue recognition') || notesMention('revenue is recognized') },
+    { id: 'receivables', detected: hasItem('current-assets', /receivable/i), disclosed: notesMention('accounts receivable') || notesMention('allowance') },
+    { id: 'inventory', detected: hasItem('current-assets', /inventor/i), disclosed: notesMention('inventory') },
+    { id: 'ppe', detected: hasItem('noncurrent-assets', /property|equipment|vehicle|building|furniture|machinery|computer|leasehold/i), disclosed: notesMention('property and equipment') || notesMention('depreciation') },
+    { id: 'intangibles', detected: hasItem('noncurrent-assets', /intangible|goodwill|patent|trademark|copyright|customer list|franchise|software/i), disclosed: notesMention('intangible') || notesMention('goodwill') || notesMention('amortiz') },
+    { id: 'debt', detected: hasItem('current-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i) || hasItem('noncurrent-liab', /loan|note.?payable|line.?of.?credit|mortgage|debt|borrowing/i), disclosed: notesMention('debt') || notesMention('notes payable') || notesMention('loan') || notesMention('line of credit') },
+    { id: 'leases', detected: hasItem('current-liab', /lease/i) || hasItem('noncurrent-liab', /lease/i) || hasItem('noncurrent-assets', /right.?of.?use|rou|lease/i), disclosed: notesMention('lease') },
+    { id: 'taxes', detected: true, required: true, disclosed: notesMention('income tax') || notesMention('tax') },
+    { id: 'equity', detected: hasAnyItems('equity'), disclosed: notesMention('equity') || notesMention('stockholder') || notesMention('member') },
+    { id: 'related', detected: true, required: true, disclosed: notesMention('related party') },
+    { id: 'concentrations', detected: true, required: true, disclosed: notesMention('concentration') || notesMention('credit risk') || notesMention('fdic') },
+    { id: 'contingencies', detected: true, required: true, disclosed: notesMention('commitment') || notesMention('contingenc') || notesMention('litigation') },
+    { id: 'subsequent', detected: true, required: true, disclosed: notesMention('subsequent event') },
+  ];
+
+  // Check going concern
+  var totalCA = sum(currentData, 'current-assets');
+  var totalCL = sum(currentData, 'current-liab');
+  var ni = computeNetIncome(currentData);
+  if (Math.abs(totalCL) > totalCA || ni < 0) {
+    checks.push({ id: 'goingconcern', detected: true, required: true, disclosed: notesMention('going concern') });
+  }
+
+  // Find missing items
+  var missingIds = [];
+  checks.forEach(function(c) {
+    if ((c.detected || c.required) && !c.disclosed) {
+      missingIds.push(c.id);
+    }
+  });
+
+  if (missingIds.length === 0) {
+    alert('All disclosures are complete — no missing items to add.');
+    return;
+  }
+
+  // Append missing disclosures to notes
+  var existingHTML = notesEl.innerHTML;
+  // Remove closing </div> of notes-output if present, so we append inside
+  var closingDiv = existingHTML.lastIndexOf('</div>');
+  var beforeClose = closingDiv >= 0 ? existingHTML.substring(0, closingDiv) : existingHTML;
+  var afterClose = closingDiv >= 0 ? existingHTML.substring(closingDiv) : '';
+
+  var addedHTML = '<div class="auto-disclosures" style="margin-top:24px;border-top:2px solid #3b82f6;padding-top:20px">';
+  addedHTML += '<p style="font-size:0.85rem;font-weight:600;color:#3b82f6;margin-bottom:16px">The following disclosures were auto-generated to address gaps identified by the Disclosure Checklist. Review and customize as needed.</p>';
+
+  var noteNum = (existingHTML.match(/Note\s+\d+/gi) || []).length;
+  missingIds.forEach(function(id) {
+    var text = getDefaultDisclosureText(id, m, dataContext);
+    if (text) {
+      noteNum++;
+      // Replace "Note —" with numbered note
+      text = text.replace(/<h3>Note —/, '<h3>Note ' + noteNum + ' —');
+      addedHTML += text;
+    }
+  });
+  addedHTML += '</div>';
+
+  notesEl.innerHTML = beforeClose + addedHTML + afterClose;
+
+  // Show notes output if hidden
+  var outputWrapper = document.getElementById('notes-output-wrapper');
+  if (outputWrapper) outputWrapper.style.display = 'block';
+  var questionnaire = document.getElementById('notes-questionnaire');
+  if (questionnaire) questionnaire.style.display = 'none';
+
+  // Re-run checklist to show updated status
+  runDisclosureChecklist();
+
+  // Scroll to top of checklist
+  document.getElementById('checklist-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function runDisclosureChecklist() {
   const m = meta();
   const multi = hasPriorData();
@@ -4289,6 +4456,18 @@ function runDisclosureChecklist() {
     html += '<div style="margin-left:auto;font-weight:600;font-size:1.1rem;color:' + (pct === 100 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626') + '">' + pct + '% Complete</div>';
   }
   html += '</div>';
+
+  // Add "Fix Missing" button when there are gaps
+  if (missing > 0) {
+    html += '<div style="margin-top:16px;padding:16px 20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">';
+    html += '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
+    html += '<div style="flex:1;min-width:200px">';
+    html += '<div style="font-weight:600;color:#991b1b;margin-bottom:4px">' + missing + ' Missing Disclosure' + (missing !== 1 ? 's' : '') + '</div>';
+    html += '<div style="font-size:0.83rem;color:#7f1d1d">Auto-generate standard GAAP disclosure language for all missing items and append to your notes. You can review and customize the text afterward.</div>';
+    html += '</div>';
+    html += '<button class="btn btn-primary" onclick="addMissingDisclosures()" style="white-space:nowrap">Add Missing Disclosures to Notes</button>';
+    html += '</div></div>';
+  }
 
   document.getElementById('checklist-output').innerHTML = html;
 }
