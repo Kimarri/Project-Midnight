@@ -690,6 +690,7 @@
   <div class="tab" onclick="switchTab('income')">Income Statement</div>
   <div class="tab" onclick="switchTab('balance')">Balance Sheet</div>
   <div class="tab" onclick="switchTab('cashflow')">Cash Flow</div>
+  <div class="tab" onclick="switchTab('equity')">Equity</div>
   <div class="tab" onclick="switchTab('notes')">Notes</div>
   <div class="tab" onclick="switchTab('checklist')">Disclosure Checklist</div>
 </div>
@@ -793,6 +794,17 @@
       <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
     </div>
     <div class="statement" id="cashflow-statement"></div>
+  </div>
+
+  <!-- ===== EQUITY ===== -->
+  <div class="page" id="page-equity">
+    <div class="print-actions">
+      <button class="btn btn-ghost btn-sm" onclick="switchTab('input')">← Back to Import</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportToExcel()">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPackagePDF()">Export Full Package</button>
+    </div>
+    <div class="statement" id="equity-statement"></div>
   </div>
 
   <!-- ===== NOTES ===== -->
@@ -1656,6 +1668,10 @@ function meta() {
   };
 }
 
+function computeNetIncome(dataObj) {
+  return sum(dataObj, 'revenue') - sum(dataObj, 'cogs') - sum(dataObj, 'opex') + sum(dataObj, 'other');
+}
+
 function hasPriorData() {
   for (const s of SECTIONS) {
     if (rows(priorData, s).length > 0) return true;
@@ -2260,22 +2276,122 @@ function buildBalanceSheet() {
   document.getElementById('balance-statement').innerHTML = html;
 }
 
-// ─── Cash Flow ──────────────────────────────────────────────────────────────
+// ─── Cash Flow Intelligence ────────────────────────────────────────────────
+const NONCASH_PATTERNS = [
+  { pattern: /depreciation/i, label: 'Depreciation' },
+  { pattern: /amortization/i, label: 'Amortization' },
+  { pattern: /bad\s*debt|doubtful|allowance\s*expense|provision\s*for/i, label: 'Bad Debt Expense' },
+  { pattern: /loss\s*on\s*(disposal|sale|write.?off|abandon)/i, label: 'Loss on Disposal of Assets' },
+  { pattern: /gain\s*on\s*(disposal|sale)/i, label: 'Gain on Disposal of Assets', negate: true },
+  { pattern: /stock.based\s*comp|share.based\s*comp/i, label: 'Stock-Based Compensation' },
+  { pattern: /deferred\s*(tax|income\s*tax)/i, label: 'Deferred Income Tax' },
+  { pattern: /impairment/i, label: 'Impairment Loss' },
+  { pattern: /unrealized\s*(gain|loss)/i, label: 'Unrealized Gain/Loss' },
+  { pattern: /accretion|discount\s*amort/i, label: 'Accretion / Discount Amortization' },
+];
+
+const CASH_SKIP_PATTERN = /^cash$|^cash\s|^bank|^checking|^savings|cash\s*equiv|money\s*market|petty\s*cash/i;
+
+function findNoncashItems(dataObj, manualLabels) {
+  var items = [];
+  var seen = new Set();
+  ['opex', 'noncurrent-assets', 'other'].forEach(function(section) {
+    rows(dataObj, section).forEach(function(row) {
+      NONCASH_PATTERNS.forEach(function(rule) {
+        if (rule.pattern.test(row.label) && !seen.has(rule.label)) {
+          // Skip if already manually mapped to cf-operating
+          var isDuplicate = manualLabels && manualLabels.some(function(ml) {
+            return rule.pattern.test(ml);
+          });
+          if (isDuplicate) return;
+          seen.add(rule.label);
+          var amt = parseFloat(row.amount) || 0;
+          // Non-cash expenses are added back (positive); gains are subtracted (negative)
+          if (rule.negate) {
+            items.push({ label: row.label, amount: -Math.abs(amt) });
+          } else {
+            items.push({ label: row.label, amount: Math.abs(amt) });
+          }
+        }
+      });
+    });
+  });
+  return items;
+}
+
+function computeWorkingCapitalChanges(curData, priorDataObj) {
+  var changes = [];
+
+  // Current assets: decrease = cash inflow (+), increase = cash outflow (-)
+  var curCA = rows(curData, 'current-assets');
+  var priorCA = rows(priorDataObj, 'current-assets');
+  var caItems = mergeLabels(curCA, priorCA, true);
+  caItems.forEach(function(item) {
+    if (CASH_SKIP_PATTERN.test(item.label)) return;
+    var curAmt = item.cur || 0;
+    var priorAmt = item.prior || 0;
+    var change = priorAmt - curAmt; // decrease in asset = positive CF
+    if (Math.abs(change) > 0.005) {
+      var direction = change > 0 ? 'Decrease' : 'Increase';
+      changes.push({ label: direction + ' in ' + item.label, amount: parseFloat(change.toFixed(2)) });
+    }
+  });
+
+  // Current liabilities: increase = cash inflow (+), decrease = cash outflow (-)
+  // Liabilities stored as negative (credit-normal via SECTION_SIGN = -1)
+  var curCL = rows(curData, 'current-liab');
+  var priorCL = rows(priorDataObj, 'current-liab');
+  var clItems = mergeLabels(curCL, priorCL, true);
+  clItems.forEach(function(item) {
+    var curAmt = Math.abs(item.cur || 0);
+    var priorAmt = Math.abs(item.prior || 0);
+    var change = curAmt - priorAmt; // increase in absolute liability = positive CF
+    if (Math.abs(change) > 0.005) {
+      var direction = change > 0 ? 'Increase' : 'Decrease';
+      changes.push({ label: direction + ' in ' + item.label, amount: parseFloat(change.toFixed(2)) });
+    }
+  });
+
+  return changes;
+}
+
+// ─── Cash Flow (Indirect Method) ───────────────────────────────────────────
 function buildCashFlow() {
   const multi = hasPriorData();
+  const netIncome = computeNetIncome(currentData);
+  const pNetIncome = multi ? computeNetIncome(priorData) : 0;
 
-  const totalOp = sum(currentData, 'cf-operating');
+  // Get manual cf-operating labels for deduplication
+  const manualOpLabels = rows(currentData, 'cf-operating').map(function(r) { return r.label; });
+  const pManualOpLabels = multi ? rows(priorData, 'cf-operating').map(function(r) { return r.label; }) : [];
+
+  // Auto-detect non-cash items
+  const noncashItems = findNoncashItems(currentData, manualOpLabels);
+  const pNoncashItems = multi ? findNoncashItems(priorData, pManualOpLabels) : [];
+
+  // Working capital changes (only when prior data exists)
+  const wcChanges = multi ? computeWorkingCapitalChanges(currentData, priorData) : [];
+
+  // Manual operating items
+  const manualOpItems = mergeLabels(rows(currentData, 'cf-operating'), multi ? rows(priorData, 'cf-operating') : [], multi);
+
+  // Calculate totals
+  const autoNoncashTotal = noncashItems.reduce(function(s, i) { return s + i.amount; }, 0);
+  const pAutoNoncashTotal = pNoncashItems.reduce(function(s, i) { return s + i.amount; }, 0);
+  const wcTotal = wcChanges.reduce(function(s, i) { return s + i.amount; }, 0);
+  const manualOpTotal = sum(currentData, 'cf-operating');
+  const pManualOpTotal = multi ? sum(priorData, 'cf-operating') : 0;
+
+  const totalOp = netIncome + autoNoncashTotal + wcTotal + manualOpTotal;
+  const pTotalOp = multi ? (pNetIncome + pAutoNoncashTotal + pManualOpTotal) : 0;
+
   const totalInv = sum(currentData, 'cf-investing');
   const totalFin = sum(currentData, 'cf-financing');
-  const netChange = totalOp + totalInv + totalFin;
+  const pTotalInv = multi ? sum(priorData, 'cf-investing') : 0;
+  const pTotalFin = multi ? sum(priorData, 'cf-financing') : 0;
 
-  let pTotalOp = 0, pTotalInv = 0, pTotalFin = 0, pNetChange = 0;
-  if (multi) {
-    pTotalOp = sum(priorData, 'cf-operating');
-    pTotalInv = sum(priorData, 'cf-investing');
-    pTotalFin = sum(priorData, 'cf-financing');
-    pNetChange = pTotalOp + pTotalInv + pTotalFin;
-  }
+  const netChange = totalOp + totalInv + totalFin;
+  const pNetChange = multi ? (pTotalOp + pTotalInv + pTotalFin) : 0;
 
   let html = stmtHeader('Statement of Cash Flows');
   const tableClass = multi ? 'stmt-table multi-period' : 'stmt-table';
@@ -2286,25 +2402,149 @@ function buildCashFlow() {
   }
   html += columnHeaders(multi);
 
-  html += sectionHeader('Operating Activities', multi);
-  const opItems = mergeLabels(rows(currentData, 'cf-operating'), multi ? rows(priorData, 'cf-operating') : [], multi);
-  opItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  // ── OPERATING ACTIVITIES (Indirect Method) ──
+  html += sectionHeader('Cash Flows from Operating Activities', multi);
+  html += tr('Net Income', true, netIncome, multi ? pNetIncome : null, false, '', multi);
+
+  // Non-cash adjustments
+  if (noncashItems.length > 0 || (multi && pNoncashItems.length > 0)) {
+    html += '<tr class="section-header" style="padding-top:6px"><td colspan="3" style="font-size:0.78rem;font-style:italic;color:var(--muted)">Adjustments for non-cash items:</td></tr>';
+    // Merge current and prior non-cash items for multi-period alignment
+    if (multi) {
+      var allNoncash = mergeLabels(
+        noncashItems.map(function(i) { return { label: i.label, amount: i.amount }; }),
+        pNoncashItems.map(function(i) { return { label: i.label, amount: i.amount }; }),
+        true
+      );
+      allNoncash.forEach(function(item) {
+        html += tr(item.label, true, item.cur, item.prior, false, '', multi);
+      });
+    } else {
+      noncashItems.forEach(function(item) {
+        html += tr(item.label, true, item.amount, null, false, '', multi);
+      });
+    }
+  }
+
+  // Working capital changes
+  if (wcChanges.length > 0) {
+    html += '<tr class="section-header" style="padding-top:6px"><td colspan="3" style="font-size:0.78rem;font-style:italic;color:var(--muted)">Changes in operating assets and liabilities:</td></tr>';
+    wcChanges.forEach(function(item) {
+      html += tr(item.label, true, item.amount, null, false, '', multi);
+    });
+  }
+
+  // Manual operating items (if any)
+  if (manualOpItems.length > 0) {
+    html += '<tr class="section-header" style="padding-top:6px"><td colspan="3" style="font-size:0.78rem;font-style:italic;color:var(--muted)">Other operating adjustments:</td></tr>';
+    manualOpItems.forEach(function(item) {
+      html += tr(item.label, true, item.cur, item.prior, false, '', multi);
+    });
+  }
+
   html += tr('Net Cash from Operating Activities', false, totalOp, multi ? pTotalOp : null, false, '', multi);
 
-  html += sectionHeader('Investing Activities', multi);
+  // ── INVESTING ACTIVITIES ──
+  html += sectionHeader('Cash Flows from Investing Activities', multi);
   const invItems = mergeLabels(rows(currentData, 'cf-investing'), multi ? rows(priorData, 'cf-investing') : [], multi);
-  invItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  if (invItems.length > 0) {
+    invItems.forEach(function(item) { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  } else {
+    html += '<tr class="item"><td class="col-label" style="padding-left:20px;font-style:italic;color:var(--muted)">None</td><td></td>' + (multi ? '' : '<td></td>') + '</tr>';
+  }
   html += tr('Net Cash from Investing Activities', false, totalInv, multi ? pTotalInv : null, false, '', multi);
 
-  html += sectionHeader('Financing Activities', multi);
+  // ── FINANCING ACTIVITIES ──
+  html += sectionHeader('Cash Flows from Financing Activities', multi);
   const finItems = mergeLabels(rows(currentData, 'cf-financing'), multi ? rows(priorData, 'cf-financing') : [], multi);
-  finItems.forEach(item => { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  if (finItems.length > 0) {
+    finItems.forEach(function(item) { html += tr(item.label, true, item.cur, item.prior, false, '', multi); });
+  } else {
+    html += '<tr class="item"><td class="col-label" style="padding-left:20px;font-style:italic;color:var(--muted)">None</td><td></td>' + (multi ? '' : '<td></td>') + '</tr>';
+  }
   html += tr('Net Cash from Financing Activities', false, totalFin, multi ? pTotalFin : null, false, '', multi);
 
   html += tr('Net Change in Cash', false, netChange, multi ? pNetChange : null, true, '', multi);
 
   html += '</tbody></table>';
   document.getElementById('cashflow-statement').innerHTML = html;
+}
+
+// ─── Statement of Stockholders' Equity ─────────────────────────────────────
+function buildEquityStatement() {
+  const multi = hasPriorData();
+  const netIncome = computeNetIncome(currentData);
+  const totalEquity = sum(currentData, 'equity');
+  const pTotalEquity = multi ? sum(priorData, 'equity') : 0;
+  const pNetIncome = multi ? computeNetIncome(priorData) : 0;
+
+  // Beginning balance for current period = prior period ending equity
+  const beginBal = pTotalEquity;
+  // Beginning balance for prior period = 0 (unknown)
+  const pBeginBal = 0;
+
+  // Determine title based on entity type
+  var entityEl = document.getElementById('nq-entity-type');
+  var entityType = entityEl ? entityEl.value : '';
+  var eqTitle = (entityType && (entityType.indexOf('LLC') >= 0 || entityType.indexOf('Partnership') >= 0))
+    ? "Statement of Changes in Members' Equity"
+    : "Statement of Stockholders' Equity";
+
+  let html = stmtHeader(eqTitle);
+  const tableClass = multi ? 'stmt-table multi-period' : 'stmt-table';
+  if (multi) {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-current"><col class="col-prior"></colgroup><tbody>';
+  } else {
+    html += '<table class="' + tableClass + '"><colgroup><col class="col-label"><col class="col-amount"><col class="col-total"></colgroup><tbody>';
+  }
+  html += columnHeaders(multi);
+
+  if (multi) {
+    // ── Prior Period Rollforward ──
+    html += sectionHeader('Prior Period', multi);
+    html += tr('Beginning Balance', false, pBeginBal, null, true, '', false);
+    html += tr('Net Income', true, pNetIncome, null, false, '', false);
+
+    // Prior period equity items (excluding retained earnings)
+    var priorEqItems = rows(priorData, 'equity');
+    priorEqItems.forEach(function(item) {
+      if (item.label.toLowerCase().indexOf('retained') === -1) {
+        html += tr(item.label, true, parseFloat(item.amount) || 0, null, false, '', false);
+      }
+    });
+    html += tr('Ending Balance (Prior Period)', false, pTotalEquity, null, true, '', false);
+
+    // Blank separator
+    html += '<tr><td colspan="3" style="height:12px"></td></tr>';
+
+    // ── Current Period Rollforward ──
+    html += sectionHeader('Current Period', multi);
+    html += tr('Beginning Balance', false, pTotalEquity, null, true, '', false);
+    html += tr('Net Income', true, netIncome, null, false, '', false);
+
+    var curEqItems = rows(currentData, 'equity');
+    curEqItems.forEach(function(item) {
+      if (item.label.toLowerCase().indexOf('retained') === -1) {
+        html += tr(item.label, true, parseFloat(item.amount) || 0, null, false, '', false);
+      }
+    });
+    html += tr('Ending Balance (Current Period)', false, totalEquity, null, true, '', false);
+  } else {
+    // ── Single Period Rollforward ──
+    html += tr('Beginning Balance', false, beginBal, null, true, '', multi);
+    html += tr('Net Income', true, netIncome, null, false, '', multi);
+
+    var eqItems = rows(currentData, 'equity');
+    eqItems.forEach(function(item) {
+      if (item.label.toLowerCase().indexOf('retained') === -1) {
+        html += tr(item.label, true, parseFloat(item.amount) || 0, null, false, '', multi);
+      }
+    });
+    html += tr('Ending Balance', false, totalEquity, null, true, '', multi);
+  }
+
+  html += '</tbody></table>';
+  document.getElementById('equity-statement').innerHTML = html;
 }
 
 // ─── Import System ──────────────────────────────────────────────────────────
@@ -2587,12 +2827,13 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
-  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, notes: 4, checklist: 5 };
+  const tabs = { input: 0, income: 1, balance: 2, cashflow: 3, equity: 4, notes: 5, checklist: 6 };
   document.querySelectorAll('.tab')[tabs[name]].classList.add('active');
 
   if (name === 'income') { buildIncomeStatement(); applyTemplateToStatements(); }
   if (name === 'balance') { buildBalanceSheet(); applyTemplateToStatements(); }
   if (name === 'cashflow') { buildCashFlow(); applyTemplateToStatements(); }
+  if (name === 'equity') { buildEquityStatement(); applyTemplateToStatements(); }
   if (name === 'notes') renderSuggestions();
 }
 
@@ -2600,6 +2841,7 @@ function generateAll() {
   buildIncomeStatement();
   buildBalanceSheet();
   buildCashFlow();
+  buildEquityStatement();
   applyTemplateToStatements();
   switchTab('income');
 }
@@ -2786,43 +3028,120 @@ function exportToExcel() {
       aoa.push(['', 'Amount']);
     }
 
-    const totalOp = sum(currentData, 'cf-operating');
-    const totalInv = sum(currentData, 'cf-investing');
-    const totalFin = sum(currentData, 'cf-financing');
-    const netChange = totalOp + totalInv + totalFin;
+    function addRow(label, cur, prior, indent) {
+      var prefix = indent ? '  ' : '';
+      if (multi) { aoa.push([prefix + label, cur, prior]); }
+      else { aoa.push([prefix + label, cur]); }
+    }
 
-    let pTotalOp = 0, pTotalInv = 0, pTotalFin = 0, pNetChange = 0;
+    var netIncome = computeNetIncome(currentData);
+    var pNetIncome = multi ? computeNetIncome(priorData) : 0;
+    var manualOpLabels = rows(currentData, 'cf-operating').map(function(r) { return r.label; });
+    var pManualOpLabels = multi ? rows(priorData, 'cf-operating').map(function(r) { return r.label; }) : [];
+    var noncashItems = findNoncashItems(currentData, manualOpLabels);
+    var pNoncashItems = multi ? findNoncashItems(priorData, pManualOpLabels) : [];
+    var wcChanges = multi ? computeWorkingCapitalChanges(currentData, priorData) : [];
+    var autoNoncashTotal = noncashItems.reduce(function(s, i) { return s + i.amount; }, 0);
+    var pAutoNoncashTotal = pNoncashItems.reduce(function(s, i) { return s + i.amount; }, 0);
+    var wcTotal = wcChanges.reduce(function(s, i) { return s + i.amount; }, 0);
+    var manualOpTotal = sum(currentData, 'cf-operating');
+    var pManualOpTotal = multi ? sum(priorData, 'cf-operating') : 0;
+    var totalOp = netIncome + autoNoncashTotal + wcTotal + manualOpTotal;
+    var pTotalOp = multi ? (pNetIncome + pAutoNoncashTotal + pManualOpTotal) : 0;
+    var totalInv = sum(currentData, 'cf-investing');
+    var totalFin = sum(currentData, 'cf-financing');
+    var pTotalInv = multi ? sum(priorData, 'cf-investing') : 0;
+    var pTotalFin = multi ? sum(priorData, 'cf-financing') : 0;
+    var netChange = totalOp + totalInv + totalFin;
+    var pNetChange = multi ? (pTotalOp + pTotalInv + pTotalFin) : 0;
+
+    aoa.push(['Cash Flows from Operating Activities']);
+    addRow('Net Income', netIncome, pNetIncome, true);
+    if (noncashItems.length > 0 || (multi && pNoncashItems.length > 0)) {
+      aoa.push(['  Adjustments for non-cash items:']);
+      if (multi) {
+        var allNc = mergeLabels(
+          noncashItems.map(function(i) { return { label: i.label, amount: i.amount }; }),
+          pNoncashItems.map(function(i) { return { label: i.label, amount: i.amount }; }), true);
+        allNc.forEach(function(item) { addRow(item.label, item.cur, item.prior, true); });
+      } else {
+        noncashItems.forEach(function(item) { addRow(item.label, item.amount, 0, true); });
+      }
+    }
+    if (wcChanges.length > 0) {
+      aoa.push(['  Changes in operating assets and liabilities:']);
+      wcChanges.forEach(function(item) { addRow(item.label, item.amount, 0, true); });
+    }
+    var manualOpItems = mergeLabels(rows(currentData, 'cf-operating'), multi ? rows(priorData, 'cf-operating') : [], multi);
+    if (manualOpItems.length > 0) {
+      aoa.push(['  Other operating adjustments:']);
+      manualOpItems.forEach(function(item) { addRow(item.label, item.cur, item.prior, true); });
+    }
+    addRow('Net Cash from Operating Activities', totalOp, pTotalOp, false);
+
+    aoa.push(['Cash Flows from Investing Activities']);
+    var invItems = mergeLabels(rows(currentData, 'cf-investing'), multi ? rows(priorData, 'cf-investing') : [], multi);
+    invItems.forEach(function(item) { addRow(item.label, item.cur, item.prior, true); });
+    addRow('Net Cash from Investing Activities', totalInv, pTotalInv, false);
+
+    aoa.push(['Cash Flows from Financing Activities']);
+    var finItems = mergeLabels(rows(currentData, 'cf-financing'), multi ? rows(priorData, 'cf-financing') : [], multi);
+    finItems.forEach(function(item) { addRow(item.label, item.cur, item.prior, true); });
+    addRow('Net Cash from Financing Activities', totalFin, pTotalFin, false);
+
+    addRow('Net Change in Cash', netChange, pNetChange, false);
+
+    return aoa;
+  }
+
+  function buildEquityData() {
+    const aoa = [];
+    var entityEl = document.getElementById('nq-entity-type');
+    var entityType = entityEl ? entityEl.value : '';
+    var eqTitle = (entityType && (entityType.indexOf('LLC') >= 0 || entityType.indexOf('Partnership') >= 0))
+      ? "Statement of Changes in Members' Equity" : "Statement of Stockholders' Equity";
+
+    aoa.push([m.company]);
+    aoa.push([eqTitle]);
+    aoa.push([multi ? m.period + ' and ' + m.priorPeriod : m.period]);
+    aoa.push([]);
+    aoa.push(['', 'Amount']);
+
+    var netIncome = computeNetIncome(currentData);
+    var totalEquity = sum(currentData, 'equity');
+    var pTotalEquity = multi ? sum(priorData, 'equity') : 0;
+    var pNetIncome = multi ? computeNetIncome(priorData) : 0;
+
     if (multi) {
-      pTotalOp = sum(priorData, 'cf-operating');
-      pTotalInv = sum(priorData, 'cf-investing');
-      pTotalFin = sum(priorData, 'cf-financing');
-      pNetChange = pTotalOp + pTotalInv + pTotalFin;
-    }
-
-    function addSection(sectionLabel, sectionKey) {
-      aoa.push([sectionLabel]);
-      const items = mergeLabels(rows(currentData, sectionKey), multi ? rows(priorData, sectionKey) : [], multi);
-      items.forEach(function(item) {
-        if (multi) { aoa.push(['  ' + item.label, item.cur, item.prior]); }
-        else { aoa.push(['  ' + item.label, item.cur]); }
+      aoa.push(['Prior Period']);
+      aoa.push(['  Beginning Balance', 0]);
+      aoa.push(['  Net Income', pNetIncome]);
+      rows(priorData, 'equity').forEach(function(item) {
+        if (item.label.toLowerCase().indexOf('retained') === -1) {
+          aoa.push(['  ' + item.label, parseFloat(item.amount) || 0]);
+        }
       });
+      aoa.push(['Ending Balance (Prior Period)', pTotalEquity]);
+      aoa.push([]);
+      aoa.push(['Current Period']);
+      aoa.push(['  Beginning Balance', pTotalEquity]);
+      aoa.push(['  Net Income', netIncome]);
+      rows(currentData, 'equity').forEach(function(item) {
+        if (item.label.toLowerCase().indexOf('retained') === -1) {
+          aoa.push(['  ' + item.label, parseFloat(item.amount) || 0]);
+        }
+      });
+      aoa.push(['Ending Balance (Current Period)', totalEquity]);
+    } else {
+      aoa.push(['Beginning Balance', pTotalEquity]);
+      aoa.push(['  Net Income', netIncome]);
+      rows(currentData, 'equity').forEach(function(item) {
+        if (item.label.toLowerCase().indexOf('retained') === -1) {
+          aoa.push(['  ' + item.label, parseFloat(item.amount) || 0]);
+        }
+      });
+      aoa.push(['Ending Balance', totalEquity]);
     }
-
-    function addTotal(label, cur, prior) {
-      if (multi) { aoa.push([label, cur, prior]); }
-      else { aoa.push([label, cur]); }
-    }
-
-    addSection('Operating Activities', 'cf-operating');
-    addTotal('Net Cash from Operating Activities', totalOp, pTotalOp);
-
-    addSection('Investing Activities', 'cf-investing');
-    addTotal('Net Cash from Investing Activities', totalInv, pTotalInv);
-
-    addSection('Financing Activities', 'cf-financing');
-    addTotal('Net Cash from Financing Activities', totalFin, pTotalFin);
-
-    addTotal('Net Change in Cash', netChange, pNetChange);
 
     return aoa;
   }
@@ -2856,6 +3175,11 @@ function exportToExcel() {
   const wsBS = XLSX.utils.aoa_to_sheet(bsData);
   wsBS['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
   XLSX.utils.book_append_sheet(wb, wsBS, 'Balance Sheet');
+
+  const eqData = buildEquityData();
+  const wsEq = XLSX.utils.aoa_to_sheet(eqData);
+  wsEq['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsEq, 'Equity');
 
   const cfData = buildCFData();
   const wsCF = XLSX.utils.aoa_to_sheet(cfData);
@@ -3212,21 +3536,66 @@ function exportPackagePDF() {
     didDrawPage: function() { addFooter(doc, pageNum); }
   });
 
-  // ── 7. CASH FLOW STATEMENT ──
+  // ── 7. CASH FLOW STATEMENT (Indirect Method) ──
   var cfAoa = [];
-  var totalOp = sum(currentData, 'cf-operating'), totalInv = sum(currentData, 'cf-investing');
-  var totalFin = sum(currentData, 'cf-financing'), netChange = totalOp + totalInv + totalFin;
-  var pOp = 0, pInv = 0, pFin = 0, pNet = 0;
-  if (multi) {
-    pOp = sum(priorData, 'cf-operating'); pInv = sum(priorData, 'cf-investing');
-    pFin = sum(priorData, 'cf-financing'); pNet = pOp + pInv + pFin;
-  }
+  var cfNetIncome = computeNetIncome(currentData);
+  var cfPNetIncome = multi ? computeNetIncome(priorData) : 0;
+  var cfManualOpLabels = rows(currentData, 'cf-operating').map(function(r) { return r.label; });
+  var cfPManualOpLabels = multi ? rows(priorData, 'cf-operating').map(function(r) { return r.label; }) : [];
+  var cfNoncash = findNoncashItems(currentData, cfManualOpLabels);
+  var cfPNoncash = multi ? findNoncashItems(priorData, cfPManualOpLabels) : [];
+  var cfWC = multi ? computeWorkingCapitalChanges(currentData, priorData) : [];
+  var cfAutoTotal = cfNoncash.reduce(function(s, i) { return s + i.amount; }, 0);
+  var cfPAutoTotal = cfPNoncash.reduce(function(s, i) { return s + i.amount; }, 0);
+  var cfWCTotal = cfWC.reduce(function(s, i) { return s + i.amount; }, 0);
+  var cfManualOpTotal = sum(currentData, 'cf-operating');
+  var cfPManualOpTotal = multi ? sum(priorData, 'cf-operating') : 0;
+  var totalOp = cfNetIncome + cfAutoTotal + cfWCTotal + cfManualOpTotal;
+  var pOp = multi ? (cfPNetIncome + cfPAutoTotal + cfPManualOpTotal) : 0;
+  var totalInv = sum(currentData, 'cf-investing');
+  var totalFin = sum(currentData, 'cf-financing');
+  var pInv = multi ? sum(priorData, 'cf-investing') : 0;
+  var pFin = multi ? sum(priorData, 'cf-financing') : 0;
+  var netChange = totalOp + totalInv + totalFin;
+  var pNet = multi ? (pOp + pInv + pFin) : 0;
 
-  pushSection(cfAoa, 'Operating Activities', 'cf-operating');
+  // Operating Activities
+  cfAoa.push([{ content: 'Cash Flows from Operating Activities', styles: { fontStyle: 'bold' } }, '']);
+  if (multi) { cfAoa.push(['  Net Income', fmtAmt(cfNetIncome), fmtAmt(cfPNetIncome)]); }
+  else { cfAoa.push(['  Net Income', fmtAmt(cfNetIncome)]); }
+
+  if (cfNoncash.length > 0 || (multi && cfPNoncash.length > 0)) {
+    cfAoa.push([{ content: '  Adjustments for non-cash items:', styles: { fontStyle: 'italic' } }, '']);
+    if (multi) {
+      var allNc = mergeLabels(
+        cfNoncash.map(function(i) { return { label: i.label, amount: i.amount }; }),
+        cfPNoncash.map(function(i) { return { label: i.label, amount: i.amount }; }), true);
+      allNc.forEach(function(item) { cfAoa.push(['    ' + item.label, fmtAmt(item.cur), fmtAmt(item.prior)]); });
+    } else {
+      cfNoncash.forEach(function(item) { cfAoa.push(['    ' + item.label, fmtAmt(item.amount)]); });
+    }
+  }
+  if (cfWC.length > 0) {
+    cfAoa.push([{ content: '  Changes in operating assets and liabilities:', styles: { fontStyle: 'italic' } }, '']);
+    cfWC.forEach(function(item) {
+      if (multi) { cfAoa.push(['    ' + item.label, fmtAmt(item.amount), '']); }
+      else { cfAoa.push(['    ' + item.label, fmtAmt(item.amount)]); }
+    });
+  }
+  var cfManualOp = mergeLabels(rows(currentData, 'cf-operating'), multi ? rows(priorData, 'cf-operating') : [], multi);
+  if (cfManualOp.length > 0) {
+    cfAoa.push([{ content: '  Other operating adjustments:', styles: { fontStyle: 'italic' } }, '']);
+    cfManualOp.forEach(function(item) {
+      if (multi) { cfAoa.push(['    ' + item.label, fmtAmt(item.cur), fmtAmt(item.prior)]); }
+      else { cfAoa.push(['    ' + item.label, fmtAmt(item.cur)]); }
+    });
+  }
   pushTotal(cfAoa, 'Net Cash from Operating Activities', totalOp, pOp);
-  pushSection(cfAoa, 'Investing Activities', 'cf-investing');
+
+  // Investing & Financing
+  pushSection(cfAoa, 'Cash Flows from Investing Activities', 'cf-investing');
   pushTotal(cfAoa, 'Net Cash from Investing Activities', totalInv, pInv);
-  pushSection(cfAoa, 'Financing Activities', 'cf-financing');
+  pushSection(cfAoa, 'Cash Flows from Financing Activities', 'cf-financing');
   pushTotal(cfAoa, 'Net Cash from Financing Activities', totalFin, pFin);
   pushTotal(cfAoa, 'Net Change in Cash', netChange, pNet);
 
