@@ -711,6 +711,8 @@
         <label for="import-current">Current Period</label>
         <input type="radio" name="import-period" id="import-prior" value="prior">
         <label for="import-prior">Prior Period</label>
+        <input type="radio" name="import-period" id="import-comparative" value="comparative">
+        <label for="import-comparative">Comparative (Both)</label>
       </div>
 
       <div class="import-zone" id="zone-combined" ondragover="zoneDrag(event,'zone-combined')" ondragleave="zoneDragEnd('zone-combined')" ondrop="zoneDrop(event,'zone-combined','combined')">
@@ -721,7 +723,8 @@
       </div>
       <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;line-height:1.6">
         <strong>Required columns:</strong> <code>Account Number</code>, <code>Account Name</code>, <code>Debit</code>, <code>Credit</code><br>
-        <strong>Optional:</strong> <code>Section</code> column to pre-map accounts (unmapped accounts can be assigned after import)
+        <strong>Optional:</strong> <code>Section</code> column to pre-map accounts (unmapped accounts can be assigned after import)<br>
+        <strong>Comparative:</strong> Add <code>Prior Debit</code> and <code>Prior Credit</code> columns to import both periods in one file
       </div>
 
       <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -2641,6 +2644,11 @@ function parseTB(rowsArr, mode) {
     ? findCol(headers, ['section','category','classification'])
     : -1;
 
+  // Comparative columns (Prior Debit / Prior Credit)
+  const priorDebitIdx = findCol(headers, ['priordebit','priordr','prioryeardebit','pydebit','beginningdebit']);
+  const priorCreditIdx = findCol(headers, ['priorcredit','priorcr','prioryearcredit','pycredit','beginningcredit']);
+  const hasComparative = priorDebitIdx !== -1 && priorCreditIdx !== -1;
+
   if (acctIdx  === -1) throw new Error('Trial balance missing "Account Number" column.');
   if (debitIdx === -1) throw new Error('Trial balance missing "Debit" column.');
   if (creditIdx=== -1) throw new Error('Trial balance missing "Credit" column.');
@@ -2654,8 +2662,14 @@ function parseTB(rowsArr, mode) {
     const debit  = parseAmount(r[debitIdx]  || '0');
     const credit = parseAmount(r[creditIdx] || '0');
     const sect   = sectIdx !== -1 ? (r[sectIdx] || '').trim().toLowerCase().replace(/\s+/g, '-') : undefined;
-    if (acct) result.push({ accountNumber: acct, accountName: name || acct, debit, credit, section: sect });
+    const row = { accountNumber: acct, accountName: name || acct, debit, credit, section: sect };
+    if (hasComparative) {
+      row.priorDebit = parseAmount(r[priorDebitIdx] || '0');
+      row.priorCredit = parseAmount(r[priorCreditIdx] || '0');
+    }
+    if (acct) result.push(row);
   }
+  result._hasComparative = hasComparative;
   return result;
 }
 
@@ -2670,16 +2684,32 @@ async function runImport() {
     const text = await readFileText(importFiles.combined);
     const tbRows = parseTB(parseCSV(text), 'combined');
 
-    let targetData;
-    if (periodVal === 'prior') {
-      SECTIONS.forEach(s => { priorData[s] = []; });
-      targetData = priorData;
+    if (periodVal === 'comparative') {
+      // Comparative import — both periods from one file
+      if (!tbRows._hasComparative) {
+        showStatus('error', 'Comparative mode requires "Prior Debit" and "Prior Credit" columns. Add them to your file or switch to Current/Prior Period mode.');
+        return;
+      }
+      SECTIONS.forEach(s => { currentData[s] = []; priorData[s] = []; });
+      applyComparativeImport(tbRows, null);
     } else {
-      SECTIONS.forEach(s => { currentData[s] = []; });
-      targetData = currentData;
+      // Auto-detect comparative columns even in current/prior mode
+      if (tbRows._hasComparative && periodVal === 'current') {
+        // If file has prior columns and user selected "Current Period", import both automatically
+        SECTIONS.forEach(s => { currentData[s] = []; priorData[s] = []; });
+        applyComparativeImport(tbRows, null);
+      } else {
+        let targetData;
+        if (periodVal === 'prior') {
+          SECTIONS.forEach(s => { priorData[s] = []; });
+          targetData = priorData;
+        } else {
+          SECTIONS.forEach(s => { currentData[s] = []; });
+          targetData = currentData;
+        }
+        applyImport(tbRows, null, targetData);
+      }
     }
-
-    applyImport(tbRows, null, targetData);
   } catch (err) {
     showStatus('error', 'Parse error: ' + err.message);
   }
@@ -2744,6 +2774,109 @@ function applyImport(tbRows, accountMap, targetData) {
   document.getElementById('import-status').innerHTML = html;
 }
 
+// ─── Comparative Import (both periods from one file) ───────────────────────
+let pendingComparativeUnmapped = [];
+
+function applyComparativeImport(tbRows, accountMap) {
+  const unmapped = [];
+  let importedCur = 0, importedPrior = 0;
+
+  for (const row of tbRows) {
+    const section = row.section !== undefined ? row.section : (accountMap ? accountMap.get(row.accountNumber) : undefined);
+    if (!section || !VALID_SECTIONS.has(section)) {
+      unmapped.push({ ...row, section: section || '' });
+      continue;
+    }
+    const sign = SECTION_SIGN[section];
+
+    // Current period
+    const curAmount = sign * (row.debit - row.credit);
+    if (Math.abs(curAmount) > 0.005 || (row.debit === 0 && row.credit === 0)) {
+      currentData[section].push({ label: row.accountName, amount: parseFloat(curAmount.toFixed(2)) });
+      importedCur++;
+    }
+
+    // Prior period
+    if (row.priorDebit !== undefined && row.priorCredit !== undefined) {
+      const priorAmount = sign * (row.priorDebit - row.priorCredit);
+      if (Math.abs(priorAmount) > 0.005 || (row.priorDebit === 0 && row.priorCredit === 0)) {
+        priorData[section].push({ label: row.accountName, amount: parseFloat(priorAmount.toFixed(2)) });
+        importedPrior++;
+      }
+    }
+  }
+
+  saveProject();
+  pendingComparativeUnmapped = unmapped;
+
+  let html = '';
+
+  if (importedCur > 0 || importedPrior > 0) {
+    html += '<div class="import-status success" style="margin-bottom:' + (unmapped.length ? '12px' : '0') + '">';
+    html += '<strong>Comparative import: ' + importedCur + ' current + ' + importedPrior + ' prior period accounts imported.</strong>';
+    html += '</div>';
+  }
+
+  if (unmapped.length) {
+    html += '<div class="import-status info">';
+    html += '<strong>' + unmapped.length + ' account' + (unmapped.length !== 1 ? 's' : '') + ' need' + (unmapped.length === 1 ? 's' : '') + ' a section assignment.</strong>';
+    html += ' Use the dropdowns to assign each account to the correct financial statement section.';
+    html += '<div class="unmapped-list"><table>';
+    html += '<tr><th>Account #</th><th>Name</th><th>Debit</th><th>Credit</th><th>Prior Dr</th><th>Prior Cr</th><th style="min-width:180px">Assign Section</th></tr>';
+    for (let i = 0; i < unmapped.length; i++) {
+      const u = unmapped[i];
+      html += '<tr>' +
+        '<td>' + esc(u.accountNumber) + '</td>' +
+        '<td>' + esc(u.accountName) + '</td>' +
+        '<td>' + fmt(u.debit) + '</td>' +
+        '<td>' + fmt(u.credit) + '</td>' +
+        '<td>' + fmt(u.priorDebit || 0) + '</td>' +
+        '<td>' + fmt(u.priorCredit || 0) + '</td>' +
+        '<td>' + buildSectionSelect('map-' + i, '') + '</td>' +
+      '</tr>';
+    }
+    html += '</table></div>';
+    html += '<div class="map-actions">' +
+      '<button class="btn btn-primary btn-sm" onclick="applyComparativeMappings()">Map & Import</button>' +
+      '<span class="map-count" id="map-count">0 of ' + unmapped.length + ' assigned</span>' +
+    '</div>';
+    html += '</div>';
+  }
+
+  if (!importedCur && !importedPrior && !unmapped.length) {
+    html = '<div class="import-status error">No accounts found in file.</div>';
+  }
+
+  document.getElementById('import-status').innerHTML = html;
+}
+
+function applyComparativeMappings() {
+  let added = 0;
+  for (let i = 0; i < pendingComparativeUnmapped.length; i++) {
+    const sel = document.getElementById('map-' + i);
+    const section = sel ? sel.value : '';
+    if (!section || !VALID_SECTIONS.has(section)) continue;
+    const row = pendingComparativeUnmapped[i];
+    const sign = SECTION_SIGN[section];
+
+    // Current
+    const curAmount = sign * (row.debit - row.credit);
+    currentData[section].push({ label: row.accountName, amount: parseFloat(curAmount.toFixed(2)) });
+
+    // Prior
+    if (row.priorDebit !== undefined && row.priorCredit !== undefined) {
+      const priorAmount = sign * (row.priorDebit - row.priorCredit);
+      priorData[section].push({ label: row.accountName, amount: parseFloat(priorAmount.toFixed(2)) });
+    }
+    added++;
+  }
+  if (added === 0) { showStatus('error', 'No sections assigned. Use the dropdowns to map accounts first.'); return; }
+  pendingComparativeUnmapped = [];
+  saveProject();
+  const total = SECTIONS.reduce(function(n, s) { return n + currentData[s].length + priorData[s].length; }, 0);
+  showStatus('success', '<strong>' + added + ' account' + (added !== 1 ? 's' : '') + ' mapped (both periods).</strong> ' + total + ' total accounts loaded.');
+}
+
 function buildSectionSelect(id, preselect) {
   let html = '<select id="' + id + '" onchange="onMappingChange(this)">';
   html += '<option value="">-- Select section --</option>';
@@ -2803,18 +2936,44 @@ function showStatus(type, msg) {
 
 // ─── Template Download ──────────────────────────────────────────────────────
 function downloadTemplate() {
-  const csv = 'Account Number,Account Name,Debit,Credit,Section\n' +
-    '1000,Cash,124000,0,current-assets\n' +
-    '1100,Accounts Receivable,88000,0,current-assets\n' +
-    '1200,Inventory,210000,0,current-assets\n' +
-    '2000,Accounts Payable,0,64000,current-liab\n' +
-    '2500,Long-Term Debt,0,245000,noncurrent-liab\n' +
-    '3000,Common Stock,0,100000,equity\n' +
-    '4000,Product Sales,0,850000,revenue\n' +
-    '5000,Cost of Goods Sold,310000,0,cogs\n' +
-    '6000,Salaries & Wages,148000,0,opex\n' +
-    '7100,Interest Expense,14200,0,other\n';
-  const filename = 'import_template.csv';
+  const periodVal = document.querySelector('input[name="import-period"]:checked').value;
+  let csv;
+  if (periodVal === 'comparative') {
+    csv = 'Account Number,Account Name,Debit,Credit,Prior Debit,Prior Credit,Section\n' +
+      '1000,Cash,124000,0,98000,0,current-assets\n' +
+      '1100,Accounts Receivable,88000,0,72000,0,current-assets\n' +
+      '1200,Inventory,210000,0,195000,0,current-assets\n' +
+      '1500,Equipment,350000,0,320000,0,noncurrent-assets\n' +
+      '1510,Accumulated Depreciation,0,85000,0,60000,noncurrent-assets\n' +
+      '2000,Accounts Payable,0,64000,0,52000,current-liab\n' +
+      '2500,Long-Term Debt,0,245000,0,280000,noncurrent-liab\n' +
+      '3000,Common Stock,0,100000,0,100000,equity\n' +
+      '3100,Retained Earnings,0,120000,0,75000,equity\n' +
+      '4000,Product Sales,0,850000,0,720000,revenue\n' +
+      '5000,Cost of Goods Sold,310000,0,265000,0,cogs\n' +
+      '6000,Salaries & Wages,148000,0,132000,0,opex\n' +
+      '6100,Depreciation Expense,25000,0,20000,0,opex\n' +
+      '6200,Rent Expense,36000,0,36000,0,opex\n' +
+      '7100,Interest Expense,14200,0,16500,0,other\n';
+  } else {
+    csv = 'Account Number,Account Name,Debit,Credit,Section\n' +
+      '1000,Cash,124000,0,current-assets\n' +
+      '1100,Accounts Receivable,88000,0,current-assets\n' +
+      '1200,Inventory,210000,0,current-assets\n' +
+      '1500,Equipment,350000,0,noncurrent-assets\n' +
+      '1510,Accumulated Depreciation,0,85000,noncurrent-assets\n' +
+      '2000,Accounts Payable,0,64000,current-liab\n' +
+      '2500,Long-Term Debt,0,245000,noncurrent-liab\n' +
+      '3000,Common Stock,0,100000,equity\n' +
+      '3100,Retained Earnings,0,120000,equity\n' +
+      '4000,Product Sales,0,850000,revenue\n' +
+      '5000,Cost of Goods Sold,310000,0,cogs\n' +
+      '6000,Salaries & Wages,148000,0,opex\n' +
+      '6100,Depreciation Expense,25000,0,opex\n' +
+      '6200,Rent Expense,36000,0,opex\n' +
+      '7100,Interest Expense,14200,0,other\n';
+  }
+  const filename = periodVal === 'comparative' ? 'comparative_import_template.csv' : 'import_template.csv';
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(blob), download: filename
