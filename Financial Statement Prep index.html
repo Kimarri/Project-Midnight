@@ -1190,6 +1190,7 @@
   <div class="header-actions">
     <span class="save-indicator" id="save-indicator"></span>
     <span class="security-badge" id="security-badge" title="Data encrypted with AES-256-GCM" style="font-size:0.7rem;color:#22c55e;margin-right:8px;display:none">&#128274; Encrypted</span>
+    <span class="security-badge" id="cloud-sync-badge" title="Data synced to cloud" style="font-size:0.7rem;color:#3b82f6;margin-right:8px;display:none">&#9729; Cloud Sync</span>
     <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
     <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">◐</button>
     <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openTemplate()">Formatting</button>
@@ -2040,6 +2041,15 @@ if (FIREBASE_ENABLED) {
   firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
   firebaseAuth = firebase.auth();
   firebaseDb = firebase.firestore();
+
+  // Enable offline persistence for seamless offline/online transitions
+  firebaseDb.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+    console.warn('Firestore persistence failed:', err.code);
+  });
+}
+
+function getFirebaseUid() {
+  return (FIREBASE_ENABLED && firebaseAuth && firebaseAuth.currentUser) ? firebaseAuth.currentUser.uid : null;
 }
 
 // ─── Stripe Configuration ────────────────────────────────────────────────────
@@ -2238,26 +2248,180 @@ function genId() {
   });
 }
 
+// ─── Cloud Data Layer (Firestore + localStorage) ────────────────────────────
+// All data operations go through these helpers. When Firebase is configured and
+// the user is authenticated, data syncs to Firestore with localStorage as cache.
+// When Firebase is not configured, localStorage is used exclusively.
+
+function cloudSaveUserData(field, data) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve();
+  return firebaseDb.collection('users').doc(uid).set(
+    Object.fromEntries ? Object.fromEntries([[field, data]]) : (function() { var o = {}; o[field] = data; return o; })(),
+    { merge: true }
+  ).catch(function(err) { console.warn('Cloud save failed (' + field + '):', err); });
+}
+
+function cloudLoadUserData(field) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve(null);
+  return firebaseDb.collection('users').doc(uid).get()
+    .then(function(doc) {
+      if (!doc.exists) return null;
+      return doc.data()[field] || null;
+    })
+    .catch(function(err) { console.warn('Cloud load failed (' + field + '):', err); return null; });
+}
+
+function cloudSaveProject(projectId, projectData) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve();
+  return firebaseDb.collection('users').doc(uid).collection('projects').doc(projectId).set(projectData, { merge: true })
+    .catch(function(err) { console.warn('Cloud project save failed:', err); });
+}
+
+function cloudLoadProject(projectId) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve(null);
+  return firebaseDb.collection('users').doc(uid).collection('projects').doc(projectId).get()
+    .then(function(doc) { return doc.exists ? doc.data() : null; })
+    .catch(function(err) { console.warn('Cloud project load failed:', err); return null; });
+}
+
+function cloudDeleteProject(projectId) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve();
+  return firebaseDb.collection('users').doc(uid).collection('projects').doc(projectId).delete()
+    .catch(function(err) { console.warn('Cloud project delete failed:', err); });
+}
+
+function cloudLoadAllProjects() {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve([]);
+  return firebaseDb.collection('users').doc(uid).collection('projects').get()
+    .then(function(snapshot) {
+      var list = [];
+      snapshot.forEach(function(doc) {
+        var d = doc.data();
+        list.push({ id: doc.id, name: d.name || 'Unnamed', createdAt: d.createdAt || '', updatedAt: d.updatedAt || '' });
+      });
+      return list;
+    })
+    .catch(function(err) { console.warn('Cloud project list failed:', err); return []; });
+}
+
+// Migrate localStorage data to Firestore on first cloud login
+function migrateToCloud() {
+  var uid = getFirebaseUid();
+  if (!uid || !currentUserEmail) return Promise.resolve();
+
+  // Check if migration already happened
+  var migKey = 'noteflow-cloud-migrated-' + currentUserEmail;
+  if (localStorage.getItem(migKey)) return Promise.resolve();
+
+  var promises = [];
+
+  // Migrate projects
+  var list = getProjectList(currentUserEmail);
+  list.forEach(function(entry) {
+    var raw = localStorage.getItem('fsgen-project-' + entry.id);
+    if (!raw) return;
+    var projData = { name: entry.name, createdAt: entry.createdAt || new Date().toISOString(), updatedAt: entry.updatedAt || new Date().toISOString() };
+    try {
+      // Handle encrypted data — store the raw string in a 'localData' field for migration
+      if (raw.startsWith('ENC:')) {
+        projData.encryptedData = raw;
+      } else {
+        projData.data = JSON.parse(raw);
+      }
+    } catch(e) { return; }
+
+    // Migrate AJE data
+    var ajeRaw = localStorage.getItem('fsgen-aje-' + entry.id);
+    if (ajeRaw) {
+      try { projData.aje = JSON.parse(ajeRaw); } catch(e) {}
+    }
+
+    promises.push(cloudSaveProject(entry.id, projData));
+  });
+
+  // Migrate user-level data
+  var firmRaw = localStorage.getItem('noteflow-firmprofile-' + currentUserEmail);
+  if (firmRaw) {
+    try { promises.push(cloudSaveUserData('firmProfile', JSON.parse(firmRaw))); } catch(e) {}
+  }
+
+  var tplRaw = localStorage.getItem('noteflow-template-' + currentUserEmail);
+  if (tplRaw) {
+    try { promises.push(cloudSaveUserData('template', JSON.parse(tplRaw))); } catch(e) {}
+  }
+
+  var patRaw = localStorage.getItem('noteflow-patterns-' + currentUserEmail);
+  if (patRaw) {
+    try { promises.push(cloudSaveUserData('patterns', JSON.parse(patRaw))); } catch(e) {}
+  }
+
+  var disRaw = localStorage.getItem('noteflow-dismissed-' + currentUserEmail);
+  if (disRaw) {
+    try { promises.push(cloudSaveUserData('dismissed', JSON.parse(disRaw))); } catch(e) {}
+  }
+
+  return Promise.all(promises).then(function() {
+    localStorage.setItem(migKey, '1');
+    console.log('NoteFlow: Data migrated to cloud successfully');
+  }).catch(function(err) {
+    console.warn('NoteFlow: Cloud migration had errors:', err);
+  });
+}
+
 // ─── Project Management ─────────────────────────────────────────────────────
 function getProjectList(email) {
   try {
     return JSON.parse(localStorage.getItem('fsgen-projects-' + email)) || [];
-  } catch { return []; }
+  } catch(e) { return []; }
+}
+
+// Async version that syncs with cloud
+function getProjectListCloud(callback) {
+  var local = getProjectList(currentUserEmail);
+  if (!getFirebaseUid()) { callback(local); return; }
+
+  cloudLoadAllProjects().then(function(cloudList) {
+    if (cloudList.length === 0 && local.length > 0) {
+      // Cloud is empty but local has data — use local (migration pending)
+      callback(local);
+      return;
+    }
+    if (cloudList.length > 0) {
+      // Merge: cloud is source of truth, but keep any local-only projects
+      var cloudIds = {};
+      cloudList.forEach(function(p) { cloudIds[p.id] = true; });
+      var merged = cloudList.slice();
+      local.forEach(function(p) {
+        if (!cloudIds[p.id]) merged.push(p);
+      });
+      // Update localStorage cache
+      saveProjectList(currentUserEmail, merged);
+      callback(merged);
+      return;
+    }
+    callback(local);
+  });
 }
 
 function saveProjectList(email, list) {
   localStorage.setItem('fsgen-projects-' + email, JSON.stringify(list));
+  // Cloud sync happens at project level, not list level — the list is derived from project docs
 }
 
 function loadProject(id) {
-  const raw = localStorage.getItem('fsgen-project-' + id);
-  if (!raw) return;
+  var raw = localStorage.getItem('fsgen-project-' + id);
 
   function applyProject(projJson) {
     try {
-      const proj = JSON.parse(projJson);
+      var proj = JSON.parse(projJson);
       currentProjectId = id;
-      SECTIONS.forEach(s => {
+      SECTIONS.forEach(function(s) {
         currentData[s] = (proj.currentData && proj.currentData[s]) ? proj.currentData[s] : [];
         priorData[s] = (proj.priorData && proj.priorData[s]) ? proj.priorData[s] : [];
       });
@@ -2271,12 +2435,30 @@ function loadProject(id) {
     } catch (e) { /* ignore corrupt project */ }
   }
 
-  if (raw.startsWith('ENC:') && currentUserEmail) {
-    decryptData(raw, currentUserEmail).then(function(decrypted) {
-      applyProject(decrypted);
+  function applyFromRaw(rawData) {
+    if (!rawData) return;
+    if (rawData.startsWith('ENC:') && currentUserEmail) {
+      decryptData(rawData, currentUserEmail).then(function(decrypted) {
+        applyProject(decrypted);
+      });
+    } else {
+      applyProject(rawData);
+    }
+  }
+
+  if (raw) {
+    applyFromRaw(raw);
+  } else if (getFirebaseUid()) {
+    // Try loading from cloud
+    cloudLoadProject(id).then(function(cloudDoc) {
+      if (cloudDoc && cloudDoc.data) {
+        var projJson = JSON.stringify(cloudDoc.data);
+        // Cache locally
+        localStorage.setItem('fsgen-project-' + id, projJson);
+        currentProjectId = id;
+        applyProject(projJson);
+      }
     });
-  } else {
-    applyProject(raw);
   }
 }
 
@@ -2317,6 +2499,18 @@ function saveProject() {
     entry.updatedAt = new Date().toISOString();
     saveProjectList(currentUserEmail, list);
   }
+
+  // Cloud sync
+  if (getFirebaseUid()) {
+    var list2 = getProjectList(currentUserEmail);
+    var entry2 = list2.find(function(p) { return p.id === currentProjectId; });
+    var cloudDoc = {
+      name: entry2 ? entry2.name : 'Unnamed',
+      updatedAt: new Date().toISOString(),
+      data: proj
+    };
+    cloudSaveProject(currentProjectId, cloudDoc);
+  }
 }
 
 function createProject(name) {
@@ -2351,6 +2545,7 @@ function deleteProject(id) {
   const filtered = list.filter(p => p.id !== id);
   saveProjectList(currentUserEmail, filtered);
   localStorage.removeItem('fsgen-project-' + id);
+  cloudDeleteProject(id);
 
   if (filtered.length > 0) {
     // Switch to most recent
@@ -2742,6 +2937,7 @@ function loadTemplate() {
 }
 function saveTemplate(tpl) {
   localStorage.setItem('noteflow-template-' + currentUserEmail, JSON.stringify(tpl));
+  cloudSaveUserData('template', tpl);
 }
 function getActiveTemplate() { return loadTemplate(); }
 
@@ -2815,6 +3011,7 @@ function loadFirmProfile() {
 }
 function saveFirmProfile(profile) {
   localStorage.setItem('noteflow-firmprofile-' + currentUserEmail, JSON.stringify(profile));
+  cloudSaveUserData('firmProfile', profile);
 }
 function openFirmProfile() {
   var p = loadFirmProfile();
@@ -2868,6 +3065,7 @@ function loadPatterns() {
 }
 function savePatterns(p) {
   localStorage.setItem('noteflow-patterns-' + currentUserEmail, JSON.stringify(p));
+  cloudSaveUserData('patterns', p);
 }
 
 function trackProjectPatterns() {
@@ -3000,6 +3198,7 @@ function dismissSuggestion(field) {
   var dismissed = JSON.parse(localStorage.getItem('noteflow-dismissed-' + currentUserEmail) || '[]');
   if (dismissed.indexOf(field) === -1) dismissed.push(field);
   localStorage.setItem('noteflow-dismissed-' + currentUserEmail, JSON.stringify(dismissed));
+  cloudSaveUserData('dismissed', dismissed);
   renderSuggestions();
 }
 
@@ -4266,18 +4465,35 @@ function unpostAJE() {
 var _featureSaveProject = saveProject;
 saveProject = function() {
   _featureSaveProject();
-  if (currentProjectId) localStorage.setItem('fsgen-aje-' + currentProjectId, JSON.stringify({ entries: ajeEntries, posted: ajePosted, prePostData: ajePrePostData }));
+  if (currentProjectId) {
+    var ajeData = { entries: ajeEntries, posted: ajePosted, prePostData: ajePrePostData };
+    localStorage.setItem('fsgen-aje-' + currentProjectId, JSON.stringify(ajeData));
+    if (getFirebaseUid()) {
+      cloudSaveProject(currentProjectId, { aje: ajeData });
+    }
+  }
 };
 
 var _featureLoadProject = loadProject;
 loadProject = function(id) {
   _featureLoadProject(id);
+  function applyAJE(d) {
+    ajeEntries = d.entries || []; ajePosted = d.posted || false; ajePrePostData = d.prePostData || null;
+    renderAJEEntries(); loadPriorYearFields(); buildTrialBalanceEditor();
+  }
   try {
     var raw = localStorage.getItem('fsgen-aje-' + id);
-    if (raw) { var d = JSON.parse(raw); ajeEntries = d.entries || []; ajePosted = d.posted || false; ajePrePostData = d.prePostData || null; }
-    else { ajeEntries = []; ajePosted = false; ajePrePostData = null; }
-  } catch(e) { ajeEntries = []; ajePosted = false; ajePrePostData = null; }
-  renderAJEEntries(); loadPriorYearFields(); buildTrialBalanceEditor();
+    if (raw) { applyAJE(JSON.parse(raw)); }
+    else if (getFirebaseUid()) {
+      cloudLoadProject(id).then(function(doc) {
+        if (doc && doc.aje) {
+          localStorage.setItem('fsgen-aje-' + id, JSON.stringify(doc.aje));
+          applyAJE(doc.aje);
+        } else { applyAJE({}); }
+      });
+    }
+    else { applyAJE({}); }
+  } catch(e) { applyAJE({}); }
 };
 
 var _featureCreateProject = createProject;
@@ -5935,15 +6151,42 @@ function loginSession(email, name) {
   // Show security badge if encryption is enabled
   var badge = document.getElementById('security-badge');
   if (badge && ENCRYPTION_ENABLED) badge.style.display = 'inline';
+  var cloudBadge = document.getElementById('cloud-sync-badge');
+  if (cloudBadge && getFirebaseUid()) cloudBadge.style.display = 'inline';
 
-  // Check subscription before showing dashboard
-  checkSubscription(function(hasAccess) {
-    if (hasAccess) {
-      hideSubscriptionGate();
-      showDashboard();
-    } else {
-      showSubscriptionGate();
+  // Migrate localStorage data to cloud on first login
+  var migrationDone = getFirebaseUid() ? migrateToCloud() : Promise.resolve();
+  migrationDone.then(function() {
+    // Sync cloud data to localStorage cache
+    if (getFirebaseUid()) {
+      // Pull user-level data from cloud
+      Promise.all([
+        cloudLoadUserData('firmProfile'),
+        cloudLoadUserData('template'),
+        cloudLoadUserData('patterns'),
+        cloudLoadUserData('dismissed')
+      ]).then(function(results) {
+        if (results[0]) localStorage.setItem('noteflow-firmprofile-' + email, JSON.stringify(results[0]));
+        if (results[1]) localStorage.setItem('noteflow-template-' + email, JSON.stringify(results[1]));
+        if (results[2]) localStorage.setItem('noteflow-patterns-' + email, JSON.stringify(results[2]));
+        if (results[3]) localStorage.setItem('noteflow-dismissed-' + email, JSON.stringify(results[3]));
+      });
+
+      // Pull project list from cloud
+      getProjectListCloud(function(mergedList) {
+        saveProjectList(email, mergedList);
+      });
     }
+
+    // Check subscription before showing dashboard
+    checkSubscription(function(hasAccess) {
+      if (hasAccess) {
+        hideSubscriptionGate();
+        showDashboard();
+      } else {
+        showSubscriptionGate();
+      }
+    });
   });
 }
 
@@ -6036,6 +6279,7 @@ function dashRenameProject(id, oldName) {
 function dashDeleteProject(id, name) {
   if (confirm('Delete "' + name + '"? This cannot be undone.')) {
     localStorage.removeItem('fsgen-project-' + id);
+    cloudDeleteProject(id);
     var list = getProjectList(currentUserEmail).filter(function(p) { return p.id !== id; });
     saveProjectList(currentUserEmail, list);
     if (currentProjectId === id) {
@@ -6060,6 +6304,8 @@ function handleSignOut() {
   document.getElementById('login-screen').style.display = 'flex';
   var badge = document.getElementById('security-badge');
   if (badge) badge.style.display = 'none';
+  var cloudBadge = document.getElementById('cloud-sync-badge');
+  if (cloudBadge) cloudBadge.style.display = 'none';
   showAuthView('signin');
 }
 
