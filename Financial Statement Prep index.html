@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.gstatic.com https://js.stripe.com https://buy.stripe.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.gstatic.com https://js.stripe.com https://cdn.sheetjs.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com https://en.wikipedia.org https://api.duckduckgo.com https://api.opencorporates.com https://efts.sec.gov; frame-src https://js.stripe.com https://buy.stripe.com;">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NoteFlow</title>
@@ -2136,8 +2137,8 @@ function checkSubscription(callback) {
       });
     })
     .catch(function(err) {
-      console.warn('Subscription check failed, allowing access:', err);
-      callback(true);
+      console.warn('Subscription check failed:', err);
+      callback(false); // fail-closed: deny access on error
     });
 }
 
@@ -2207,26 +2208,44 @@ function handlePaymentSuccess(plan) {
   if (!uid) return;
   plan = plan || 'individual';
 
-  var updateData = {
-    subscriptionStatus: 'active',
-    subscribedAt: new Date().toISOString(),
-    plan: plan
-  };
-
-  // If firm plan, initialize firm data
-  if (plan === 'firm') {
-    updateData.firm = {
-      members: [],
-      memberEmails: [],
-      maxSeats: 10,
-      createdAt: new Date().toISOString()
-    };
-  }
-
-  firebaseDb.collection('users').doc(uid).set(updateData, { merge: true }).then(function() {
-    hideSubscriptionGate();
-    showDashboard();
+  // Mark as pending — actual activation happens via Stripe webhook
+  firebaseDb.collection('users').doc(uid).set({
+    paymentPending: true,
+    pendingPlan: plan,
+    paymentInitiatedAt: new Date().toISOString()
+  }, { merge: true }).then(function() {
+    // Poll for activation (webhook will set subscriptionStatus to 'active')
+    var attempts = 0;
+    var pollInterval = setInterval(function() {
+      attempts++;
+      firebaseDb.collection('users').doc(uid).get().then(function(doc) {
+        if (doc.exists) {
+          var data = doc.data();
+          if (data.subscriptionStatus === 'active') {
+            clearInterval(pollInterval);
+            hideSubscriptionGate();
+            showDashboard();
+          }
+        }
+      });
+      if (attempts > 30) { // Stop after 5 minutes
+        clearInterval(pollInterval);
+        alert('Payment is being processed. Please refresh the page in a few minutes. If the issue persists, contact support at getnoteflowapp@gmail.com');
+      }
+    }, 10000); // Check every 10 seconds
   });
+
+  // Show waiting message
+  var content = document.getElementById('sub-gate-content');
+  if (content) {
+    content.innerHTML = '<div style="text-align:center;padding:40px 20px">' +
+      '<div style="font-size:2rem;margin-bottom:12px">&#9203;</div>' +
+      '<div class="form-title">Activating your subscription...</div>' +
+      '<p style="color:var(--muted);font-size:0.85rem;margin-top:8px">Your payment is being verified. This usually takes less than a minute.</p>' +
+      '<p style="color:var(--muted);font-size:0.78rem;margin-top:16px">If this takes too long, email <a href="mailto:getnoteflowapp@gmail.com" style="color:var(--primary)">getnoteflowapp@gmail.com</a></p>' +
+      '</div>';
+  }
+  document.getElementById('subscription-gate').style.display = 'flex';
 }
 
 // Check URL for payment success redirect
@@ -2365,9 +2384,12 @@ const ENCRYPTION_ENABLED = true; // Set to false to disable encryption
 
 async function deriveEncryptionKey(email) {
   var encoder = new TextEncoder();
-  var keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(email + '-noteflow-encryption-key'), 'PBKDF2', false, ['deriveKey']);
+  // Use email + a unique per-derivation salt for better security
+  var saltBase = email + '-noteflow-v2';
+  var saltHash = await crypto.subtle.digest('SHA-256', encoder.encode(saltBase));
+  var keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(email + '-noteflow-encryption-key-v2'), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: encoder.encode('noteflow-salt-v1'), iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: new Uint8Array(saltHash), iterations: 600000, hash: 'SHA-256' },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -2467,10 +2489,14 @@ let currentUserName = null;
 
 // ─── UUID Generator ─────────────────────────────────────────────────────────
 function genId() {
-  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  var arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  arr[6] = (arr[6] & 0x0f) | 0x40;
+  arr[8] = (arr[8] & 0x3f) | 0x80;
+  var hex = '';
+  for (var i = 0; i < 16; i++) hex += ('0' + arr[i].toString(16)).slice(-2);
+  return hex.slice(0,8) + '-' + hex.slice(8,12) + '-' + hex.slice(12,16) + '-' + hex.slice(16,20) + '-' + hex.slice(20);
 }
 
 // ─── Cloud Data Layer (Firestore + localStorage) ────────────────────────────
@@ -2895,6 +2921,7 @@ function exportProjectJSON() {
 function importProjectJSON(event) {
   var file = event.target.files[0];
   if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('File too large. Maximum size is 5MB.'); return; }
   event.target.value = ''; // reset so same file can be re-imported
 
   var reader = new FileReader();
@@ -4064,6 +4091,7 @@ let pendingTargetData = null;
 async function runImport() {
   try {
     if (!importFiles.combined) { showStatus('error', 'Please select a file to import.'); return; }
+    if (importFiles.combined.size > 5 * 1024 * 1024) { alert('File too large. Maximum size is 5MB.'); return; }
     const periodVal = document.querySelector('input[name="import-period"]:checked').value;
     const text = await readFileText(importFiles.combined);
     const tbRows = parseTB(parseCSV(text), 'combined');
@@ -6214,6 +6242,16 @@ function runDisclosureChecklist() {
 const AUTH_USERS_KEY = 'fsgen-users';
 const AUTH_SESSION_KEY = 'fsgen-session';
 
+async function hashPassword(password) {
+  var encoder = new TextEncoder();
+  var data = encoder.encode(password + '-noteflow-auth-pepper-v1');
+  var hash = await crypto.subtle.digest('SHA-256', data);
+  var arr = new Uint8Array(hash);
+  var hex = '';
+  for (var i = 0; i < arr.length; i++) hex += ('0' + arr[i].toString(16)).slice(-2);
+  return hex;
+}
+
 function getUsers() {
   try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)) || {}; }
   catch(e) { return {}; }
@@ -6233,7 +6271,7 @@ function authMsg(elId, type, msg) {
   document.getElementById(elId).innerHTML = '<div class="login-msg ' + type + '">' + msg + '</div>';
 }
 
-function handleSignUp() {
+async function handleSignUp() {
   const name = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim().toLowerCase();
   const pass = document.getElementById('signup-password').value;
@@ -6241,7 +6279,8 @@ function handleSignUp() {
 
   if (!name) { authMsg('signup-msg', 'error', 'Please enter your name.'); return; }
   if (!email || !email.includes('@')) { authMsg('signup-msg', 'error', 'Please enter a valid email.'); return; }
-  if (pass.length < 6) { authMsg('signup-msg', 'error', 'Password must be at least 6 characters.'); return; }
+  if (pass.length < 8) { authMsg('signup-msg', 'error', 'Password must be at least 8 characters.'); return; }
+  if (!/[A-Z]/.test(pass) || !/[0-9]/.test(pass)) { authMsg('signup-msg', 'error', 'Password must contain at least one uppercase letter and one number.'); return; }
   if (pass !== confirm_pass) { authMsg('signup-msg', 'error', 'Passwords do not match.'); return; }
 
   if (FIREBASE_ENABLED) {
@@ -6270,14 +6309,15 @@ function handleSignUp() {
     // Fallback: localStorage auth
     const users = getUsers();
     if (users[email]) { authMsg('signup-msg', 'error', 'An account with this email already exists.'); return; }
-    users[email] = { name: name, password: pass };
+    var hashed = await hashPassword(pass);
+    users[email] = { name: name, password: hashed };
     saveUsers(users);
     authMsg('signup-msg', 'success', 'Account created! Redirecting...');
     setTimeout(function() { loginSession(email, name); }, 800);
   }
 }
 
-function handleSignIn() {
+async function handleSignIn() {
   const email = document.getElementById('signin-email').value.trim().toLowerCase();
   const pass = document.getElementById('signin-password').value;
 
@@ -6301,7 +6341,8 @@ function handleSignIn() {
   } else {
     const users = getUsers();
     const user = users[email];
-    if (!user || user.password !== pass) {
+    var hashed = await hashPassword(pass);
+    if (!user || user.password !== hashed) {
       authMsg('signin-msg', 'error', 'Invalid email or password.');
       return;
     }
@@ -6309,7 +6350,7 @@ function handleSignIn() {
   }
 }
 
-function handleForgotPassword() {
+async function handleForgotPassword() {
   const email = document.getElementById('forgot-email').value.trim().toLowerCase();
 
   if (FIREBASE_ENABLED) {
@@ -6330,9 +6371,10 @@ function handleForgotPassword() {
     if (!email || !email.includes('@')) { authMsg('forgot-msg', 'error', 'Please enter a valid email.'); return; }
     const users = getUsers();
     if (!users[email]) { authMsg('forgot-msg', 'error', 'No account found with this email.'); return; }
-    if (pass.length < 6) { authMsg('forgot-msg', 'error', 'New password must be at least 6 characters.'); return; }
+    if (pass.length < 8) { authMsg('forgot-msg', 'error', 'New password must be at least 8 characters.'); return; }
+    if (!/[A-Z]/.test(pass) || !/[0-9]/.test(pass)) { authMsg('forgot-msg', 'error', 'Password must contain at least one uppercase letter and one number.'); return; }
     if (pass !== confirm_pass) { authMsg('forgot-msg', 'error', 'Passwords do not match.'); return; }
-    users[email].password = pass;
+    users[email].password = await hashPassword(pass);
     saveUsers(users);
     authMsg('forgot-msg', 'success', 'Password updated! Redirecting to sign in...');
     setTimeout(function() { showAuthView('signin'); }, 1200);
