@@ -1133,20 +1133,32 @@
       <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;line-height:1.5">
         Your free trial has ended. Subscribe to continue using NoteFlow and access all features including statement generation, PDF exports, and unlimited projects.
       </p>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px">
-        <div style="font-weight:700;font-size:1.1rem;margin-bottom:8px">NoteFlow Professional</div>
-        <div style="font-size:1.6rem;font-weight:800;color:var(--primary)">$49<span style="font-size:0.8rem;font-weight:400;color:var(--muted)">/month</span></div>
-        <ul style="list-style:none;padding:0;margin:12px 0 0;font-size:0.82rem;color:var(--text)">
-          <li style="padding:4px 0">&#10003; Unlimited financial statement projects</li>
-          <li style="padding:4px 0">&#10003; PDF &amp; Excel exports</li>
-          <li style="padding:4px 0">&#10003; Prior year comparatives</li>
-          <li style="padding:4px 0">&#10003; Adjusting journal entries</li>
-          <li style="padding:4px 0">&#10003; Smart note suggestions</li>
-          <li style="padding:4px 0">&#10003; Company research engine</li>
-          <li style="padding:4px 0">&#10003; Client-side data encryption</li>
-        </ul>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer" onclick="selectPlan('individual')" id="plan-individual">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Individual</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--primary)">$49<span style="font-size:0.75rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <ul style="list-style:none;padding:0;margin:10px 0 0;font-size:0.78rem;color:var(--text)">
+            <li style="padding:3px 0">&#10003; 1 user</li>
+            <li style="padding:3px 0">&#10003; Unlimited projects</li>
+            <li style="padding:3px 0">&#10003; All exports</li>
+            <li style="padding:3px 0">&#10003; Cloud sync</li>
+            <li style="padding:3px 0">&#10003; Encryption</li>
+          </ul>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--primary);border-radius:10px;padding:16px;cursor:pointer;position:relative" onclick="selectPlan('firm')" id="plan-firm">
+          <div style="position:absolute;top:-10px;right:12px;background:var(--primary);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:10px">BEST VALUE</div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Firm</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--primary)">$199<span style="font-size:0.75rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <ul style="list-style:none;padding:0;margin:10px 0 0;font-size:0.78rem;color:var(--text)">
+            <li style="padding:3px 0">&#10003; Up to 10 users</li>
+            <li style="padding:3px 0">&#10003; Unlimited projects</li>
+            <li style="padding:3px 0">&#10003; All exports</li>
+            <li style="padding:3px 0">&#10003; Team management</li>
+            <li style="padding:3px 0">&#10003; Priority support</li>
+          </ul>
+        </div>
       </div>
-      <button class="login-btn" onclick="startCheckout()">Subscribe Now</button>
+      <button class="login-btn" id="subscribe-btn" onclick="startCheckout()">Subscribe — Individual $49/mo</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="handleSignOut()">Sign Out</button>
     </div>
     <div id="sub-trial-banner" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;color:#92400e;text-align:center">
@@ -1174,8 +1186,25 @@
     </div>
     <div class="dash-actions">
       <button class="btn btn-primary" onclick="dashCreateProject()">+ New Project</button>
+      <button class="btn btn-ghost btn-sm" id="team-mgmt-btn" onclick="toggleTeamPanel()" style="display:none">Team Members</button>
     </div>
     <div id="project-grid" class="project-grid"></div>
+
+    <!-- Firm Team Management Panel -->
+    <div id="team-panel" style="display:none;margin-top:24px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0;font-size:1.1rem">Team Members</h3>
+          <span id="team-seat-count" style="font-size:0.8rem;color:var(--muted)"></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="email" id="team-add-email" placeholder="team@example.com" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+          <input type="text" id="team-add-name" placeholder="Name (optional)" style="width:150px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+          <button class="btn btn-primary btn-sm" onclick="addTeamMember()">Add</button>
+        </div>
+        <div id="team-member-list"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2055,7 +2084,8 @@ function getFirebaseUid() {
 // ─── Stripe Configuration ────────────────────────────────────────────────────
 const STRIPE_CONFIG = {
   publishableKey: "pk_test_51TKTo1FhQOr40UhPGUH6Dl1jwCuDWqoxNEABCNF98Tyn0rpjcUL06FQfW7bSJufo5MDIp0liodhvdrHscmNj4GQE00XZqcpzHe",
-  paymentLink: "https://buy.stripe.com/test_6oU8wPc9p91N81d5ar9EI00"
+  paymentLink: "https://buy.stripe.com/test_6oU8wPc9p91N81d5ar9EI00",
+  firmPaymentLink: "" // Set after creating Firm product in Stripe
 };
 const STRIPE_ENABLED = STRIPE_CONFIG.publishableKey !== 'YOUR_STRIPE_PUBLISHABLE_KEY';
 const TRIAL_DAYS = 14;
@@ -2073,11 +2103,18 @@ function checkSubscription(callback) {
       var data = doc.data();
       var status = data.subscriptionStatus || 'trial';
 
+      // User has their own active subscription
       if (status === 'active' || status === 'trialing') {
+        // Show team button if firm plan
+        if (data.firm) {
+          var btn = document.getElementById('team-mgmt-btn');
+          if (btn) btn.style.display = 'inline-block';
+        }
         callback(true);
         return;
       }
 
+      // Check trial
       if (status === 'trial') {
         var trialEnd = data.trialEndsAt ? new Date(data.trialEndsAt) : null;
         if (trialEnd && trialEnd > new Date()) {
@@ -2086,17 +2123,20 @@ function checkSubscription(callback) {
           callback(true);
           return;
         }
-        // Trial expired
-        callback(false);
-        return;
       }
 
-      // expired, cancelled, etc.
-      callback(false);
+      // No individual subscription — check if user is a firm member
+      checkFirmMembership(currentUserEmail, function(isFirmMember) {
+        if (isFirmMember) {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      });
     })
     .catch(function(err) {
       console.warn('Subscription check failed, allowing access:', err);
-      callback(true); // fail-open for now
+      callback(true);
     });
 }
 
@@ -2124,28 +2164,65 @@ function hideSubscriptionGate() {
   document.getElementById('subscription-gate').style.display = 'none';
 }
 
+var selectedPlan = 'individual';
+
+function selectPlan(plan) {
+  selectedPlan = plan;
+  var indCard = document.getElementById('plan-individual');
+  var firmCard = document.getElementById('plan-firm');
+  var btn = document.getElementById('subscribe-btn');
+
+  if (plan === 'firm') {
+    firmCard.style.borderColor = 'var(--primary)';
+    firmCard.style.boxShadow = '0 0 0 2px var(--primary)';
+    indCard.style.borderColor = 'var(--border)';
+    indCard.style.boxShadow = 'none';
+    btn.textContent = 'Subscribe — Firm $199/mo';
+  } else {
+    indCard.style.borderColor = 'var(--primary)';
+    indCard.style.boxShadow = '0 0 0 2px var(--primary)';
+    firmCard.style.borderColor = 'var(--primary)';
+    firmCard.style.boxShadow = 'none';
+    btn.textContent = 'Subscribe — Individual $49/mo';
+  }
+}
+
 function startCheckout() {
-  if (!STRIPE_CONFIG.paymentLink) {
+  var link = selectedPlan === 'firm' ? STRIPE_CONFIG.firmPaymentLink : STRIPE_CONFIG.paymentLink;
+  if (!link) {
     alert('Payment link not configured yet. Please contact support.');
     return;
   }
-  // Build payment link with prefilled email and client reference
   var uid = getFirebaseUid();
   var email = currentUserEmail || '';
-  var url = STRIPE_CONFIG.paymentLink + '?prefilled_email=' + encodeURIComponent(email);
+  var url = link + '?prefilled_email=' + encodeURIComponent(email);
   if (uid) url += '&client_reference_id=' + encodeURIComponent(uid);
   window.open(url, '_blank');
 }
 
 // Handle return from successful Stripe payment
-function handlePaymentSuccess() {
+function handlePaymentSuccess(plan) {
   var uid = getFirebaseUid();
   if (!uid) return;
-  // Update subscription status in Firestore
-  firebaseDb.collection('users').doc(uid).set({
+  plan = plan || 'individual';
+
+  var updateData = {
     subscriptionStatus: 'active',
-    subscribedAt: new Date().toISOString()
-  }, { merge: true }).then(function() {
+    subscribedAt: new Date().toISOString(),
+    plan: plan
+  };
+
+  // If firm plan, initialize firm data
+  if (plan === 'firm') {
+    updateData.firm = {
+      members: [],
+      memberEmails: [],
+      maxSeats: 10,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  firebaseDb.collection('users').doc(uid).set(updateData, { merge: true }).then(function() {
     hideSubscriptionGate();
     showDashboard();
   });
@@ -2155,14 +2232,132 @@ function handlePaymentSuccess() {
 (function checkPaymentReturn() {
   var params = new URLSearchParams(window.location.search);
   if (params.get('payment') === 'success') {
-    // Clean URL
+    var plan = params.get('plan') || 'individual';
     window.history.replaceState({}, '', window.location.pathname);
-    // Wait for auth to initialize, then update subscription
     setTimeout(function() {
-      if (getFirebaseUid()) handlePaymentSuccess();
+      if (getFirebaseUid()) handlePaymentSuccess(plan);
     }, 2000);
   }
 })();
+
+// ─── Firm / Team Management ─────────────────────────────────────────────────
+function loadFirmData(callback) {
+  var uid = getFirebaseUid();
+  if (!uid) { callback(null); return; }
+  firebaseDb.collection('users').doc(uid).get()
+    .then(function(doc) {
+      if (!doc.exists) { callback(null); return; }
+      var data = doc.data();
+      callback(data.firm || null);
+    })
+    .catch(function() { callback(null); });
+}
+
+function saveFirmData(firmData) {
+  var uid = getFirebaseUid();
+  if (!uid) return Promise.resolve();
+  return firebaseDb.collection('users').doc(uid).set({ firm: firmData }, { merge: true });
+}
+
+function toggleTeamPanel() {
+  var panel = document.getElementById('team-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') renderTeamMembers();
+}
+
+function renderTeamMembers() {
+  loadFirmData(function(firm) {
+    if (!firm) return;
+    var members = firm.members || [];
+    var maxSeats = firm.maxSeats || 10;
+    document.getElementById('team-seat-count').textContent = members.length + ' / ' + maxSeats + ' seats used';
+
+    var html = '';
+    if (members.length === 0) {
+      html = '<p style="color:var(--muted);font-size:0.85rem">No team members added yet. Add members by email to give them access.</p>';
+    } else {
+      html = '<table style="width:100%;font-size:0.85rem;border-collapse:collapse">';
+      html += '<tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:0.75rem"><td style="padding:6px 0">Email</td><td>Name</td><td>Added</td><td></td></tr>';
+      members.forEach(function(m, i) {
+        var dateStr = m.addedAt ? new Date(m.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        html += '<tr style="border-bottom:1px solid var(--border)">';
+        html += '<td style="padding:8px 0">' + esc(m.email) + '</td>';
+        html += '<td>' + esc(m.name || '-') + '</td>';
+        html += '<td style="color:var(--muted)">' + dateStr + '</td>';
+        html += '<td style="text-align:right"><button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:0.7rem" onclick="removeTeamMember(' + i + ')">Remove</button></td>';
+        html += '</tr>';
+      });
+      html += '</table>';
+    }
+    document.getElementById('team-member-list').innerHTML = html;
+  });
+}
+
+function addTeamMember() {
+  var emailInput = document.getElementById('team-add-email');
+  var nameInput = document.getElementById('team-add-name');
+  var email = emailInput.value.trim().toLowerCase();
+  var name = nameInput.value.trim();
+
+  if (!email || !email.includes('@')) { alert('Please enter a valid email address.'); return; }
+
+  loadFirmData(function(firm) {
+    if (!firm) firm = { members: [], maxSeats: 10 };
+    var members = firm.members || [];
+
+    if (members.length >= (firm.maxSeats || 10)) {
+      alert('Team is at capacity (' + (firm.maxSeats || 10) + ' seats). Contact support to add more seats.');
+      return;
+    }
+
+    if (members.some(function(m) { return m.email === email; })) {
+      alert('This email is already on the team.');
+      return;
+    }
+
+    members.push({ email: email, name: name, addedAt: new Date().toISOString() });
+    firm.members = members;
+    firm.memberEmails = members.map(function(m) { return m.email; });
+    saveFirmData(firm).then(function() {
+      emailInput.value = '';
+      nameInput.value = '';
+      renderTeamMembers();
+    });
+  });
+}
+
+function removeTeamMember(index) {
+  loadFirmData(function(firm) {
+    if (!firm || !firm.members) return;
+    var member = firm.members[index];
+    if (!confirm('Remove ' + member.email + ' from the team?')) return;
+    firm.members.splice(index, 1);
+    firm.memberEmails = firm.members.map(function(m) { return m.email; });
+    saveFirmData(firm).then(function() {
+      renderTeamMembers();
+    });
+  });
+}
+
+// Check if current user is a member of any firm (for subscription access)
+function checkFirmMembership(email, callback) {
+  if (!FIREBASE_ENABLED || !getFirebaseUid()) { callback(false); return; }
+
+  firebaseDb.collection('users')
+    .where('firm.memberEmails', 'array-contains', email)
+    .limit(1)
+    .get()
+    .then(function(snapshot) {
+      if (!snapshot.empty) {
+        var firmDoc = snapshot.docs[0].data();
+        var firmStatus = firmDoc.subscriptionStatus;
+        callback(firmStatus === 'active' || firmStatus === 'trialing');
+      } else {
+        callback(false);
+      }
+    })
+    .catch(function() { callback(false); });
+}
 
 // ─── Client-Side Encryption (AES-GCM) ───────────────────────────────────────
 const ENCRYPTION_ENABLED = true; // Set to false to disable encryption
