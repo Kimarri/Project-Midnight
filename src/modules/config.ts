@@ -21,7 +21,8 @@ export const FIREBASE_ENABLED: boolean = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KE
 export const STRIPE_CONFIG: Record<string, string> = {
   publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
   paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK,
-  firmPaymentLink: import.meta.env.VITE_STRIPE_FIRM_PAYMENT_LINK
+  firmPaymentLink: import.meta.env.VITE_STRIPE_FIRM_PAYMENT_LINK,
+  firmPlusPaymentLink: import.meta.env.VITE_STRIPE_FIRMPLUS_PAYMENT_LINK
 };
 export const STRIPE_ENABLED: boolean = STRIPE_CONFIG.publishableKey !== 'YOUR_STRIPE_PUBLISHABLE_KEY';
 export const TRIAL_DAYS: number = 14;

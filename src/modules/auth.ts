@@ -200,26 +200,36 @@ export function selectPlan(plan: string): void {
   selectedPlan = plan;
   const indCard = el('plan-individual');
   const firmCard = el('plan-firm');
+  const firmPlusCard = el('plan-firmplus');
   const btn = el('subscribe-btn');
-  if (!indCard || !firmCard || !btn) return;
+  if (!indCard || !firmCard || !firmPlusCard || !btn) return;
+
+  // Reset all cards
+  const cards = [indCard, firmCard, firmPlusCard];
+  cards.forEach(card => {
+    card.style.borderColor = 'var(--border)';
+    card.style.boxShadow = 'none';
+  });
+  // Re-apply the BEST VALUE border on Firm
+  firmCard.style.borderColor = 'var(--border)';
 
   if (plan === 'firm') {
     firmCard.style.borderColor = 'var(--primary)';
     firmCard.style.boxShadow = '0 0 0 2px var(--primary)';
-    indCard.style.borderColor = 'var(--border)';
-    indCard.style.boxShadow = 'none';
-    btn.textContent = 'Subscribe — Firm $199/mo';
+    btn.textContent = 'Subscribe — Firm $399/mo';
+  } else if (plan === 'firmplus') {
+    firmPlusCard.style.borderColor = 'var(--primary)';
+    firmPlusCard.style.boxShadow = '0 0 0 2px var(--primary)';
+    btn.textContent = 'Subscribe — Firm+ $699/mo';
   } else {
     indCard.style.borderColor = 'var(--primary)';
     indCard.style.boxShadow = '0 0 0 2px var(--primary)';
-    firmCard.style.borderColor = 'var(--border)';
-    firmCard.style.boxShadow = 'none';
-    btn.textContent = 'Subscribe — Individual $49/mo';
+    btn.textContent = 'Subscribe — Individual $99/mo';
   }
 }
 
 export function startCheckout(): void {
-  const link: string | undefined = selectedPlan === 'firm' ? STRIPE_CONFIG.firmPaymentLink : STRIPE_CONFIG.paymentLink;
+  const link: string | undefined = selectedPlan === 'firm' ? STRIPE_CONFIG.firmPaymentLink : selectedPlan === 'firmplus' ? STRIPE_CONFIG.firmPlusPaymentLink : STRIPE_CONFIG.paymentLink;
   if (!link) {
     alert('Payment link not configured yet. Please contact support.');
     return;
