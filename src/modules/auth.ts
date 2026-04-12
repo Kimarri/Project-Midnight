@@ -128,6 +128,74 @@ function hideSubscriptionGate(): void {
   if (subGate) subGate.style.display = 'none';
 }
 
+// ─── Terms & Conditions Gate ────────────────────────────────────────────────
+
+function hasAcceptedTerms(): boolean {
+  if (!state.currentUserEmail) return false;
+  return localStorage.getItem('noteflow-terms-' + state.currentUserEmail) === 'accepted';
+}
+
+function showTermsGate(): void {
+  const loginScreen = el('login-screen');
+  if (loginScreen) loginScreen.style.display = 'none';
+  el('dashboard')?.classList.remove('visible');
+  el('app-wrapper')?.classList.remove('visible');
+  const termsGate = el('terms-gate');
+  if (termsGate) termsGate.style.display = 'flex';
+
+  // Wire up checkbox to enable/disable button
+  const cb = el('terms-accept-checkbox') as HTMLInputElement | null;
+  const btn = el('terms-accept-btn') as HTMLButtonElement | null;
+  if (cb && btn) {
+    cb.checked = false;
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+    cb.onchange = function () {
+      btn.disabled = !cb.checked;
+      btn.style.opacity = cb.checked ? '1' : '0.5';
+      btn.style.cursor = cb.checked ? 'pointer' : 'not-allowed';
+    };
+  }
+}
+
+function hideTermsGate(): void {
+  const termsGate = el('terms-gate');
+  if (termsGate) termsGate.style.display = 'none';
+}
+
+export function acceptTerms(): void {
+  if (!state.currentUserEmail) return;
+
+  // Save to localStorage
+  localStorage.setItem('noteflow-terms-' + state.currentUserEmail, 'accepted');
+
+  // Save to Firestore
+  if (FIREBASE_ENABLED) {
+    const uid = getFirebaseUid();
+    if (uid) {
+      try {
+        firebase.firestore().collection('users').doc(uid).set(
+          { termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-04-12' },
+          { merge: true }
+        );
+      } catch (_e) { /* Firestore write is best-effort */ }
+    }
+  }
+
+  hideTermsGate();
+
+  // Continue with subscription check
+  checkSubscription(function (hasAccess: boolean) {
+    if (hasAccess) {
+      hideSubscriptionGate();
+      if (_showDashboardFn) _showDashboardFn();
+    } else {
+      showSubscriptionGate();
+    }
+  });
+}
+
 export function selectPlan(plan: string): void {
   selectedPlan = plan;
   const indCard = el('plan-individual');
@@ -795,15 +863,19 @@ export function loginSession(email: string, name: string): void {
       });
     }
 
-    // Check subscription before showing dashboard
-    checkSubscription(function(hasAccess: boolean) {
-      if (hasAccess) {
-        hideSubscriptionGate();
-        if (_showDashboardFn) _showDashboardFn();
-      } else {
-        showSubscriptionGate();
-      }
-    });
+    // Check Terms & Conditions acceptance, then subscription
+    if (!hasAcceptedTerms()) {
+      showTermsGate();
+    } else {
+      checkSubscription(function(hasAccess: boolean) {
+        if (hasAccess) {
+          hideSubscriptionGate();
+          if (_showDashboardFn) _showDashboardFn();
+        } else {
+          showSubscriptionGate();
+        }
+      });
+    }
   });
 }
 

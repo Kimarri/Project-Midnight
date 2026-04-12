@@ -20,7 +20,7 @@ import {
 } from './modules/data';
 import {
   handleSignIn, handleSignUp, handleForgotPassword,
-  handleSignOut, showAuthView, verify2FASignIn,
+  handleSignOut, showAuthView, verify2FASignIn, acceptTerms,
   start2FASetup, disable2FA, openSecuritySettings, closeSecuritySettings,
   selectPlan, startCheckout, dismissTrialBanner,
   toggleTeamPanel, addTeamMember, removeTeamMember,
@@ -91,6 +91,7 @@ const actions: Record<string, (...args: any[]) => void> = {
   'handleSignUp': handleSignUp,
   'handleForgotPassword': handleForgotPassword,
   'handleSignOut': handleSignOut,
+  'acceptTerms': acceptTerms,
   'showAuthView': showAuthView,
   'verify2FASignIn': verify2FASignIn,
   'start2FASetup': start2FASetup,
