@@ -1,5 +1,38 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ─── Skip Navigation Link ────────────────────────────────────────── */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--primary, #2563eb);
+      color: #fff;
+      padding: 8px 16px;
+      z-index: 10000;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 0 0 6px 0;
+      transition: top 0.15s;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    /* ─── Focus Indicators ─────────────────────────────────────────────── */
+    .tab:focus-visible {
+      outline: 2px solid var(--primary, #2563eb);
+      outline-offset: -2px;
+      border-radius: 4px;
+    }
+
+    *:focus-visible {
+      outline: 2px solid var(--primary, #2563eb);
+      outline-offset: 2px;
+    }
+
     :root {
       --bg: #f4f6f9;
       --card: #ffffff;
@@ -257,6 +290,7 @@
     .import-status.success { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
     .import-status.error   { background: #fef2f2; color: var(--red);   border: 1px solid #fecaca; }
     .import-status.info    { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+    .import-status.warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 
     .unmapped-list {
       margin-top: 12px;
@@ -331,7 +365,8 @@
     .note-table th:first-child { text-align: left; width: 45%; }
     .note-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
     .note-table td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
-    .note-table .nt-total td { font-weight: 600; border-top: 1px solid #cbd5e1; }
+    .note-table .nt-subtotal td { font-weight: 500; border-top: 1px solid #e2e8f0; font-style: italic; }
+    .note-table .nt-total td { font-weight: 600; border-top: 2px solid #cbd5e1; border-bottom: 3px double #cbd5e1; }
 
     /* ── Firm Profile modal ──────────────────────────────────────────── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
@@ -697,20 +732,53 @@
     .project-bar .proj-btn.danger:hover { background: #7f1d1d; color: #fff; }
     .project-bar .proj-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    /* ── Import period toggle ────────────────────────────────────────── */
-    .period-toggle {
-      display: flex; gap: 0; margin-bottom: 14px; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; width: fit-content;
+    /* ── Import wizard ──────────────────────────────────────────────── */
+    .wizard-mappings {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px;
     }
-    .period-toggle label {
-      padding: 7px 16px; font-size: 0.82rem; cursor: pointer; color: var(--muted); transition: all 0.15s; user-select: none;
+    .wizard-mappings .wiz-field { display: flex; flex-direction: column; gap: 4px; }
+    .wizard-mappings .wiz-field label {
+      font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .period-toggle input { display: none; }
-    .period-toggle input:checked + label { background: var(--primary); color: #fff; }
+    .wizard-mappings .wiz-field label .wiz-optional { font-weight: 400; opacity: 0.7; text-transform: none; }
+    .wizard-mappings .wiz-field select {
+      padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem;
+      background: var(--bg); color: var(--text); cursor: pointer;
+    }
+    .wizard-mappings .wiz-field select.mapped { border-color: var(--green); }
+
+    #wizard-preview table {
+      width: 100%; font-size: 0.75rem; border-collapse: collapse;
+    }
+    #wizard-preview th {
+      background: var(--secondary); padding: 5px 8px; text-align: left; font-weight: 600;
+      color: var(--muted); font-size: 0.7rem; text-transform: uppercase; position: sticky; top: 0;
+    }
+    #wizard-preview td { padding: 4px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    #wizard-preview tr:hover td { background: rgba(59,130,246,0.04); }
+    #wizard-preview .col-mapped { background: rgba(34,197,94,0.06); }
 
     /* ── Multi-period statement columns ──────────────────────────────── */
     .stmt-table.multi-period .col-label { width: 36%; }
     .stmt-table.multi-period .col-current { text-align: right; width: 16%; }
     .stmt-table.multi-period .col-prior { text-align: right; width: 16%; }
+
+    /* ── AI Rewrite ──────────────────────────────────────────────────── */
+    .note-field { position: relative; }
+    .ai-rewrite-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; font-size: 0.72rem; font-weight: 600;
+      color: #7c3aed; background: #f5f3ff; border: 1px solid #ddd6fe;
+      border-radius: 5px; cursor: pointer; transition: all 0.15s;
+      margin-top: 4px;
+    }
+    .ai-rewrite-btn:hover { background: #ede9fe; border-color: #c4b5fd; }
+    .ai-rewrite-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ai-rewrite-btn .ai-spinner {
+      display: inline-block; width: 12px; height: 12px;
+      border: 2px solid #ddd6fe; border-top-color: #7c3aed;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
 
     /* ── Company Research panel ────────────────────────────────────── */
     .research-btn {
@@ -1195,10 +1263,165 @@
     }
 
 
+    /* ─── Print Styles ────────────────────────────────────────────────── */
+    @page {
+      size: letter;
+      margin: 0.75in 0.75in 0.75in 0.75in;
+    }
+
     @media print {
-      body { background: #fff !important; color: #000 !important; }
-      header, .tabs, .actions, .print-actions, .card, .stmt-toolbar, .generate-bar { display: none !important; }
-      .page { display: block !important; }
-      .statement { border: none; padding: 0; }
-      .page.active .statement { display: block; }
+      /* Reset base styles for clean printing */
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 11pt !important;
+        line-height: 1.4 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* Hide non-print UI elements */
+      header,
+      .tabs,
+      #tab-bar,
+      .actions,
+      .print-actions,
+      .stmt-toolbar,
+      .generate-bar,
+      .stmt-empty,
+      .ratios-card,
+      .card:not(.print-visible),
+      .import-zone,
+      #page-input,
+      #page-checklist,
+      #page-ratios,
+      #notes-questionnaire,
+      .subscription-gate,
+      .modal {
+        display: none !important;
+      }
+
+      /* Show all statement pages for full package printing */
+      .container { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+      .page { display: block !important; padding: 0 !important; margin: 0 !important; }
+      .statement { border: none !important; padding: 0 !important; box-shadow: none !important; background: #fff !important; }
+
+      /* Remove background colors and shadows for clean print */
+      * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+      table { background: #fff !important; }
+      th { background: #f8f8f8 !important; color: #000 !important; }
+      td, th { border-color: #ccc !important; }
+
+      /* Each statement starts on a new page */
+      #page-balance { page-break-before: always; }
+      #page-income { page-break-before: always; }
+      #page-equity { page-break-before: always; }
+      #page-cashflow { page-break-before: always; }
+      #notes-output-wrapper { display: block !important; page-break-before: always; }
+
+      /* Cover page and TOC print styles */
+      #print-cover-page {
+        display: block !important;
+        page-break-after: always;
+      }
+      #print-toc {
+        display: block !important;
+        page-break-after: always;
+      }
+
+      /* Prevent awkward page breaks inside tables */
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+      thead { display: table-header-group; }
+
+      /* Print-friendly font sizes */
+      .statement h2 { font-size: 14pt !important; color: #000 !important; }
+      .statement h3 { font-size: 12pt !important; color: #000 !important; }
+      .statement table { font-size: 10pt !important; }
+      .statement .stmt-period { font-size: 9pt !important; color: #333 !important; }
+
+      /* Links: show URL in print */
+      a[href]:after { content: none !important; }
+    }
+
+    /* ─── Cover Page Styles (screen: hidden, print: shown) ────────────── */
+    #print-cover-page {
+      display: none;
+      text-align: center;
+      padding-top: 2.5in;
+    }
+    #print-cover-page .cover-company {
+      font-size: 28pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    #print-cover-page .cover-title {
+      font-size: 16pt;
+      font-weight: 400;
+      color: #475569;
+      margin-bottom: 36px;
+    }
+    #print-cover-page .cover-divider {
+      width: 120px;
+      height: 2px;
+      background: #2563eb;
+      margin: 0 auto 36px auto;
+    }
+    #print-cover-page .cover-period {
+      font-size: 13pt;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+    #print-cover-page .cover-date {
+      font-size: 11pt;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    #print-cover-page .cover-firm {
+      font-size: 12pt;
+      color: #334155;
+      margin-top: 48px;
+      font-weight: 600;
+    }
+
+    /* ─── Table of Contents Styles (screen: hidden, print: shown) ─────── */
+    #print-toc {
+      display: none;
+    }
+    #print-toc .toc-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    #print-toc .toc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto;
+      max-width: 480px;
+    }
+    #print-toc .toc-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px dotted #cbd5e1;
+      font-size: 12pt;
+      color: #1e293b;
+    }
+    #print-toc .toc-list li:last-child {
+      border-bottom: none;
+    }
+    #print-toc .toc-list .toc-label {
+      font-weight: 500;
+    }
+    #print-toc .toc-list .toc-page {
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
     }

@@ -90,13 +90,25 @@ const ACCUM_DEP_PATTERN: RegExp =
   /accum|accumulated|accum\.?\s*dep|a\/d/i;
 
 const DEBT_PATTERN: RegExp =
-  /loan|note.?payable|mortgage|line.?of.?credit|debt|borrowing|bond/i;
+  /loan|notes?\s*payable|mortgage|line.?of.?credit|debt|borrowing|bond/i;
 
 const LEASE_LIABILITY_PATTERN: RegExp =
   /lease\s*liab|lease\s*obligation|right.of.use\s*liab|rou\s*liab|finance\s*lease|operating\s*lease\s*liab/i;
 
 const RETAINED_EARNINGS_PATTERN: RegExp =
   /retained\s*earnings|accumulated\s*(deficit|surplus)/i;
+
+/** AOCI and similar non-cash equity items — excluded from financing activities */
+const NONCASH_EQUITY_PATTERN: RegExp =
+  /accumulated\s*other\s*comprehensive|aoci|unrealized\s*(gain|loss).*equity/i;
+
+/** Items in noncurrent-assets that are NOT investing activities */
+const NON_INVESTING_ASSET_PATTERN: RegExp =
+  /deferred\s*tax|right.of.use|rou\s*asset|operating\s*lease\s*asset/i;
+
+/** Short-term investment accounts — classified as investing, not operating WC */
+const STI_PATTERN: RegExp =
+  /short.term\s*invest|marketable\s*secur|trading\s*secur/i;
 
 // ─── Learning / Pattern Intelligence ───────────────────────────────────────
 
@@ -707,7 +719,8 @@ const NONCASH_PATTERNS: NoncashPattern[] = [
     label: 'Deferred Income Tax',
   },
   { pattern: /impairment/i, label: 'Impairment Loss' },
-  { pattern: /unrealized\s*(gain|loss)/i, label: 'Unrealized Gain/Loss' },
+  { pattern: /unrealized\s*gain/i, label: 'Unrealized Gain', negate: true },
+  { pattern: /unrealized\s*loss/i, label: 'Unrealized Loss' },
   {
     pattern: /accretion|discount\s*amort/i,
     label: 'Accretion / Discount Amortization',
@@ -717,13 +730,17 @@ const NONCASH_PATTERNS: NoncashPattern[] = [
 const CASH_SKIP_PATTERN: RegExp =
   /^cash$|^cash\s|^bank|^checking|^savings|cash\s*equiv|money\s*market|petty\s*cash/i;
 
+/** Skip contra-asset accounts whose expense is already captured as a non-cash add-back */
+const CONTRA_ASSET_PATTERN: RegExp =
+  /allowance\s*for|accum.*depreciation|accum.*amortization|contra|provision\s*for\s*(bad|doubtful)/i;
+
 export function findNoncashItems(
   dataObj: SectionData,
   manualLabels?: string[]
 ): NoncashItem[] {
   const items: NoncashItem[] = [];
   const seen = new Set<string>();
-  (['opex', 'noncurrent-assets', 'other'] as const).forEach((section: string) => {
+  (['opex', 'other'] as const).forEach((section: string) => {
     rows(dataObj, section).forEach((row: LineItem) => {
       NONCASH_PATTERNS.forEach((rule: NoncashPattern) => {
         if (rule.pattern.test(row.label) && !seen.has(rule.label)) {
@@ -759,6 +776,8 @@ export function computeWorkingCapitalChanges(
   const caItems: MergedItem[] = mergeLabels(curCA, priorCA, true);
   caItems.forEach((item: MergedItem) => {
     if (CASH_SKIP_PATTERN.test(item.label)) return;
+    if (CONTRA_ASSET_PATTERN.test(item.label)) return; // Already captured as non-cash add-back
+    if (STI_PATTERN.test(item.label)) return; // Classified as investing, not operating
     const curAmt: number = item.cur || 0;
     const priorAmt: number = (item.prior as number) || 0;
     const change: number = priorAmt - curAmt; // decrease in asset = positive CF
@@ -791,6 +810,44 @@ export function computeWorkingCapitalChanges(
     }
   });
 
+  // Noncurrent operating liabilities (exclude debt and leases — those are in financing)
+  const curNCL: LineItem[] = rows(curData, 'noncurrent-liab');
+  const priorNCL: LineItem[] = rows(priorDataObj, 'noncurrent-liab');
+  const nclItems: MergedItem[] = mergeLabels(curNCL, priorNCL, true);
+  nclItems.forEach((item: MergedItem) => {
+    if (DEBT_PATTERN.test(item.label)) return;
+    if (LEASE_LIABILITY_PATTERN.test(item.label)) return;
+    const curAmt: number = Math.abs(item.cur || 0);
+    const priorAmt: number = Math.abs((item.prior as number) || 0);
+    const change: number = curAmt - priorAmt;
+    if (Math.abs(change) > 0.005) {
+      const direction: string = change > 0 ? 'Increase' : 'Decrease';
+      changes.push({
+        label: direction + ' in ' + item.label,
+        amount: parseFloat(change.toFixed(2)),
+      });
+    }
+  });
+
+  // Noncurrent operating assets that aren't investing (DTA, ROU)
+  const curNCA: LineItem[] = rows(curData, 'noncurrent-assets');
+  const priorNCA: LineItem[] = rows(priorDataObj, 'noncurrent-assets');
+  const ncaItems: MergedItem[] = mergeLabels(curNCA, priorNCA, true);
+  ncaItems.forEach((item: MergedItem) => {
+    if (!NON_INVESTING_ASSET_PATTERN.test(item.label)) return;
+    if (ACCUM_DEP_PATTERN.test(item.label)) return;
+    const curAmt: number = item.cur || 0;
+    const priorAmt: number = (item.prior as number) || 0;
+    const change: number = priorAmt - curAmt; // decrease in asset = positive CF
+    if (Math.abs(change) > 0.005) {
+      const direction: string = change > 0 ? 'Decrease' : 'Increase';
+      changes.push({
+        label: direction + ' in ' + item.label,
+        amount: parseFloat(change.toFixed(2)),
+      });
+    }
+  });
+
   return changes;
 }
 
@@ -813,6 +870,8 @@ export function detectInvestingActivities(
   merged.forEach((item: MergedItem) => {
     // Skip accumulated depreciation/amortization — handled in operating
     if (ACCUM_DEP_PATTERN.test(item.label)) return;
+    // Skip non-investing assets (deferred tax, ROU leases) — handled in operating
+    if (NON_INVESTING_ASSET_PATTERN.test(item.label)) return;
 
     const curAmt: number = item.cur || 0;
     const priorAmt: number = (item.prior as number) || 0;
@@ -837,9 +896,22 @@ export function detectInvestingActivities(
     }
   });
 
-  // Check for gain/loss on sale in 'other' section for context
-  // (The gain/loss itself is already handled as a non-cash adjustment in operating;
-  //  the investing section shows the gross proceeds)
+  // Short-term investments (current-assets) are also investing activities
+  const curCA: LineItem[] = rows(curData, 'current-assets');
+  const priorCA: LineItem[] = rows(priorDataObj, 'current-assets');
+  const caMerged: MergedItem[] = mergeLabels(curCA, priorCA, true);
+  caMerged.forEach((item: MergedItem) => {
+    if (!STI_PATTERN.test(item.label)) return;
+    const curAmt: number = item.cur || 0;
+    const priorAmt: number = (item.prior as number) || 0;
+    const delta: number = curAmt - priorAmt;
+    if (Math.abs(delta) < 0.005) return;
+    if (delta > 0) {
+      items.push({ label: 'Purchase of ' + item.label, amount: -delta, priorAmount: 0 });
+    } else {
+      items.push({ label: 'Proceeds from ' + item.label, amount: -delta, priorAmount: 0 });
+    }
+  });
 
   return items;
 }
@@ -910,6 +982,7 @@ export function detectFinancingActivities(
 
   eqMerged.forEach((item: MergedItem) => {
     if (RETAINED_EARNINGS_PATTERN.test(item.label)) return;
+    if (NONCASH_EQUITY_PATTERN.test(item.label)) return;
 
     const curAmt: number = item.cur || 0;
     const priorAmt: number = (item.prior as number) || 0;
