@@ -1,0 +1,98 @@
+Account Number,Account Name,Debit,Credit,Prior Debit,Prior Credit,Section
+1000,Cash and Cash Equivalents,487250.75,0,312890.50,0,current-assets
+1010,Petty Cash,2500.00,0,2500.00,0,current-assets
+1020,Money Market Account,150000.00,0,75000.00,0,current-assets
+1100,Accounts Receivable,892340.18,0,745120.33,0,current-assets
+1110,Allowance for Doubtful Accounts,0,44617.01,0,37256.02,current-assets
+1200,Inventory - Raw Materials,285000.00,0,310000.00,0,current-assets
+1210,Inventory - Work in Progress,125000.00,0,98000.00,0,current-assets
+1220,Inventory - Finished Goods,432000.00,0,387500.00,0,current-assets
+1300,Prepaid Insurance,36000.00,0,42000.00,0,current-assets
+1310,Prepaid Rent,24000.00,0,24000.00,0,current-assets
+1320,Short-Term Investments,200000.00,0,0,0,current-assets
+1400,Notes Receivable - Current,75000.00,0,50000.00,0,current-assets
+1500,Land,450000.00,0,450000.00,0,noncurrent-assets
+1510,Buildings,2800000.00,0,2800000.00,0,noncurrent-assets
+1515,Accumulated Depreciation - Buildings,0,560000.00,0,420000.00,noncurrent-assets
+1520,Machinery & Equipment,1850000.00,0,1650000.00,0,noncurrent-assets
+1525,Accumulated Depreciation - Equipment,0,740000.00,0,577500.00,noncurrent-assets
+1530,Vehicles,285000.00,0,225000.00,0,noncurrent-assets
+1535,Accumulated Depreciation - Vehicles,0,142500.00,0,112500.00,noncurrent-assets
+1540,Furniture & Fixtures,175000.00,0,160000.00,0,noncurrent-assets
+1545,Accumulated Depreciation - Furniture,0,87500.00,0,72000.00,noncurrent-assets
+1550,Computer Equipment,320000.00,0,280000.00,0,noncurrent-assets
+1555,Accumulated Depreciation - Computers,0,224000.00,0,168000.00,noncurrent-assets
+1600,Goodwill,500000.00,0,500000.00,0,noncurrent-assets
+1610,Patents,180000.00,0,200000.00,0,noncurrent-assets
+1620,Trademarks,95000.00,0,100000.00,0,noncurrent-assets
+1630,Customer Relationships,120000.00,0,0,0,noncurrent-assets
+1700,Right-of-Use Asset - Operating Leases,340000.00,0,380000.00,0,noncurrent-assets
+1710,Long-Term Investments,425000.00,0,350000.00,0,noncurrent-assets
+1720,Notes Receivable - Long Term,100000.00,0,125000.00,0,noncurrent-assets
+1800,Deferred Tax Asset,82000.00,0,65000.00,0,noncurrent-assets
+2000,Accounts Payable,0,634280.92,0,521340.17,current-liab
+2010,Accrued Salaries & Wages,0,187500.00,0,165000.00,current-liab
+2020,Accrued Interest Payable,0,28750.00,0,32400.00,current-liab
+2030,Income Tax Payable,0,145200.00,0,118500.00,current-liab
+2040,Sales Tax Payable,0,23890.00,0,19870.00,current-liab
+2050,Unearned Revenue,0,85000.00,0,62000.00,current-liab
+2060,Current Portion of Long-Term Debt,0,150000.00,0,125000.00,current-liab
+2070,Dividends Payable,0,50000.00,0,40000.00,current-liab
+2080,Operating Lease Liability - Current,0,42000.00,0,40000.00,current-liab
+2090,Accrued Warranty Liability,0,35000.00,0,28000.00,current-liab
+2100,Customer Deposits,0,67500.00,0,45000.00,current-liab
+2500,Notes Payable - Long Term,0,750000.00,0,900000.00,noncurrent-liab
+2510,Mortgage Payable,0,1200000.00,0,1275000.00,noncurrent-liab
+2520,Bonds Payable,0,500000.00,0,500000.00,noncurrent-liab
+2530,Operating Lease Liability - Long Term,0,298000.00,0,340000.00,noncurrent-liab
+2540,Deferred Tax Liability,0,145000.00,0,128000.00,noncurrent-liab
+2550,Pension Obligation,0,425000.00,0,390000.00,noncurrent-liab
+2560,Post-Retirement Benefits Obligation,0,180000.00,0,165000.00,noncurrent-liab
+2570,Environmental Remediation Liability,0,75000.00,0,85000.00,noncurrent-liab
+3000,Common Stock ($1 par - 500000 shares authorized; 250000 issued),0,250000.00,0,250000.00,equity
+3010,Additional Paid-In Capital,0,1750000.00,0,1750000.00,equity
+3020,Retained Earnings,0,1162690.01,0,1025362.66,equity
+3030,Treasury Stock (10000 shares at cost),125000.00,0,100000.00,0,equity
+3040,Accumulated Other Comprehensive Income (Loss),0,45000.00,0,32000.00,equity
+4000,Product Sales Revenue,0,6850000.00,0,5720000.00,revenue
+4010,Service Revenue,0,1425000.00,0,1180000.00,revenue
+4020,Subscription Revenue,0,890000.00,0,650000.00,revenue
+4030,License & Royalty Revenue,0,275000.00,0,220000.00,revenue
+4040,Sales Returns & Allowances,185000.00,0,142000.00,0,revenue
+4050,Sales Discounts,92500.00,0,71000.00,0,revenue
+5000,Cost of Goods Sold - Materials,2480000.00,0,2120000.00,0,cogs
+5010,Cost of Goods Sold - Direct Labor,1285000.00,0,1085000.00,0,cogs
+5020,Manufacturing Overhead,645000.00,0,548000.00,0,cogs
+5030,Freight-In,87500.00,0,72000.00,0,cogs
+5040,Inventory Write-Downs,42000.00,0,28000.00,0,cogs
+6000,Salaries & Wages - Administrative,892000.00,0,815000.00,0,opex
+6010,Employee Benefits,267600.00,0,244500.00,0,opex
+6020,Payroll Taxes,136120.00,0,124350.00,0,opex
+6030,Stock-Based Compensation,85000.00,0,72000.00,0,opex
+6100,Depreciation Expense,294500.00,0,247000.00,0,opex
+6110,Amortization Expense,45000.00,0,35000.00,0,opex
+6200,Rent Expense,288000.00,0,276000.00,0,opex
+6210,Utilities Expense,96000.00,0,88000.00,0,opex
+6220,Insurance Expense,78000.00,0,72000.00,0,opex
+6230,Repairs & Maintenance,64000.00,0,52000.00,0,opex
+6300,Office Supplies,28500.00,0,24000.00,0,opex
+6310,Postage & Shipping,45000.00,0,38000.00,0,opex
+6320,Telephone & Internet,36000.00,0,33000.00,0,opex
+6400,Professional Fees - Legal,125000.00,0,98000.00,0,opex
+6410,Professional Fees - Accounting,85000.00,0,78000.00,0,opex
+6420,Consulting Fees,142000.00,0,115000.00,0,opex
+6500,Advertising & Marketing,325000.00,0,275000.00,0,opex
+6510,Travel & Entertainment,98000.00,0,82000.00,0,opex
+6520,Meals & Entertainment,42000.00,0,36000.00,0,opex
+6600,Bad Debt Expense,44617.01,0,37256.02,0,opex
+6700,Property Tax Expense,56000.00,0,52000.00,0,opex
+6710,Licenses & Permits,12000.00,0,10000.00,0,opex
+6800,Research & Development,285000.00,0,240000.00,0,opex
+6900,Impairment Loss - Goodwill,0,0,50000.00,0,opex
+7000,Interest Income,0,18500.00,0,12000.00,other
+7010,Dividend Income,0,8500.00,0,6500.00,other
+7020,Gain on Sale of Investments,0,35000.00,0,0,other
+7030,Unrealized Gain on Investments,0,13000.00,0,0,other
+7100,Interest Expense,142800.00,0,158500.00,0,other
+7110,Loss on Disposal of Equipment,22000.00,0,0,0,other
+7200,Income Tax Expense,435200.00,0,362612.00,0,other

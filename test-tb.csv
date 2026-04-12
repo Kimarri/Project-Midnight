@@ -1,0 +1,48 @@
+Section,Account Name,Current Balance,Prior Balance
+current-assets,Cash and Cash Equivalents,485000,320000
+current-assets,Accounts Receivable,275000,210000
+current-assets,Allowance for Doubtful Accounts,-12000,-8500
+current-assets,Inventory - Raw Materials,95000,82000
+current-assets,Inventory - Work in Process,45000,38000
+current-assets,Inventory - Finished Goods,120000,105000
+current-assets,Prepaid Expenses,18000,15000
+noncurrent-assets,Land,250000,250000
+noncurrent-assets,Buildings,1200000,1200000
+noncurrent-assets,Machinery & Equipment,450000,380000
+noncurrent-assets,Computer Equipment,85000,72000
+noncurrent-assets,Furniture & Fixtures,65000,65000
+noncurrent-assets,Vehicles,120000,120000
+noncurrent-assets,Accumulated Depreciation - Buildings,-180000,-150000
+noncurrent-assets,Accumulated Depreciation - Equipment,-125000,-95000
+noncurrent-assets,Accumulated Depreciation - Computers,-42000,-30000
+noncurrent-assets,Accumulated Depreciation - Furniture,-22000,-15000
+noncurrent-assets,Accumulated Depreciation - Vehicles,-48000,-24000
+noncurrent-assets,Goodwill,350000,350000
+noncurrent-assets,Patents,80000,90000
+current-liab,Accounts Payable,-145000,-120000
+current-liab,Accrued Expenses,-68000,-55000
+current-liab,Current Portion of Note Payable,-50000,-50000
+current-liab,Operating Lease Liability - Current,-36000,-34000
+noncurrent-liab,Note Payable - Bank,-400000,-450000
+noncurrent-liab,Mortgage Payable,-750000,-775000
+noncurrent-liab,Operating Lease Liability - Long Term,-180000,-210000
+equity,Common Stock,-100000,-100000
+equity,Additional Paid-in Capital,-500000,-500000
+equity,Retained Earnings,-640500,-480000
+equity,Treasury Stock,75000,75000
+revenue,Product Sales,-2800000,-2400000
+revenue,Service Revenue,-650000,-520000
+cogs,Cost of Goods Sold,1750000,1500000
+opex,Salaries and Wages,680000,590000
+opex,Rent Expense,120000,115000
+opex,Depreciation Expense,128000,110000
+opex,Amortization Expense,10000,10000
+opex,Utilities,42000,38000
+opex,Insurance,36000,33000
+opex,Advertising Expense,85000,72000
+opex,Bad Debt Expense,8500,6000
+opex,Office Supplies,12000,10500
+other,Interest Expense,45000,48000
+other,Interest Income,-8000,-6000
+other,Gain on Sale of Equipment,-15000,0
+other,Income Tax Expense,142000,118000
