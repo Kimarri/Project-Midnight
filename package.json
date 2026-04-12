@@ -1,0 +1,43 @@
+{
+  "name": "noteflow",
+  "version": "1.0.0",
+  "description": "NoteFlow — Professional Financial Statement Generation Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && npx firebase-tools deploy --only hosting",
+    "deploy:functions": "npx firebase-tools deploy --only functions",
+    "deploy:rules": "npx firebase-tools deploy --only firestore:rules",
+    "functions:install": "cd functions && npm install",
+    "functions:logs": "npx firebase-tools functions:log",
+    "health": "curl -s https://us-central1-noteflow-app1.cloudfunctions.net/healthCheck | npx json"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "NoteFlow",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@vitest/coverage-v8": "^4.1.4",
+    "jsdom": "^29.0.2",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4"
+  },
+  "dependencies": {
+    "docx": "^9.6.1",
+    "file-saver": "^2.0.5"
+  }
+}
