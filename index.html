@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.gstatic.com https://js.stripe.com https://buy.stripe.com; script-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.gstatic.com https://js.stripe.com https://cdn.sheetjs.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com https://en.wikipedia.org https://api.duckduckgo.com https://api.opencorporates.com https://efts.sec.gov; frame-src https://js.stripe.com https://buy.stripe.com;">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoteFlow — Professional Financial Statement Generation Software</title>
+  <meta name="description" content="NoteFlow automates financial statement preparation. Generate GAAP-compliant Balance Sheets, Income Statements, Cash Flows, Equity Statements, and Notes from your trial balance in minutes. Cloud-synced, encrypted, and export-ready." />
+  <meta name="keywords" content="financial statements, accounting software, balance sheet generator, income statement, cash flow statement, GAAP compliance, trial balance, CPA tool, financial reporting, bookkeeping" />
+  <meta name="author" content="NoteFlow" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://getnoteflowapp.com" />
+
+  <!-- Open Graph (Facebook, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="NoteFlow — Professional Financial Statements, Simplified" />
+  <meta property="og:description" content="Generate GAAP-compliant financial statements from your trial balance in minutes. Balance Sheets, Income Statements, Cash Flows, Notes, and more." />
+  <meta property="og:url" content="https://getnoteflowapp.com" />
+  <meta property="og:site_name" content="NoteFlow" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="NoteFlow — Professional Financial Statements, Simplified" />
+  <meta name="twitter:description" content="Generate GAAP-compliant financial statements from your trial balance in minutes. Encrypted, cloud-synced, and export-ready." />
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<a href="#app-wrapper" class="skip-link">Skip to main content</a>
+
+<div id="recaptcha-container"></div>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="9" y1="13" x2="15" y2="13"/>
+          <line x1="9" y1="17" x2="13" y2="17"/>
+        </svg>
+      </div>
+      <h2>NoteFlow</h2>
+      <p>Professional Financial Statements, Simplified</p>
+      <div class="login-features">
+        <span>Auto-generate</span>
+        <span>Cloud sync</span>
+        <span>Encrypted</span>
+      </div>
+    </div>
+
+    <!-- Sign In -->
+    <div id="auth-signin">
+      <div class="form-title">Sign In</div>
+      <div id="signin-msg"></div>
+      <div class="login-field">
+        <label for="signin-email">Email</label>
+        <input type="email" id="signin-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label for="signin-password">Password</label>
+        <input type="password" id="signin-password" placeholder="Enter your password" />
+      </div>
+      <button class="login-btn" data-action="handleSignIn">Sign In</button>
+      <div class="login-footer">
+        <a data-action="showAuthView" data-param="forgot">Forgot password?</a><br>
+        Don't have an account? <a data-action="showAuthView" data-param="signup">Sign up</a>
+      </div>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="auth-signup" style="display:none">
+      <div class="form-title">Create Account</div>
+      <div id="signup-msg"></div>
+      <div class="login-field">
+        <label for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" placeholder="Your full name" />
+      </div>
+      <div class="login-field">
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" placeholder="At least 6 characters" />
+      </div>
+      <div class="login-field">
+        <label for="signup-confirm">Confirm Password</label>
+        <input type="password" id="signup-confirm" placeholder="Re-enter password" />
+      </div>
+      <button class="login-btn" data-action="handleSignUp">Create Account</button>
+      <div class="login-footer">
+        Already have an account? <a data-action="showAuthView" data-param="signin">Sign in</a>
+      </div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div id="auth-forgot" style="display:none">
+      <div class="form-title">Reset Password</div>
+      <div id="forgot-msg"></div>
+      <div class="login-field">
+        <label for="forgot-email">Email</label>
+        <input type="email" id="forgot-email" placeholder="you@company.com" />
+      </div>
+      <div class="login-field">
+        <label for="forgot-password">New Password</label>
+        <input type="password" id="forgot-password" placeholder="At least 6 characters" />
+      </div>
+      <div class="login-field">
+        <label for="forgot-confirm">Confirm New Password</label>
+        <input type="password" id="forgot-confirm" placeholder="Re-enter new password" />
+      </div>
+      <button class="login-btn" data-action="handleForgotPassword">Reset Password</button>
+      <div class="login-footer">
+        <a data-action="showAuthView" data-param="signin">Back to Sign In</a>
+      </div>
+    </div>
+
+    <!-- 2FA Verification -->
+    <div id="auth-2fa" style="display:none">
+      <div class="form-title">Two-Factor Verification</div>
+      <div id="2fa-signin-msg"></div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">A verification code has been sent to your phone.</p>
+      <div class="login-field">
+        <label for="2fa-signin-code">Verification Code</label>
+        <input type="text" id="2fa-signin-code" placeholder="123456" maxlength="6" />
+      </div>
+      <button class="login-btn" data-action="verify2FASignIn">Verify</button>
+      <div class="login-footer">
+        <a data-action="showAuthView" data-param="signin">Back to sign in</a>
+      </div>
+    </div>
+
+  </div>
+  <div class="login-bottom-text" style="position:absolute;bottom:24px;left:0;right:0;text-align:center;z-index:1">
+    <p style="font-size:0.72rem;color:rgba(148,163,184,0.6);margin:0">AES-256 encrypted &middot; SOC 2 architecture &middot; Your data stays yours</p>
+  </div>
+</div>
+
+<!-- ===== SUBSCRIPTION GATE ===== -->
+<div class="login-screen" id="subscription-gate" style="display:none">
+  <div class="login-card" style="max-width:520px">
+    <div class="logo">
+      <h2>NoteFlow</h2>
+      <p>Professional Financial Statements, Simplified</p>
+    </div>
+    <div id="sub-gate-content">
+      <div class="form-title">Subscription Required</div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;line-height:1.5">
+        Your free trial has ended. Subscribe to continue using NoteFlow and access all features including statement generation, PDF exports, and unlimited projects.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer" data-action="selectPlan" data-param="individual" id="plan-individual">
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Individual</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--primary)">$49<span style="font-size:0.75rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <ul style="list-style:none;padding:0;margin:10px 0 0;font-size:0.78rem;color:var(--text)">
+            <li style="padding:3px 0">&#10003; 1 user</li>
+            <li style="padding:3px 0">&#10003; Unlimited projects</li>
+            <li style="padding:3px 0">&#10003; All exports</li>
+            <li style="padding:3px 0">&#10003; Cloud sync</li>
+            <li style="padding:3px 0">&#10003; Encryption</li>
+          </ul>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--primary);border-radius:10px;padding:16px;cursor:pointer;position:relative" data-action="selectPlan" data-param="firm" id="plan-firm">
+          <div style="position:absolute;top:-10px;right:12px;background:var(--primary);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:10px">BEST VALUE</div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Firm</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--primary)">$199<span style="font-size:0.75rem;font-weight:400;color:var(--muted)">/mo</span></div>
+          <ul style="list-style:none;padding:0;margin:10px 0 0;font-size:0.78rem;color:var(--text)">
+            <li style="padding:3px 0">&#10003; Up to 10 users</li>
+            <li style="padding:3px 0">&#10003; Unlimited projects</li>
+            <li style="padding:3px 0">&#10003; All exports</li>
+            <li style="padding:3px 0">&#10003; Team management</li>
+            <li style="padding:3px 0">&#10003; Priority support</li>
+          </ul>
+        </div>
+      </div>
+      <button class="login-btn" id="subscribe-btn" data-action="startCheckout">Subscribe — Individual $49/mo</button>
+      <p style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:12px">Need 20+ seats? <a href="mailto:getnoteflowapp@gmail.com" style="color:var(--primary);text-decoration:none;font-weight:600">Contact us</a> for custom firm pricing.</p>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px" data-action="handleSignOut">Sign Out</button>
+    </div>
+    <div id="sub-trial-banner" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;color:#92400e;text-align:center">
+      <strong>Free Trial:</strong> <span id="trial-days-left">14</span> days remaining
+      <button class="btn btn-ghost btn-sm" data-action="dismissTrialBanner" style="margin-left:8px;font-size:0.7rem">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <h1>NoteFlow</h1>
+    <div class="user-area">
+      <span id="dash-user-display"></span>
+      <a id="admin-link" href="admin.html" target="_blank" style="display:none;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-weight:700;font-size:0.8rem;padding:8px 16px;border-radius:8px;text-decoration:none;box-shadow:0 4px 12px rgba(245,158,11,0.4);transition:all 0.2s">Admin Dashboard</a>
+      <button class="dark-toggle" data-action="toggleDarkMode" title="Toggle dark mode" aria-label="Toggle dark mode">&#9684;</button>
+      <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" data-action="openFirmProfile">Firm Profile</button>
+      <!-- <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openSecuritySettings()">Security</button> -->
+      <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" data-action="handleSignOut">Sign Out</button>
+    </div>
+  </div>
+  <div class="dash-content">
+    <!-- Stats Row -->
+    <div class="dash-stats" id="dash-stats"></div>
+
+    <div class="dash-welcome">
+      <div>
+        <h2 id="dash-greeting">Your Projects</h2>
+        <p>Select a project to open, or create a new one.</p>
+      </div>
+      <div class="dash-actions">
+        <button class="btn btn-primary" data-action="dashCreateProject">+ New Project</button>
+        <button class="btn btn-ghost btn-sm" id="team-mgmt-btn" data-action="toggleTeamPanel" style="display:none">Team Members</button>
+      </div>
+    </div>
+
+    <!-- Workflow Filter Tabs -->
+    <div class="wf-filter-bar" id="wf-filter-bar"></div>
+
+    <!-- Search -->
+    <div style="margin-bottom:16px">
+      <input type="text" id="dash-search" placeholder="Search projects..." aria-label="Search projects" style="width:100%;max-width:320px;padding:9px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+    </div>
+
+    <div id="project-grid" class="project-grid"></div>
+
+    <!-- Firm Team Management Panel -->
+    <div id="team-panel" style="display:none;margin-top:24px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0;font-size:1.1rem">Team Members</h3>
+          <span id="team-seat-count" style="font-size:0.8rem;color:var(--muted)"></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="email" id="team-add-email" placeholder="team@example.com" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+          <input type="text" id="team-add-name" placeholder="Name (optional)" style="width:150px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+          <button class="btn btn-primary btn-sm" data-action="addTeamMember">Add</button>
+        </div>
+        <div id="team-member-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WORKFLOW / COMMENTS MODAL ===== -->
+<div class="modal-overlay" id="workflow-modal">
+  <div class="modal-box" style="max-width:600px;max-height:85vh;overflow-y:auto">
+    <h2 id="wf-modal-title">Project Workflow</h2>
+    <div id="wf-modal-project-name" style="font-size:0.85rem;color:var(--muted);margin-bottom:16px"></div>
+
+    <!-- Current Status -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em">Current Status</label>
+      <div id="wf-current-status" style="margin-top:6px"></div>
+    </div>
+
+    <!-- Assign To -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em">Assigned To</label>
+      <div class="wf-assign-row">
+        <input type="email" id="wf-assign-email" placeholder="reviewer@firm.com" />
+        <select id="wf-assign-role" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--bg);color:var(--text)">
+          <option value="manager">Manager</option>
+          <option value="partner">Partner</option>
+        </select>
+        <button class="btn btn-primary btn-sm" data-action="assignReviewer">Assign</button>
+      </div>
+      <div id="wf-assignees" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Workflow Actions -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em">Actions</label>
+      <div class="wf-actions" id="wf-actions"></div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em">Activity Timeline</label>
+      <div class="wf-timeline" id="wf-timeline"></div>
+    </div>
+
+    <!-- Comments -->
+    <div>
+      <label style="font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em">Comments</label>
+      <div id="wf-comments"></div>
+      <div class="comment-input-wrap">
+        <textarea id="wf-comment-input" placeholder="Add a comment..." rows="2"></textarea>
+        <button class="btn btn-primary btn-sm" data-action="addComment" style="align-self:flex-end">Post</button>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:right">
+      <button class="btn btn-ghost" data-action="closeWorkflowModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP (hidden until project is open) ===== -->
+<div class="app-wrapper" id="app-wrapper">
+
+<header>
+  <div>
+    <h1 id="app-project-name" style="cursor:pointer" data-action="goToDashboard">NoteFlow</h1>
+    <span>Professional Financial Statements, Simplified</span>
+  </div>
+  <div class="header-actions">
+    <span class="save-indicator" id="save-indicator"></span>
+    <span class="security-badge" id="security-badge" title="Data encrypted with AES-256-GCM" style="font-size:0.7rem;color:#22c55e;margin-right:8px;display:none">&#128274; Encrypted</span>
+    <span class="security-badge" id="cloud-sync-badge" title="Data synced to cloud" style="font-size:0.7rem;color:#3b82f6;margin-right:8px;display:none">&#9729; Cloud Sync</span>
+    <span id="user-display" style="font-size:0.8rem;color:#94a3b8"></span>
+    <button class="dark-toggle" data-action="toggleDarkMode" title="Toggle dark mode" aria-label="Toggle dark mode">&#9684;</button>
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" data-action="openTemplate">Formatting</button>
+    <!-- <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" onclick="openSecuritySettings()">Security</button> -->
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" data-action="goToDashboard">All Projects</button>
+    <button class="btn btn-ghost btn-sm" style="color:#94a3b8;border-color:#475569" data-action="handleSignOut">Sign Out</button>
+    <button class="hamburger-btn" data-action="toggleMobileMenu" title="Menu" aria-label="Open menu">&#9776;</button>
+    <div class="mobile-menu" id="mobile-menu">
+      <button data-action="toggleDarkModeAndCloseMenu">&#9684; Dark Mode</button>
+      <button data-action="openTemplateAndCloseMenu">Formatting</button>
+      <button data-action="goToDashboardAndCloseMenu">All Projects</button>
+      <button class="danger" data-action="handleSignOut">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<div class="tabs" id="tab-bar" role="tablist">
+  <div class="tab active" role="tab" tabindex="0" aria-selected="true" aria-controls="page-input" id="tab-input" data-action="switchTab" data-param="input">Import<span class="tab-badge" id="badge-input"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-balance" id="tab-balance" data-action="switchTab" data-param="balance">Balance Sheet<span class="tab-badge" id="badge-balance"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-income" id="tab-income" data-action="switchTab" data-param="income">Income Statement<span class="tab-badge" id="badge-income"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-equity" id="tab-equity" data-action="switchTab" data-param="equity">Equity<span class="tab-badge" id="badge-equity"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-cashflow" id="tab-cashflow" data-action="switchTab" data-param="cashflow">Cash Flows<span class="tab-badge" id="badge-cashflow"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-notes" id="tab-notes" data-action="switchTab" data-param="notes">Notes<span class="tab-badge" id="badge-notes"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-checklist" id="tab-checklist" data-action="switchTab" data-param="checklist">Disclosures<span class="tab-badge" id="badge-checklist"></span></div>
+  <div class="tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="page-ratios" id="tab-ratios" data-action="switchTab" data-param="ratios">Ratios<span class="tab-badge" id="badge-ratios"></span></div>
+</div>
+
+<div class="container">
+
+  <!-- ===== DATA ENTRY ===== -->
+  <div class="page active" id="page-input" role="tabpanel" aria-labelledby="tab-input">
+    <!-- ===== IMPORT WIZARD ===== -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Import Trial Balance</div>
+
+      <!-- Step 1: Upload -->
+      <div id="import-step-upload">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+          Upload your trial balance CSV or Excel file. You'll map the columns in the next step.
+        </p>
+        <div class="import-zone" id="zone-combined">
+          <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" />
+          <div class="zone-label">Trial Balance CSV</div>
+          <div class="zone-hint" id="zone-combined-hint">Drop file here or click to browse</div>
+          <div class="zone-file" id="zone-combined-name"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-ghost btn-sm" data-action="downloadTemplate">Download Template</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Column Mapping (shown after file upload) -->
+      <div id="import-step-map" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <p style="font-size:0.85rem;color:var(--muted);margin:0;line-height:1.5">
+            Map your file columns to the fields below. Prior year columns are optional.
+          </p>
+          <button class="btn btn-ghost btn-sm" data-action="importWizardBack">Change File</button>
+        </div>
+
+        <div class="wizard-mappings" id="wizard-mappings"></div>
+
+        <div style="margin-top:12px;margin-bottom:14px">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:6px">DATA PREVIEW</div>
+          <div id="wizard-preview" style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-primary" data-action="runImport">Import &amp; Map</button>
+        </div>
+      </div>
+
+      <div id="import-status" role="alert" aria-live="assertive"></div>
+    </div>
+
+    <!-- ===== TRIAL BALANCE EDITOR (Feature 3) ===== -->
+    <div class="card card-collapsible collapsed" id="tb-editor-card" style="margin-bottom:20px">
+      <div class="card-title">Trial Balance</div>
+      <div class="card-body">
+        <div id="tb-editor-content">
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">No trial balance data imported yet. Import a CSV above to populate this editor.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRIOR YEAR BALANCES (Feature 1) ===== -->
+    <div class="card card-collapsible collapsed" id="py-balances-card" style="margin-bottom:20px">
+      <div class="card-title">Prior Year Balances (Manual Entry)</div>
+      <div class="card-body">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+          If your client has prior year financial statements but no trial balance, enter the key balances below. These will be used for comparative presentation.
+        </p>
+        <div id="py-overwrite-warning" class="py-warning" style="display:none">
+          Prior period data already exists from a comparative CSV import. Saving manual balances will overwrite that data.
+        </div>
+        <div class="py-grid">
+          <div class="py-section-title">Balance Sheet</div>
+          <div><label>Total Current Assets</label><input type="number" id="py-current-assets" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Non-Current Assets</label><input type="number" id="py-noncurrent-assets" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Current Liabilities</label><input type="number" id="py-current-liab" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Non-Current Liabilities</label><input type="number" id="py-noncurrent-liab" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Equity</label><input type="number" id="py-equity" step="0.01" placeholder="0.00"></div>
+          <div></div>
+
+          <div class="py-section-title">Income Statement</div>
+          <div><label>Total Revenue</label><input type="number" id="py-revenue" step="0.01" placeholder="0.00"></div>
+          <div><label>Total COGS</label><input type="number" id="py-cogs" step="0.01" placeholder="0.00"></div>
+          <div><label>Total Operating Expenses</label><input type="number" id="py-opex" step="0.01" placeholder="0.00"></div>
+          <div><label>Other Income/(Expense)</label><input type="number" id="py-other" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Income</label><input type="number" id="py-net-income" step="0.01" placeholder="0.00" disabled style="background:var(--bg);color:var(--muted)"></div>
+          <div></div>
+
+          <div class="py-section-title">Cash Flow</div>
+          <div><label>Net Cash from Operations</label><input type="number" id="py-cf-operating" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Cash from Investing</label><input type="number" id="py-cf-investing" step="0.01" placeholder="0.00"></div>
+          <div><label>Net Cash from Financing</label><input type="number" id="py-cf-financing" step="0.01" placeholder="0.00"></div>
+          <div></div>
+        </div>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn btn-primary" data-action="savePriorYearBalances">Save Prior Year Balances</button>
+          <button class="btn btn-danger btn-sm" data-action="clearPriorYearBalances">Clear Prior Year</button>
+        </div>
+        <div id="py-status" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ===== ADJUSTING JOURNAL ENTRIES (Feature 2) ===== -->
+    <div class="card card-collapsible" id="aje-card" style="margin-bottom:20px">
+      <div class="card-title">Adjusting Journal Entries</div>
+      <div class="card-body">
+        <div id="aje-entries-container"></div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" data-action="addAJEEntry">Add Entry</button>
+          <button class="btn btn-primary" data-action="postAllAJE" id="aje-post-btn">Post All Adjustments</button>
+          <button class="btn btn-danger btn-sm" data-action="unpostAJE" id="aje-unpost-btn" style="display:none">Unpost Adjustments</button>
+        </div>
+        <div id="aje-summary" class="aje-summary" style="display:none"></div>
+        <div id="aje-status" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ===== CONSOLIDATION MODE ===== -->
+    <div class="card card-collapsible collapsed" id="consolidation-card" style="margin-bottom:20px">
+      <div class="card-title">Consolidation Mode</div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <label class="toggle-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="consol-toggle" style="width:auto" />
+            <span style="font-weight:600;font-size:0.85rem">Enable Consolidation</span>
+          </label>
+        </div>
+        <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+          When enabled, you can import multiple entity trial balances and add elimination entries for intercompany transactions.
+        </p>
+
+        <div id="consolidation-panel" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <label style="font-size:0.83rem;font-weight:600">Importing for entity:</label>
+            <select id="consol-entity-select" style="padding:4px 8px;font-size:0.85rem"></select>
+          </div>
+
+          <div id="consolidation-entities"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Report Settings</div>
+      <div class="meta-row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label for="companyName">Company Name</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="companyName" value="" placeholder="e.g. Acme Corporation" style="flex:1" />
+            <button class="research-btn" id="research-btn" data-action="researchCompany" title="Search the web to learn about this company and pre-fill notes">
+              <span id="research-btn-text">Research</span>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label for="currency">Currency</label>
+          <input type="text" id="currency" value="$" placeholder="$" />
+        </div>
+      </div>
+      <div class="meta-row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label for="period">Period End Date</label>
+          <input type="text" id="period" value="" placeholder="e.g. December 31, 2025" />
+        </div>
+        <div>
+          <label for="priorPeriod">Prior Period End Date</label>
+          <input type="text" id="priorPeriod" value="" placeholder="e.g. December 31, 2024" />
+        </div>
+      </div>
+      <div class="meta-row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label for="engagementDate">Engagement Date</label>
+          <input type="text" id="engagementDate" value="" placeholder="e.g. January 15, 2026" />
+        </div>
+        <div>
+          <label for="reportDate">Report Issue Date</label>
+          <input type="text" id="reportDate" value="" placeholder="e.g. March 31, 2026" />
+        </div>
+      </div>
+      <div class="meta-row" style="grid-template-columns:1fr">
+        <div>
+          <label for="inThousands" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="inThousands" style="width:auto" />
+            Present amounts in thousands (000s)
+          </label>
+        </div>
+      </div>
+
+      <!-- Research Results Panel -->
+      <div class="research-panel" id="research-panel">
+        <div class="research-panel-header">
+          <h3 id="research-panel-title">Company Research Results</h3>
+          <button class="btn btn-ghost btn-sm" data-action="closeResearchPanel">Close</button>
+        </div>
+        <div class="research-panel-body" id="research-panel-body">
+        </div>
+      </div>
+    </div>
+
+    <div class="generate-bar">
+      <button class="btn btn-primary" data-action="generateAll">Generate Statements</button>
+      <button class="btn btn-ghost" data-action="exportPackagePDF">Export Full Package (PDF)</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportProjectJSON" title="Download project as JSON backup" aria-label="Export project as JSON backup" style="font-size:0.75rem">&#11015; Export Project</button>
+      <button class="btn btn-ghost btn-sm" data-action="triggerImportProject" title="Import project from JSON backup" aria-label="Import project from JSON backup" style="font-size:0.75rem">&#11014; Import Project</button>
+      <input type="file" id="import-project-file" accept=".json" style="display:none" />
+      <div style="flex:1"></div>
+      <button class="btn btn-danger btn-sm" data-action="confirmClearAll" style="font-size:0.75rem">Clear All Data</button>
+    </div>
+  </div>
+
+
+  <!-- ===== PRINT COVER PAGE (hidden on screen, visible in print) ===== -->
+  <div id="print-cover-page"></div>
+
+  <!-- ===== PRINT TABLE OF CONTENTS (hidden on screen, visible in print) ===== -->
+  <div id="print-toc"></div>
+
+  <!-- ===== BALANCE SHEET ===== -->
+  <div class="page" id="page-balance" role="tabpanel" aria-labelledby="tab-balance">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="printPage">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToExcel">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToWord">Export Word</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportPackagePDF">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-balance">
+      <div class="stmt-empty-icon">&#9776;</div>
+      <p>No balance sheet data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Balance Sheet.</p>
+      <button class="btn btn-primary btn-sm" data-action="switchTab" data-param="input">Go to Import</button>
+    </div>
+    <div class="statement" id="balance-statement" aria-live="polite"></div>
+    <div class="card ratios-card" id="balance-ratios-card">
+      <div class="card-title">Financial Analysis</div>
+      <div class="ratios-grid" id="balance-ratios-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== INCOME STATEMENT ===== -->
+  <div class="page" id="page-income" role="tabpanel" aria-labelledby="tab-income">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="printPage">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToExcel">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToWord">Export Word</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportPackagePDF">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-income">
+      <div class="stmt-empty-icon">&#9776;</div>
+      <p>No income statement data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Income Statement.</p>
+      <button class="btn btn-primary btn-sm" data-action="switchTab" data-param="input">Go to Import</button>
+    </div>
+    <div class="statement" id="income-statement" aria-live="polite"></div>
+    <div class="card ratios-card" id="income-ratios-card">
+      <div class="card-title">Financial Analysis</div>
+      <div class="ratios-grid" id="income-ratios-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== EQUITY ===== -->
+  <div class="page" id="page-equity" role="tabpanel" aria-labelledby="tab-equity">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="printPage">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToExcel">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToWord">Export Word</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportPackagePDF">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-equity">
+      <div class="stmt-empty-icon">&#9776;</div>
+      <p>No equity statement data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Equity Statement.</p>
+      <button class="btn btn-primary btn-sm" data-action="switchTab" data-param="input">Go to Import</button>
+    </div>
+    <div class="statement" id="equity-statement" aria-live="polite"></div>
+  </div>
+
+  <!-- ===== CASH FLOWS ===== -->
+  <div class="page" id="page-cashflow" role="tabpanel" aria-labelledby="tab-cashflow">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="printPage">Print / Save PDF</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToExcel">Export Excel</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportToWord">Export Word</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportPackagePDF">Export Full Package</button>
+    </div>
+    <div class="stmt-empty" id="empty-cashflow">
+      <div class="stmt-empty-icon">&#9776;</div>
+      <p>No cash flow data yet.<br>Import a trial balance and click <strong>Generate Statements</strong> to build your Cash Flow Statement.</p>
+      <button class="btn btn-primary btn-sm" data-action="switchTab" data-param="input">Go to Import</button>
+    </div>
+    <div class="statement" id="cashflow-statement" aria-live="polite"></div>
+  </div>
+
+  <!-- ===== NOTES ===== -->
+  <div class="page" id="page-notes" role="tabpanel" aria-labelledby="tab-notes">
+    <div id="note-suggestions" style="display:none;margin-bottom:16px"></div>
+    <div class="card" id="notes-questionnaire">
+      <div class="card-title">Financial Statement Notes — Questionnaire</div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.5">
+        Answer the questions below to generate notes to the financial statements compliant with U.S. GAAP private company disclosure requirements. Only completed sections will appear in the generated notes.
+      </p>
+
+      <div class="notes-form">
+
+        <!-- 1. Nature of Operations -->
+        <div class="note-group">
+          <div class="note-group-title">1. Nature of Operations</div>
+          <div class="note-field">
+            <label>What does the company do?
+              <span class="hint">Describe the principal business activities</span>
+            </label>
+            <textarea id="nq-business-desc" placeholder="e.g., The Company provides residential plumbing and HVAC services to homeowners in the greater Atlanta metropolitan area."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-business-desc" data-param="nq-business-desc">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>State / jurisdiction of incorporation or formation</label>
+            <input type="text" id="nq-state" placeholder="e.g., Georgia" />
+          </div>
+          <div class="note-field">
+            <label>Date of incorporation or formation</label>
+            <input type="text" id="nq-formed" placeholder="e.g., March 15, 2018" />
+          </div>
+          <div class="note-field">
+            <label>Entity type</label>
+            <select id="nq-entity-type">
+              <option value="">— Select —</option>
+              <option value="S Corporation">S Corporation</option>
+              <option value="C Corporation">C Corporation</option>
+              <option value="Limited Liability Company (LLC)">Limited Liability Company (LLC)</option>
+              <option value="Partnership">Partnership</option>
+              <option value="Sole Proprietorship">Sole Proprietorship</option>
+              <option value="Nonprofit Organization">Nonprofit Organization</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Summary of Significant Accounting Policies -->
+        <div class="note-group">
+          <div class="note-group-title">2. Summary of Significant Accounting Policies</div>
+          <div class="note-field">
+            <label>Basis of accounting</label>
+            <select id="nq-basis">
+              <option value="">— Select —</option>
+              <option value="accrual" selected>Accrual basis (U.S. GAAP)</option>
+              <option value="cash">Cash basis</option>
+              <option value="modified-cash">Modified cash basis</option>
+              <option value="tax">Income tax basis</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Revenue recognition policy
+              <span class="hint">Under ASC 606, describe when and how revenue is recognized (e.g., at a point in time upon delivery, over time as services are performed)</span>
+            </label>
+            <textarea id="nq-revenue-recognition" placeholder="e.g., Revenue is recognized at the point in time when control of goods transfers to the customer, generally upon delivery. Service revenue is recognized over time as services are performed."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-revenue-recognition" data-param="nq-revenue-recognition">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Cash and cash equivalents — what does the Company consider cash equivalents?
+              <span class="hint">Typically instruments with original maturities of three months or less</span>
+            </label>
+            <textarea id="nq-cash-equiv" placeholder="e.g., The Company considers all highly liquid investments with an original maturity of three months or less to be cash equivalents."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-cash-equiv" data-param="nq-cash-equiv">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Does the Company maintain an allowance for doubtful accounts?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-allowance" value="yes" data-toggle-show="nq-allowance-detail"> Yes</label>
+              <label><input type="radio" name="nq-allowance" value="no" checked data-toggle-hide="nq-allowance-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-allowance-detail" style="display:none">
+            <label>Describe the allowance methodology and amount
+              <span class="hint">e.g., specific identification, percentage of receivables, aging analysis</span>
+            </label>
+            <textarea id="nq-allowance-text" placeholder="e.g., The Company provides an allowance based on specific identification of uncollectible accounts and an aging analysis of outstanding receivables."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-allowance-text" data-param="nq-allowance-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Inventory valuation method (if applicable)</label>
+            <select id="nq-inventory">
+              <option value="">N/A — No inventory</option>
+              <option value="FIFO">First-In, First-Out (FIFO)</option>
+              <option value="weighted average">Weighted Average Cost</option>
+              <option value="specific identification">Specific Identification</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Depreciation method for property &amp; equipment</label>
+            <select id="nq-depreciation">
+              <option value="">N/A — No fixed assets</option>
+              <option value="straight-line" selected>Straight-line</option>
+              <option value="declining balance">Declining balance</option>
+              <option value="MACRS">MACRS (tax basis)</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Estimated useful lives for major asset classes
+              <span class="hint">e.g., "Vehicles: 5 years, Equipment: 7 years, Building: 39 years"</span>
+            </label>
+            <input type="text" id="nq-useful-lives" placeholder="e.g., Vehicles: 5 years, Equipment: 7 years" />
+          </div>
+          <div class="note-field">
+            <label>Does the Company have intangible assets (patents, trademarks, goodwill, customer lists)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-intangibles" value="yes" data-toggle-show="nq-intangibles-detail"> Yes</label>
+              <label><input type="radio" name="nq-intangibles" value="no" checked data-toggle-hide="nq-intangibles-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-intangibles-detail" style="display:none">
+            <label>Describe intangible assets and amortization policy
+              <span class="hint">Include type, useful life, and amortization method</span>
+            </label>
+            <textarea id="nq-intangibles-text" placeholder="e.g., Customer relationships are amortized over 10 years using the straight-line method. Goodwill is tested for impairment annually."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-intangibles-text" data-param="nq-intangibles-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Advertising costs policy</label>
+            <select id="nq-advertising">
+              <option value="">N/A — Not material</option>
+              <option value="expensed">Expensed as incurred</option>
+              <option value="capitalized">Capitalized and amortized</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. Income Taxes -->
+        <div class="note-group">
+          <div class="note-group-title">3. Income Taxes</div>
+          <div class="note-field">
+            <label>How is the entity taxed?
+              <span class="hint">This determines the disclosure language</span>
+            </label>
+            <select id="nq-tax-status">
+              <option value="">— Select —</option>
+              <option value="s-corp">S Corporation (pass-through to shareholders)</option>
+              <option value="c-corp">C Corporation (entity-level tax)</option>
+              <option value="llc-partner">LLC / Partnership (pass-through to members)</option>
+              <option value="llc-scorp">LLC taxed as S Corporation</option>
+              <option value="sole-prop">Sole Proprietorship (reported on owner's return)</option>
+              <option value="nonprofit">Tax-exempt organization</option>
+            </select>
+          </div>
+          <div class="note-field">
+            <label>Does the Company have any uncertain tax positions or open tax years under examination?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-tax-uncertain" value="yes" data-toggle-show="nq-tax-uncertain-detail"> Yes</label>
+              <label><input type="radio" name="nq-tax-uncertain" value="no" checked data-toggle-hide="nq-tax-uncertain-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-tax-uncertain-detail" style="display:none">
+            <label>Describe the uncertain tax positions</label>
+            <textarea id="nq-tax-uncertain-text" placeholder="Describe any uncertain positions or examinations..."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-tax-uncertain-text" data-param="nq-tax-uncertain-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 4. Debt / Notes Payable -->
+        <div class="note-group">
+          <div class="note-group-title">4. Debt and Notes Payable</div>
+          <div class="note-field">
+            <label>Does the Company have any outstanding debt, loans, or lines of credit?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-debt" value="yes" data-toggle-show="nq-debt-detail,nq-loc-detail-wrap"> Yes</label>
+              <label><input type="radio" name="nq-debt" value="no" checked data-toggle-hide="nq-debt-detail,nq-loc-detail-wrap"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-debt-detail" style="display:none">
+            <label>Describe each debt instrument
+              <span class="hint">Include lender, original amount, balance, interest rate, maturity date, and any collateral or covenants</span>
+            </label>
+            <textarea id="nq-debt-text" rows="5" placeholder="e.g., The Company has a term loan with ABC Bank with an original principal of $500,000, bearing interest at 5.25% per annum, maturing December 2028. The loan is secured by substantially all assets of the Company. The outstanding balance at year-end was $325,000."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-debt-text" data-param="nq-debt-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field" style="display:none" id="nq-loc-detail-wrap">
+            <label>Describe any lines of credit
+              <span class="hint">Include lender, limit, balance drawn, rate, and expiration</span>
+            </label>
+            <textarea id="nq-loc-text" rows="3" placeholder="e.g., The Company maintains a $100,000 revolving line of credit with XYZ Bank at prime + 1.0%, expiring June 2026. At year-end, $45,000 was outstanding."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-loc-text" data-param="nq-loc-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 5. Leases (ASC 842) -->
+        <div class="note-group">
+          <div class="note-group-title">5. Leases</div>
+          <div class="note-field">
+            <label>Does the Company have any leases (office, equipment, vehicles)?
+              <span class="hint">Under ASC 842, most leases must be recognized on the balance sheet (private company adoption)</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-leases" value="yes" data-toggle-show="nq-leases-detail,nq-leases-shortterm-detail"> Yes</label>
+              <label><input type="radio" name="nq-leases" value="no" checked data-toggle-hide="nq-leases-detail,nq-leases-shortterm-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-leases-detail" style="display:none">
+            <label>Describe lease arrangements
+              <span class="hint">Include type (operating/finance), terms, annual/monthly payments, and expiration</span>
+            </label>
+            <textarea id="nq-leases-text" rows="4" placeholder="e.g., The Company leases office space under an operating lease expiring June 2028 with monthly payments of $4,000. The Company also leases vehicles under 36-month finance leases."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-leases-text" data-param="nq-leases-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field" id="nq-leases-shortterm-detail" style="display:none">
+            <label>Has the Company elected the ASC 842 practical expedient for short-term leases (12 months or less)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-lease-shortterm" value="yes" checked> Yes</label>
+              <label><input type="radio" name="nq-lease-shortterm" value="no"> No</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Equity / Stockholders' Equity -->
+        <div class="note-group">
+          <div class="note-group-title">6. Equity / Stockholders' Equity</div>
+          <div class="note-field">
+            <label>Describe the equity structure
+              <span class="hint">Include authorized shares, classes of stock (common, preferred), par value, and issued/outstanding shares</span>
+            </label>
+            <textarea id="nq-equity-text" placeholder="e.g., The Company is authorized to issue 10,000 shares of common stock with no par value. As of the balance sheet date, 1,000 shares were issued and outstanding."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-equity-text" data-param="nq-equity-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Were any distributions, dividends, or ownership changes made during the period?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-distributions" value="yes" data-toggle-show="nq-distributions-detail"> Yes</label>
+              <label><input type="radio" name="nq-distributions" value="no" checked data-toggle-hide="nq-distributions-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-distributions-detail" style="display:none">
+            <label>Describe distributions or ownership changes</label>
+            <textarea id="nq-distributions-text" placeholder="e.g., During the year, the Company declared and paid shareholder distributions totaling $75,000."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-distributions-text" data-param="nq-distributions-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 7. Related Party Transactions -->
+        <div class="note-group">
+          <div class="note-group-title">7. Related Party Transactions</div>
+          <div class="note-field">
+            <label>Are there any transactions with owners, officers, family members, or related entities?
+              <span class="hint">e.g., loans to/from shareholders, lease of owner's property, management fees, guaranteed debt</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-related" value="yes" data-toggle-show="nq-related-detail"> Yes</label>
+              <label><input type="radio" name="nq-related" value="no" checked data-toggle-hide="nq-related-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-related-detail" style="display:none">
+            <label>Describe each related party transaction
+              <span class="hint">Include the nature of the relationship, description of the transaction, and dollar amounts</span>
+            </label>
+            <textarea id="nq-related-text" rows="4" placeholder="e.g., The Company leases its office space from the sole shareholder under a month-to-month arrangement at $3,000 per month. Total rent expense to the related party was $36,000 for the year."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-related-text" data-param="nq-related-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 8. Concentrations of Credit Risk -->
+        <div class="note-group">
+          <div class="note-group-title">8. Concentrations of Credit Risk</div>
+          <div class="note-field">
+            <label>Does the Company maintain cash balances in excess of FDIC insured limits ($250,000)?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-fdic" value="yes"> Yes</label>
+              <label><input type="radio" name="nq-fdic" value="no" checked> No</label>
+            </div>
+          </div>
+          <div class="note-field">
+            <label>Does any single customer account for more than 10% of revenue?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-cust-conc" value="yes" data-toggle-show="nq-cust-conc-detail"> Yes</label>
+              <label><input type="radio" name="nq-cust-conc" value="no" checked data-toggle-hide="nq-cust-conc-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-cust-conc-detail" style="display:none">
+            <label>Describe the customer concentration</label>
+            <textarea id="nq-cust-conc-text" placeholder="e.g., One customer accounted for approximately 35% of revenue during the year. Accounts receivable from this customer totaled $120,000 at year-end."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-cust-conc-text" data-param="nq-cust-conc-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Does any single vendor/supplier account for a significant portion of purchases?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-vendor-conc" value="yes" data-toggle-show="nq-vendor-conc-detail"> Yes</label>
+              <label><input type="radio" name="nq-vendor-conc" value="no" checked data-toggle-hide="nq-vendor-conc-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-vendor-conc-detail" style="display:none">
+            <label>Describe the vendor concentration</label>
+            <textarea id="nq-vendor-conc-text" placeholder="Describe vendor concentration..."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-vendor-conc-text" data-param="nq-vendor-conc-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 9. Commitments and Contingencies -->
+        <div class="note-group">
+          <div class="note-group-title">9. Commitments and Contingencies</div>
+          <div class="note-field">
+            <label>Are there any pending or threatened lawsuits, claims, or legal proceedings?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-litigation" value="yes" data-toggle-show="nq-litigation-detail"> Yes</label>
+              <label><input type="radio" name="nq-litigation" value="no" checked data-toggle-hide="nq-litigation-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-litigation-detail" style="display:none">
+            <label>Describe the litigation or claims</label>
+            <textarea id="nq-litigation-text" placeholder="Describe pending litigation..."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-litigation-text" data-param="nq-litigation-text">&#10024; AI Rewrite</button>
+          </div>
+          <div class="note-field">
+            <label>Does the Company have any guarantees, purchase commitments, or other contractual obligations?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-other-commit" value="yes" data-toggle-show="nq-other-commit-detail"> Yes</label>
+              <label><input type="radio" name="nq-other-commit" value="no" checked data-toggle-hide="nq-other-commit-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-other-commit-detail" style="display:none">
+            <label>Describe the commitments</label>
+            <textarea id="nq-other-commit-text" placeholder="e.g., The Company has a 3-year service agreement requiring minimum annual purchases of $50,000."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-other-commit-text" data-param="nq-other-commit-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 10. Subsequent Events -->
+        <div class="note-group">
+          <div class="note-group-title">10. Subsequent Events</div>
+          <div class="note-field">
+            <label>Through what date has management evaluated subsequent events?</label>
+            <input type="text" id="nq-subseq-date" placeholder="e.g., March 15, 2026" />
+          </div>
+          <div class="note-field">
+            <label>Have any significant events occurred after the reporting period?
+              <span class="hint">e.g., major asset purchase, new loan, loss of key customer, natural disaster, ownership change</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-subseq" value="yes" data-toggle-show="nq-subseq-detail"> Yes</label>
+              <label><input type="radio" name="nq-subseq" value="no" checked data-toggle-hide="nq-subseq-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-subseq-detail" style="display:none">
+            <label>Describe the subsequent events</label>
+            <textarea id="nq-subseq-text" placeholder="Describe subsequent events..."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-subseq-text" data-param="nq-subseq-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+        <!-- 11. Going Concern -->
+        <div class="note-group">
+          <div class="note-group-title">11. Going Concern (if applicable)</div>
+          <div class="note-field">
+            <label>Are there substantial doubts about the company's ability to continue as a going concern?
+              <span class="hint">e.g., recurring losses, negative working capital, loan covenant violations, inability to meet obligations</span>
+            </label>
+            <div class="radio-row">
+              <label><input type="radio" name="nq-going-concern" value="yes" data-toggle-show="nq-gc-detail"> Yes</label>
+              <label><input type="radio" name="nq-going-concern" value="no" checked data-toggle-hide="nq-gc-detail"> No</label>
+            </div>
+          </div>
+          <div class="note-field" id="nq-gc-detail" style="display:none">
+            <label>Describe the conditions and management's plans to address them</label>
+            <textarea id="nq-gc-text" placeholder="e.g., The Company has incurred recurring losses and has a working capital deficiency. Management plans to secure additional financing and reduce operating costs."></textarea>
+            <button type="button" class="ai-rewrite-btn" data-action="aiRewrite" data-target="nq-gc-text" data-param="nq-gc-text">&#10024; AI Rewrite</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions" style="margin-top:22px">
+        <button class="btn btn-primary" data-action="generateNotes">Generate Notes</button>
+      </div>
+    </div>
+
+    <div id="notes-output-wrapper" style="display:none">
+      <div class="stmt-toolbar">
+        <button class="btn btn-ghost btn-sm" data-action="editNotesAnswers">Edit Answers</button>
+        <button class="btn btn-primary btn-sm" data-action="printPage">Print / Save PDF</button>
+        <button class="btn btn-ghost btn-sm" data-action="exportToExcel">Export Excel</button>
+        <button class="btn btn-ghost btn-sm" data-action="exportToWord">Export Word</button>
+        <button class="btn btn-ghost btn-sm" data-action="exportPackagePDF">Export Full Package</button>
+      </div>
+      <div class="statement" id="notes-statement" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- ===== DISCLOSURES ===== -->
+  <div class="page" id="page-checklist" role="tabpanel" aria-labelledby="tab-checklist">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="runDisclosureChecklist">Re-run Checklist</button>
+      <button class="btn btn-ghost btn-sm" data-action="printPage">Print</button>
+    </div>
+    <div class="statement" id="checklist-output">
+      <div class="stmt-header">
+        <div class="title">U.S. GAAP Disclosure Review</div>
+        <div class="period" style="font-size:0.85rem;color:var(--muted)">Click "Run Checklist" to analyze your statements and notes against GAAP disclosure requirements.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FINANCIAL RATIOS & ANALYTICS DASHBOARD ===== -->
+  <div class="page" id="page-ratios" role="tabpanel" aria-labelledby="tab-ratios">
+    <div class="stmt-toolbar">
+      <button class="btn btn-primary btn-sm" data-action="buildFinancialRatios">Refresh Ratios</button>
+      <button class="btn btn-ghost btn-sm" data-action="printPage">Print</button>
+      <button class="btn btn-ghost btn-sm" data-action="exportRatiosPDF">Export Ratios PDF</button>
+    </div>
+    <div class="stmt-empty" id="empty-ratios">
+      <div class="stmt-empty-icon">&#128202;</div>
+      <p>No financial data yet.<br>Import a trial balance and generate statements to see your financial ratios and analytics.</p>
+      <button class="btn btn-primary btn-sm" data-action="switchTab" data-param="input">Go to Import</button>
+    </div>
+    <div id="ratios-dashboard" style="display:none">
+      <div class="statement" style="padding:24px">
+        <div class="stmt-header">
+          <div class="title" id="ratios-company-name">Financial Ratios & Analytics</div>
+          <div class="period" id="ratios-period"></div>
+        </div>
+      </div>
+
+      <!-- Summary Scorecards -->
+      <div class="ratios-scorecard-row" id="ratios-scorecards"></div>
+
+      <!-- Liquidity Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title">
+          Liquidity Ratios
+          <span class="ratios-section-hint">Ability to meet short-term obligations</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-liquidity"></div>
+      </div>
+
+      <!-- Profitability Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title">
+          Profitability Ratios
+          <span class="ratios-section-hint">Earnings performance and margins</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-profitability"></div>
+      </div>
+
+      <!-- Leverage / Solvency Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title">
+          Leverage &amp; Solvency Ratios
+          <span class="ratios-section-hint">Long-term financial stability and debt capacity</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-leverage"></div>
+      </div>
+
+      <!-- Efficiency / Activity Ratios -->
+      <div class="card ratios-section-card">
+        <div class="card-title ratios-section-title">
+          Efficiency &amp; Activity Ratios
+          <span class="ratios-section-hint">Asset utilization and operational efficiency</span>
+        </div>
+        <div class="ratios-section-body" id="ratios-efficiency"></div>
+      </div>
+
+      <!-- Key Insights -->
+      <div class="card" id="ratios-insights-card" style="display:none">
+        <div class="card-title">Key Insights &amp; Observations</div>
+        <div id="ratios-insights"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /app-wrapper -->
+
+<!-- ===== FIRM PROFILE MODAL ===== -->
+<div class="modal-overlay" id="firm-profile-modal">
+  <div class="modal-box">
+    <h2>Firm Profile — Default Settings</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">These defaults auto-populate when you create a new project. The system learns from your choices over time.</p>
+    <div class="note-field"><label>Entity Type</label>
+      <select id="fp-entity-type"><option value="">— Select —</option><option value="S Corporation">S Corporation</option><option value="C Corporation">C Corporation</option><option value="Limited Liability Company (LLC)">LLC</option><option value="Partnership">Partnership</option><option value="Sole Proprietorship">Sole Proprietorship</option><option value="Nonprofit Organization">Nonprofit</option></select>
+    </div>
+    <div class="note-field"><label>State</label><input type="text" id="fp-state" placeholder="e.g., Georgia" /></div>
+    <div class="note-field"><label>Basis of Accounting</label>
+      <select id="fp-basis"><option value="">— Select —</option><option value="accrual">Accrual (U.S. GAAP)</option><option value="cash">Cash basis</option><option value="modified-cash">Modified cash</option><option value="tax">Tax basis</option></select>
+    </div>
+    <div class="note-field"><label>Depreciation Method</label>
+      <select id="fp-depreciation"><option value="">— Select —</option><option value="straight-line">Straight-line</option><option value="declining balance">Declining balance</option><option value="MACRS">MACRS</option></select>
+    </div>
+    <div class="note-field"><label>Tax Status</label>
+      <select id="fp-tax-status"><option value="">— Select —</option><option value="s-corp">S Corp (pass-through)</option><option value="c-corp">C Corp (entity-level)</option><option value="llc-partner">LLC / Partnership</option><option value="llc-scorp">LLC taxed as S Corp</option><option value="sole-prop">Sole Proprietorship</option><option value="nonprofit">Tax-exempt</option></select>
+    </div>
+    <div class="note-field"><label>Inventory Method</label>
+      <select id="fp-inventory"><option value="">N/A</option><option value="FIFO">FIFO</option><option value="weighted average">Weighted Average</option><option value="specific identification">Specific Identification</option></select>
+    </div>
+    <div class="note-field"><label>Useful Lives</label><input type="text" id="fp-useful-lives" placeholder="e.g., Vehicles: 5yr, Equipment: 7yr" /></div>
+    <div class="note-field"><label>Default Revenue Recognition</label><textarea id="fp-revenue-rec" rows="2" placeholder="e.g., Revenue is recognized at the point in time when control transfers to the customer."></textarea></div>
+    <div class="note-field"><label>Default Cash Equivalents</label><textarea id="fp-cash-equiv" rows="2" placeholder="e.g., Highly liquid investments with original maturity of three months or less."></textarea></div>
+    <div class="actions" style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" data-action="saveFirmProfileFromForm">Save Profile</button>
+      <button class="btn btn-ghost btn-sm" data-action="closeFirmProfile">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECURITY SETTINGS MODAL ===== -->
+<div class="modal-overlay" id="security-modal">
+  <div class="modal-box" style="max-width:480px">
+    <h2>Security Settings</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Protect your account with additional security measures.</p>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:0.95rem">Two-Factor Authentication</div>
+        <span id="2fa-status" style="font-size:0.75rem;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#dc2626">Disabled</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Add a phone number to receive a verification code each time you sign in.</p>
+
+      <div id="2fa-setup-form">
+        <div class="login-field" style="margin-bottom:8px">
+          <label style="font-size:0.8rem">Phone Number</label>
+          <input type="tel" id="2fa-phone" placeholder="+1 (555) 123-4567" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+        </div>
+        <div id="2fa-verify-section" style="display:none;margin-bottom:8px">
+          <div class="login-field">
+            <label style="font-size:0.8rem">Verification Code</label>
+            <input type="text" id="2fa-code" placeholder="123456" maxlength="6" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;background:var(--bg);color:var(--text)" />
+          </div>
+        </div>
+        <div id="2fa-msg" style="margin-bottom:8px"></div>
+        <button class="btn btn-primary btn-sm" id="2fa-action-btn" data-action="start2FASetup">Enable 2FA</button>
+        <button class="btn btn-ghost btn-sm" id="2fa-disable-btn" data-action="disable2FA" style="display:none;color:var(--red)">Disable 2FA</button>
+      </div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:8px">Active Sessions</div>
+      <p style="font-size:0.8rem;color:var(--muted)">You are currently signed in as <strong id="security-email"></strong></p>
+    </div>
+
+    <div style="text-align:right">
+      <button class="btn btn-ghost" data-action="closeSecuritySettings">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STATEMENT TEMPLATE MODAL ===== -->
+<div class="modal-overlay" id="template-modal">
+  <div class="modal-box" style="max-width:640px">
+    <h2>Statement Formatting Template</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px">Customize how your financial statements appear. Changes apply to all statements and exports.</p>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Font Family</label>
+        <select id="tpl-font-family">
+          <option value="system-ui, -apple-system, sans-serif">System Default</option>
+          <option value="'Times New Roman', Georgia, serif">Times New Roman (Serif)</option>
+          <option value="Georgia, 'Times New Roman', serif">Georgia (Serif)</option>
+          <option value="Garamond, 'Times New Roman', serif">Garamond (Serif)</option>
+          <option value="'Courier New', monospace">Courier New (Monospace)</option>
+          <option value="Arial, Helvetica, sans-serif">Arial (Sans-serif)</option>
+          <option value="Calibri, 'Segoe UI', sans-serif">Calibri (Sans-serif)</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Body Font Size</label>
+        <select id="tpl-body-size">
+          <option value="0.8rem">Small</option>
+          <option value="0.9rem" selected>Medium</option>
+          <option value="1rem">Large</option>
+          <option value="1.1rem">Extra Large</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Company Name Alignment</label>
+        <select id="tpl-company-align">
+          <option value="center" selected>Center</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Spacing</label>
+        <select id="tpl-spacing">
+          <option value="compact">Compact</option>
+          <option value="normal" selected>Normal</option>
+          <option value="spacious">Spacious</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Negative Numbers</label>
+        <select id="tpl-negative-style">
+          <option value="parentheses" selected>Parentheses — (1,000.00)</option>
+          <option value="minus">Minus sign — -1,000.00</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Decimal Places</label>
+        <select id="tpl-decimals">
+          <option value="0">0</option>
+          <option value="2" selected>2</option>
+        </select>
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Total Line Style</label>
+        <select id="tpl-total-line">
+          <option value="single">Single underline</option>
+          <option value="double" selected>Double underline</option>
+          <option value="bold">Bold border</option>
+        </select>
+      </div>
+      <div class="tpl-col"><label>Section Header Color</label>
+        <input type="color" id="tpl-section-color" value="#64748b" />
+      </div>
+    </div>
+    <div class="tpl-row">
+      <div class="tpl-col"><label>Header Text Color</label>
+        <input type="color" id="tpl-header-color" value="#1e293b" />
+      </div>
+      <div class="tpl-col"><label>Negative Amount Color</label>
+        <input type="color" id="tpl-negative-color" value="#dc2626" />
+      </div>
+    </div>
+    <div class="actions" style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" data-action="saveTemplateFromForm">Save Template</button>
+      <button class="btn btn-ghost btn-sm" data-action="resetTemplate">Reset Defaults</button>
+      <button class="btn btn-ghost btn-sm" data-action="closeTemplate">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- External Libraries (loaded as globals before module script) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+<script defer src="https://js.stripe.com/v3/"></script>
+
+<!-- Vite module entry point -->
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

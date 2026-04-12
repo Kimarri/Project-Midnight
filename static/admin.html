@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoteFlow Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1e293b; }
+  .admin-header { background: #1e293b; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .admin-header h1 { font-size: 1.2rem; }
+  .admin-header button { background: #475569; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+  .admin-header button:hover { background: #64748b; }
+
+  /* ─── Tab Navigation ─── */
+  .admin-tabs { background: #1e293b; padding: 0 24px; display: flex; gap: 0; border-top: 1px solid #334155; }
+  .admin-tab { color: #94a3b8; padding: 10px 20px; font-size: 0.82rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; font-weight: 500; }
+  .admin-tab:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
+  .admin-tab.active { color: #fff; border-bottom-color: #3b82f6; }
+
+  .admin-body { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+  .admin-page { display: none; }
+  .admin-page.active { display: block; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e2e8f0; }
+  .stat-card .label { font-size: 0.78rem; color: #64748b; margin-bottom: 4px; }
+  .stat-card .value { font-size: 1.8rem; font-weight: 800; color: #1e293b; }
+  .stat-card .sub { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+  .card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
+  .card h2 { font-size: 1rem; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { text-align: left; padding: 8px; color: #64748b; border-bottom: 2px solid #e2e8f0; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+  td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+  .badge-active { background: #dcfce7; color: #16a34a; }
+  .badge-trial { background: #fef3c7; color: #d97706; }
+  .badge-expired { background: #fee2e2; color: #dc2626; }
+  .badge-pending { background: #e0e7ff; color: #4f46e5; }
+  .badge-firm { background: #ede9fe; color: #7c3aed; }
+  .btn-sm { background: none; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+  .btn-sm:hover { background: #f1f5f9; }
+  .btn-activate { color: #16a34a; border-color: #16a34a; }
+  .btn-deactivate { color: #dc2626; border-color: #dc2626; }
+  #admin-login { display: none; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-box { background: #fff; padding: 40px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; }
+  .login-box h2 { margin-bottom: 8px; }
+  .login-box p { color: #64748b; font-size: 0.85rem; margin-bottom: 16px; }
+  .login-box button { background: #3b82f6; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+  #admin-content { display: none; }
+  #admin-loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  #admin-loading .spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .search-bar { margin-bottom: 16px; }
+  .search-bar input { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; }
+
+  /* ─── Tech Docs Styles ─── */
+  .tech-section { background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 16px; overflow: hidden; }
+  .tech-section-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+  .tech-section-header:hover { background: #f8fafc; }
+  .tech-section-header h3 { font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
+  .tech-section-header .icon { font-size: 1.2rem; }
+  .tech-section-header .chevron { color: #94a3b8; transition: transform 0.2s; font-size: 0.8rem; }
+  .tech-section-header .chevron.open { transform: rotate(90deg); }
+  .tech-section-body { padding: 0 20px 20px; display: none; }
+  .tech-section-body.open { display: block; }
+
+  .tech-kv { display: grid; grid-template-columns: 180px 1fr; gap: 6px 16px; font-size: 0.82rem; margin-bottom: 12px; }
+  .tech-kv .k { color: #64748b; font-weight: 600; }
+  .tech-kv .v { color: #1e293b; }
+
+  .dep-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 8px; }
+  .dep-table th { text-align: left; padding: 8px 12px; background: #f8fafc; color: #64748b; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+  .dep-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+  .dep-table tr:hover td { background: #f8fafc; }
+
+  .mono { font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.78rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+  .code-block { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 16px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.78rem; overflow-x: auto; line-height: 1.6; margin: 8px 0; }
+  .code-block .comment { color: #64748b; }
+  .code-block .key { color: #7dd3fc; }
+  .code-block .val { color: #86efac; }
+  .code-block .num { color: #fbbf24; }
+
+  .flow-diagram { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .flow-node { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-align: center; }
+  .flow-node.storage { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+  .flow-node.output { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+  .flow-node.cloud { background: #ede9fe; border-color: #ddd6fe; color: #6d28d9; }
+  .flow-arrow { color: #94a3b8; font-size: 1.1rem; }
+
+  .commit-list { max-height: 400px; overflow-y: auto; }
+  .commit-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.82rem; }
+  .commit-item:last-child { border-bottom: none; }
+  .commit-hash { font-family: 'SF Mono', Consolas, monospace; color: #3b82f6; font-size: 0.75rem; background: #eff6ff; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .commit-msg { flex: 1; color: #1e293b; }
+  .commit-date { color: #94a3b8; font-size: 0.75rem; white-space: nowrap; }
+
+  .safe-mode-toggle { display: flex; align-items: center; gap: 12px; padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; margin-bottom: 16px; }
+  .safe-mode-toggle.safe-on { background: #f0fdf4; border-color: #bbf7d0; }
+  .safe-mode-toggle label { font-weight: 700; font-size: 0.9rem; }
+  .safe-mode-toggle p { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+  .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #dc2626; border-radius: 26px; transition: 0.3s; }
+  .toggle-slider:before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+  .toggle-switch input:checked + .toggle-slider { background: #16a34a; }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+  .safe-rules { margin-top: 12px; }
+  .safe-rule { display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem; }
+  .safe-rule .rule-icon { font-size: 1rem; }
+  .safe-rule .rule-text strong { display: block; font-size: 0.8rem; }
+  .safe-rule .rule-text span { color: #64748b; font-size: 0.75rem; }
+
+  .endpoint-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .endpoint-method { font-family: monospace; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; min-width: 52px; text-align: center; }
+  .endpoint-method.post { background: #dcfce7; color: #16a34a; }
+  .endpoint-method.trigger { background: #ede9fe; color: #7c3aed; }
+  .endpoint-method.get { background: #dbeafe; color: #2563eb; }
+  .endpoint-path { font-family: monospace; font-size: 0.8rem; color: #1e293b; }
+  .endpoint-desc { color: #64748b; font-size: 0.78rem; margin-left: auto; }
+
+  .note-logic-step { display: flex; gap: 12px; margin-bottom: 12px; }
+  .note-logic-num { width: 28px; height: 28px; background: #3b82f6; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+  .note-logic-content { flex: 1; }
+  .note-logic-content strong { font-size: 0.85rem; display: block; margin-bottom: 2px; }
+  .note-logic-content p { font-size: 0.78rem; color: #64748b; line-height: 1.5; }
+
+  .frozen-badge { display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1d4ed8; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .tech-kv { grid-template-columns: 1fr; }
+    .admin-tabs { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div id="admin-loading"><div class="spinner"></div></div>
+
+<div id="admin-login">
+  <div class="login-box">
+    <h2>NoteFlow Admin</h2>
+    <p>Sign in with your admin account to continue.</p>
+    <button onclick="adminSignIn()">Sign In with Google</button>
+    <p id="admin-login-msg" style="margin-top:12px;color:#dc2626;font-size:0.8rem"></p>
+  </div>
+</div>
+
+<div id="admin-content">
+  <div class="admin-header">
+    <h1>NoteFlow Admin Dashboard</h1>
+    <div>
+      <span id="admin-email" style="font-size:0.8rem;margin-right:12px;color:#94a3b8"></span>
+      <button onclick="adminSignOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <div class="admin-tab active" onclick="switchAdminTab('users')">Users</div>
+    <div class="admin-tab" onclick="switchAdminTab('analytics')">Analytics</div>
+    <div class="admin-tab" onclick="switchAdminTab('health')">Health</div>
+    <div class="admin-tab" onclick="switchAdminTab('errors')">Error Logs</div>
+    <div class="admin-tab" onclick="switchAdminTab('tech')">System Docs</div>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- ═══════════ USERS PAGE ═══════════ -->
+    <div class="admin-page active" id="page-users">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Total Users</div>
+          <div class="value" id="stat-total">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Active Subscribers</div>
+          <div class="value" id="stat-active">-</div>
+          <div class="sub" id="stat-revenue"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Trial Users</div>
+          <div class="value" id="stat-trial">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Firm Plans</div>
+          <div class="value" id="stat-firms">-</div>
+          <div class="sub" id="stat-firm-seats"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>All Users</h2>
+        <div class="search-bar">
+          <input type="text" id="user-search" placeholder="Search by email or name..." oninput="filterUsers()" />
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Plan</th>
+                <th>Signed Up</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ANALYTICS PAGE ═══════════ -->
+    <div class="admin-page" id="page-analytics">
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="label">Today's Logins</div>
+          <div class="value" id="a-logins-today">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Statements Generated (Today)</div>
+          <div class="value" id="a-stmts-today">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Exports Today (PDF + Excel)</div>
+          <div class="value" id="a-exports-today">-</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Last 14 Days — Usage Trends</h2>
+        <div id="analytics-chart" style="overflow-x:auto;">
+          <table class="dep-table" id="analytics-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Logins</th>
+                <th>Statements</th>
+                <th>PDF Exports</th>
+                <th>Excel Exports</th>
+                <th>Projects Created</th>
+              </tr>
+            </thead>
+            <tbody id="analytics-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Daily Subscriber Snapshots</h2>
+        <div style="overflow-x:auto;">
+          <table class="dep-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Total Users</th>
+                <th>Active</th>
+                <th>Trial</th>
+                <th>Firms</th>
+                <th>Past Due</th>
+                <th>Cancelled</th>
+              </tr>
+            </thead>
+            <tbody id="metrics-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ HEALTH PAGE ═══════════ -->
+    <div class="admin-page" id="page-health">
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card" id="health-status-card">
+          <div class="label">System Status</div>
+          <div class="value" id="h-status" style="font-size:1.4rem;">Checking...</div>
+          <div class="sub" id="h-last-check"></div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Firestore</div>
+          <div class="value" id="h-firestore">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Stripe API</div>
+          <div class="value" id="h-stripe">-</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2>Health Check History (Last 24h)</h2>
+          <button class="btn-sm" onclick="runHealthCheck()" id="health-check-btn">Run Check Now</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="dep-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Firestore</th>
+                <th>Stripe</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="health-log-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" id="error-alert-card" style="display:none; border-color:#fca5a5; background:#fef2f2;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.4rem;">🚨</span>
+          <div>
+            <h2 style="color:#991b1b; margin-bottom:2px;">Error Spike Detected</h2>
+            <p style="font-size:0.82rem; color:#b91c1c;" id="error-alert-text">More than 20 errors logged in the last 24 hours. Check the Error Logs tab.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Automated Monitoring Schedule</h2>
+        <table class="dep-table">
+          <thead><tr><th>Check</th><th>Frequency</th><th>What It Does</th></tr></thead>
+          <tbody>
+            <tr><td>🏥 Health Check</td><td>Every 6 hours</td><td>Tests Firestore + Stripe connectivity, logs latency, flags degraded status</td></tr>
+            <tr><td>🚨 Error Spike Detection</td><td>Every 6 hours</td><td>Counts errors in last 24h — alerts if &gt; 20 errors detected</td></tr>
+            <tr><td>📈 Daily Metrics Snapshot</td><td>Daily (midnight ET)</td><td>Captures subscriber counts, plan breakdown, churn numbers</td></tr>
+            <tr><td>🧹 Error Log Cleanup</td><td>Weekly (Monday 3am ET)</td><td>Purges error logs older than 7 days to keep database clean</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Infrastructure Summary</h2>
+        <div class="tech-kv">
+          <span class="k">Hosting</span>
+          <span class="v">Firebase Hosting — CDN-backed, auto-SSL</span>
+          <span class="k">Region</span>
+          <span class="v">us-central1 (Cloud Functions)</span>
+          <span class="k">Database</span>
+          <span class="v">Cloud Firestore — auto-scaling, 99.999% SLA</span>
+          <span class="k">Functions Runtime</span>
+          <span class="v">Node.js 22</span>
+          <span class="k">Health Endpoint</span>
+          <span class="v"><span class="mono" id="health-endpoint-url">Loading...</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ERROR LOGS PAGE ═══════════ -->
+    <div class="admin-page" id="page-errors">
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="label">Errors (Last 24h)</div>
+          <div class="value" id="e-count-24h">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Errors (Last 7 Days)</div>
+          <div class="value" id="e-count-7d">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Most Common</div>
+          <div class="value" id="e-most-common" style="font-size:0.9rem;">-</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2>Recent Errors</h2>
+          <button class="btn-sm btn-deactivate" onclick="clearOldErrors()">Clear 7+ Day Old</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="dep-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Type</th>
+                <th>Message</th>
+                <th>User</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="error-log-body"></tbody>
+          </table>
+        </div>
+        <div id="error-log-empty" style="display:none; text-align:center; padding:32px; color:#94a3b8;">
+          🎉 No errors logged — system is running clean.
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SYSTEM DOCS PAGE ═══════════ -->
+    <div class="admin-page" id="page-tech">
+
+      <!-- ─── Safe Mode ─── -->
+      <div class="tech-section" style="border-color: #fecaca;">
+        <div style="padding: 20px;">
+          <div class="safe-mode-toggle" id="safe-mode-box">
+            <div class="toggle-switch">
+              <input type="checkbox" id="safe-mode-cb" onchange="toggleSafeMode()" />
+              <span class="toggle-slider"></span>
+            </div>
+            <div>
+              <label>Safe Mode</label>
+              <p>When enabled, destructive operations are blocked across the platform. Toggle ON before major deployments or maintenance.</p>
+            </div>
+          </div>
+          <div class="safe-rules">
+            <div class="safe-rule">
+              <span class="rule-icon">🛑</span>
+              <div class="rule-text">
+                <strong>Data Deletion Blocked</strong>
+                <span>Users cannot delete projects, clear trial balances, or purge data while Safe Mode is active.</span>
+              </div>
+            </div>
+            <div class="safe-rule">
+              <span class="rule-icon">🔒</span>
+              <div class="rule-text">
+                <strong>Account Changes Frozen</strong>
+                <span>Subscription status changes, plan upgrades, and team member modifications are paused.</span>
+              </div>
+            </div>
+            <div class="safe-rule">
+              <span class="rule-icon">📧</span>
+              <div class="rule-text">
+                <strong>Email Queue Paused</strong>
+                <span>Workflow email notifications are queued but not dispatched until Safe Mode is turned off.</span>
+              </div>
+            </div>
+            <div class="safe-rule">
+              <span class="rule-icon">🚀</span>
+              <div class="rule-text">
+                <strong>Deploy Guard</strong>
+                <span>Reminder: verify all changes in preview before deploying. Safe Mode does not auto-block deploys but serves as a team signal.</span>
+              </div>
+            </div>
+          </div>
+          <div id="safe-mode-status" style="margin-top:12px; font-size:0.78rem; color:#64748b;"></div>
+        </div>
+      </div>
+
+      <!-- ─── Tech Stack ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">⚙️</span> Tech Stack</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <div class="tech-kv">
+            <span class="k">Architecture</span>
+            <span class="v">Single-page application (SPA) — all logic in one HTML file, zero build step</span>
+            <span class="k">Hosting</span>
+            <span class="v">Firebase Hosting (CDN-backed, SSL)</span>
+            <span class="k">Authentication</span>
+            <span class="v">Firebase Auth — Email/Password + Google Sign-In</span>
+            <span class="k">Database</span>
+            <span class="v">Cloud Firestore (NoSQL, real-time sync)</span>
+            <span class="k">Server Functions</span>
+            <span class="v">Firebase Cloud Functions (Node.js 22 runtime)</span>
+            <span class="k">Payments</span>
+            <span class="v">Stripe Checkout + Webhooks (server-verified)</span>
+            <span class="k">Email</span>
+            <span class="v">Resend API (Firestore-triggered Cloud Function)</span>
+            <span class="k">Encryption</span>
+            <span class="v">AES-GCM via Web Crypto API, PBKDF2 key derivation (600K iterations)</span>
+            <span class="k">Spreadsheet Engine</span>
+            <span class="v">SheetJS (XLSX) — client-side import/export</span>
+            <span class="k">PDF Generation</span>
+            <span class="v">jsPDF + jsPDF-AutoTable — client-side PDF export</span>
+            <span class="k">Domain</span>
+            <span class="v">getnoteflowapp.com (Firebase Hosting custom domain)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Dependencies / Frozen Versions ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">📦</span> Dependencies &amp; Frozen Versions <span class="frozen-badge">🔒 PINNED</span></h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <p style="font-size:0.8rem; color:#64748b; margin-bottom:12px;">All dependency versions are pinned to prevent breaking changes. Do NOT run <span class="mono">npm update</span> without testing in staging first.</p>
+
+          <h4 style="font-size:0.82rem; margin: 16px 0 8px; color:#1e293b;">Client-Side Libraries (CDN)</h4>
+          <table class="dep-table">
+            <thead><tr><th>Package</th><th>Version</th><th>Purpose</th><th>Load</th></tr></thead>
+            <tbody>
+              <tr><td>Firebase JS SDK</td><td><span class="mono">10.12.0</span></td><td>Auth, Firestore, App init</td><td>Blocking</td></tr>
+              <tr><td>Stripe.js</td><td><span class="mono">v3 (latest)</span></td><td>Checkout redirect</td><td>Deferred</td></tr>
+              <tr><td>SheetJS (xlsx)</td><td><span class="mono">0.18.5</span></td><td>Excel import/export</td><td>Deferred</td></tr>
+              <tr><td>jsPDF</td><td><span class="mono">2.5.1</span></td><td>PDF generation</td><td>Deferred</td></tr>
+              <tr><td>jsPDF-AutoTable</td><td><span class="mono">3.8.2</span></td><td>PDF table formatting</td><td>Deferred</td></tr>
+            </tbody>
+          </table>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px; color:#1e293b;">Cloud Functions (Node.js 22)</h4>
+          <table class="dep-table">
+            <thead><tr><th>Package</th><th>Pinned</th><th>Installed</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td>firebase-admin</td><td><span class="mono">^11.11.0</span></td><td><span class="mono">11.11.1</span></td><td>Server-side Firebase SDK</td></tr>
+              <tr><td>firebase-functions</td><td><span class="mono">^4.5.0</span></td><td><span class="mono">4.9.0</span></td><td>Cloud Functions framework</td></tr>
+              <tr><td>stripe</td><td><span class="mono">^14.0.0</span></td><td><span class="mono">14.25.0</span></td><td>Stripe API (webhooks)</td></tr>
+              <tr><td>resend</td><td><span class="mono">^3.0.0</span></td><td><span class="mono">3.5.0</span></td><td>Transactional email API</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── Data Flow ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">🔄</span> Data Flow</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <h4 style="font-size:0.82rem; margin-bottom:8px;">Trial Balance → Financial Statements</h4>
+          <div class="flow-diagram">
+            <div class="flow-node">Excel/CSV Upload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node">SheetJS Parse</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node">Account Mapping (13 sections)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node storage">In-Memory Data Object</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node output">Statements / PDF / Excel</div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Cloud Sync &amp; Persistence</h4>
+          <div class="flow-diagram">
+            <div class="flow-node">User Input</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node">Debounced Save (600ms)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node">AES-GCM Encrypt</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node cloud">Firestore (encrypted blob)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node">Decrypt on Load</div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Payment Flow</h4>
+          <div class="flow-diagram">
+            <div class="flow-node">Stripe Checkout</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node cloud">Stripe Webhook</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node cloud">Cloud Function</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node storage">Firestore (user.subscriptionStatus)</div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Workflow &amp; Email Notifications</h4>
+          <div class="flow-diagram">
+            <div class="flow-node">Workflow Action</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node storage">Firestore (emailQueue)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node cloud">onCreate Trigger</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node cloud">Resend API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node output">Email Delivered</div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Section Sign Convention (<span class="mono">SECTION_SIGN</span>)</h4>
+          <div class="code-block">
+<span class="comment">// Determines how amounts are stored internally.</span>
+<span class="comment">// Debit-normal sections = +1 (assets, expenses)</span>
+<span class="comment">// Credit-normal sections = -1 (liabilities, equity, revenue)</span>
+
+<span class="key">SECTION_SIGN</span> = {
+  <span class="val">'revenue'</span>:          <span class="num">-1</span>,    <span class="comment">// credit-normal</span>
+  <span class="val">'cogs'</span>:              <span class="num"> 1</span>,    <span class="comment">// debit-normal</span>
+  <span class="val">'opex'</span>:              <span class="num"> 1</span>,    <span class="comment">// debit-normal</span>
+  <span class="val">'other'</span>:             <span class="num">-1</span>,    <span class="comment">// credit-normal (net)</span>
+  <span class="val">'current-assets'</span>:    <span class="num"> 1</span>,
+  <span class="val">'noncurrent-assets'</span>: <span class="num"> 1</span>,
+  <span class="val">'current-liab'</span>:      <span class="num">-1</span>,
+  <span class="val">'noncurrent-liab'</span>:   <span class="num">-1</span>,
+  <span class="val">'equity'</span>:            <span class="num">-1</span>,
+  <span class="val">'cf-operating'</span>:      <span class="num"> 1</span>,
+  <span class="val">'cf-investing'</span>:      <span class="num"> 1</span>,
+  <span class="val">'cf-financing'</span>:      <span class="num"> 1</span>,
+};
+          </div>
+          <p style="font-size:0.78rem; color:#64748b; margin-top:8px;">When adjusting entries are posted, the raw net amount is multiplied by the section's sign so debits increase debit-normal accounts and credits increase credit-normal accounts. This prevents the sign-flip bug fixed in commit <span class="mono">bead8a0</span>.</p>
+        </div>
+      </div>
+
+      <!-- ─── Note Generation Logic ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">📝</span> Note Generation Logic</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <p style="font-size:0.82rem; color:#64748b; margin-bottom:16px;">The Notes to the Financial Statements are auto-generated by <span class="mono">generateNotes()</span> based on user inputs in the Notes Questionnaire tab. The system uses conditional logic to include only relevant disclosures.</p>
+
+          <div class="note-logic-step">
+            <div class="note-logic-num">1</div>
+            <div class="note-logic-content">
+              <strong>User Inputs (Notes Questionnaire)</strong>
+              <p>~40+ form fields covering entity type, basis of accounting, revenue recognition, inventory methods, debt terms, leases, related parties, subsequent events, and more. Radio buttons toggle sub-sections; text areas capture custom language.</p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">2</div>
+            <div class="note-logic-content">
+              <strong>Conditional Assembly</strong>
+              <p><span class="mono">generateNotes()</span> reads each input via <span class="mono">nqVal()</span> and <span class="mono">nqRadio()</span>. If a section has data, it's included; empty sections are skipped. Note numbers auto-increment (<span class="mono">noteNum++</span>) so there are never gaps.</p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">3</div>
+            <div class="note-logic-content">
+              <strong>GAAP Template Language</strong>
+              <p>Each note type has pre-written GAAP-compliant boilerplate (e.g., "Use of Estimates" is always included). User text is merged with templates — custom language overrides defaults where provided.</p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">4</div>
+            <div class="note-logic-content">
+              <strong>Computed Data Integration</strong>
+              <p>Notes pull live data from the trial balance: e.g., debt schedules show actual balances, depreciation notes reference fixed asset totals, and going concern analysis uses computed ratios.</p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">5</div>
+            <div class="note-logic-content">
+              <strong>Output</strong>
+              <p>HTML rendered into the Notes tab, included in PDF export (full package), and mirrored to Excel as a <span class="mono">buildNotesData()</span> sheet.</p>
+            </div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Supported Note Types</h4>
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:6px; font-size:0.78rem;">
+            <span class="mono">Nature of Operations</span>
+            <span class="mono">Accounting Policies</span>
+            <span class="mono">Cash &amp; Equivalents</span>
+            <span class="mono">Revenue Recognition</span>
+            <span class="mono">Accounts Receivable</span>
+            <span class="mono">Inventory</span>
+            <span class="mono">Property &amp; Equipment</span>
+            <span class="mono">Intangible Assets</span>
+            <span class="mono">Debt &amp; Borrowings</span>
+            <span class="mono">Leases</span>
+            <span class="mono">Related Party Transactions</span>
+            <span class="mono">Income Taxes</span>
+            <span class="mono">Commitments &amp; Contingencies</span>
+            <span class="mono">Subsequent Events</span>
+            <span class="mono">Going Concern</span>
+            <span class="mono">Concentrations</span>
+            <span class="mono">Fair Value Measurements</span>
+            <span class="mono">Advertising Costs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── API Endpoints / Cloud Functions ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">🌐</span> API Endpoints &amp; Cloud Functions</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <p style="font-size:0.8rem; color:#64748b; margin-bottom:12px;">All server-side logic lives in <span class="mono">functions/index.js</span>. Region: <span class="mono">us-central1</span> (default).</p>
+
+          <div class="endpoint-row">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/stripeWebhook</span>
+            <span class="endpoint-desc">Stripe payment event handler (checkout, invoice, subscription)</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="endpoint-method trigger">TRIGGER</span>
+            <span class="endpoint-path">emailQueue/{id} onCreate</span>
+            <span class="endpoint-desc">Auto-sends workflow notification emails via Resend</span>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Stripe Webhook Events Handled</h4>
+          <table class="dep-table">
+            <thead><tr><th>Event</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><span class="mono">checkout.session.completed</span></td><td>Activate subscription, store Stripe customer ID, set plan type</td></tr>
+              <tr><td><span class="mono">invoice.paid</span></td><td>Renew subscription, update <span class="mono">lastPaymentAt</span></td></tr>
+              <tr><td><span class="mono">invoice.payment_failed</span></td><td>Set status to <span class="mono">past_due</span></td></tr>
+              <tr><td><span class="mono">customer.subscription.deleted</span></td><td>Set status to <span class="mono">cancelled</span></td></tr>
+            </tbody>
+          </table>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Firestore Collections</h4>
+          <table class="dep-table">
+            <thead><tr><th>Collection</th><th>Purpose</th><th>Key Fields</th></tr></thead>
+            <tbody>
+              <tr><td><span class="mono">users</span></td><td>User profiles &amp; subscription data</td><td>email, plan, subscriptionStatus, stripeCustomerId, firm{}</td></tr>
+              <tr><td><span class="mono">users/{uid}/projects</span></td><td>Encrypted project data</td><td>name, data (encrypted blob), updatedAt</td></tr>
+              <tr><td><span class="mono">emailQueue</span></td><td>Pending workflow emails</td><td>to, subject, eventType, projectName, sent, sentAt</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── Workflow System ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">📋</span> Workflow State Machine</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <div class="flow-diagram" style="margin-bottom:16px;">
+            <div class="flow-node" style="background:#f1f5f9; border-color:#cbd5e1; color:#475569;">Draft</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node" style="background:#fef3c7; border-color:#fde68a; color:#92400e;">In Review</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node" style="background:#dbeafe; border-color:#93c5fd; color:#1d4ed8;">Manager Approved</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node" style="background:#dcfce7; border-color:#86efac; color:#166534;">Partner Approved</div>
+          </div>
+          <div class="flow-diagram" style="margin-bottom:16px;">
+            <div class="flow-node" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b;">↩ Returned</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-node" style="background:#f1f5f9; border-color:#cbd5e1; color:#475569;">Draft (re-enter cycle)</div>
+          </div>
+          <div style="font-size:0.8rem; color:#64748b; line-height:1.6;">
+            <p><strong>Roles:</strong> Staff prepares → Manager reviews &amp; approves → Partner gives final sign-off.</p>
+            <p><strong>At each transition:</strong> Status updates in Firestore, timeline entry logged, email queued for assignees.</p>
+            <p><strong>Comments:</strong> Threaded per-project, visible to all assignees, trigger email notifications.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Version Control / Commits ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">🔀</span> Version Control &amp; Commit History</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <div class="tech-kv" style="margin-bottom:16px;">
+            <span class="k">Repository</span>
+            <span class="v">Local Git — <span class="mono">financial-statements</span></span>
+            <span class="k">Branch</span>
+            <span class="v"><span class="mono">main</span></span>
+            <span class="k">Deploy Command</span>
+            <span class="v"><span class="mono">cp "Financial Statement Prep index.html" public/index.html && npx firebase-tools deploy --only hosting</span></span>
+            <span class="k">Functions Deploy</span>
+            <span class="v"><span class="mono">npx firebase-tools deploy --only functions</span></span>
+            <span class="k">Total Commits</span>
+            <span class="v">18</span>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin-bottom:10px;">Commit History</h4>
+          <div class="commit-list">
+            <div class="commit-item"><span class="commit-hash">d782171</span><span class="commit-msg">Add Stripe webhook Cloud Function for server-side payment verification</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">bead8a0</span><span class="commit-msg">Fix critical security vulnerabilities for production readiness</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">055ef74</span><span class="commit-msg">Add enterprise contact line to subscription gate</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">b200ca2</span><span class="commit-msg">Add Firm payment link for team subscription tier</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">fe1c696</span><span class="commit-msg">Add Firm/Team subscription tier with team member management</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">3d70b21</span><span class="commit-msg">Add Stripe payment link and Firebase hosting configuration</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">0d17e29</span><span class="commit-msg">Connect Firebase project credentials for live authentication and cloud storage</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">3e278a7</span><span class="commit-msg">Add Firestore cloud data layer for cross-device sync</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">efac673</span><span class="commit-msg">Add Tier 1/2 features, revert unwanted features, and add commercialization</span><span class="commit-date">Apr 9, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">891732f</span><span class="commit-msg">Add company research engine to auto-populate notes from web data</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">2f31faa</span><span class="commit-msg">Add GAAP codification references to disclosure checklist items</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">6a721fa</span><span class="commit-msg">Reorganize tabs and implement 15 UI/UX improvements</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">463768c</span><span class="commit-msg">Add auto-fix missing disclosures feature with default GAAP language</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">22dac39</span><span class="commit-msg">Add comparative trial balance import (both periods in one file)</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">af38d41</span><span class="commit-msg">Add Equity statement tab and redesign Cash Flow with indirect method</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">9a7fa82</span><span class="commit-msg">Add statement templates, firm profiles, learning intelligence, and comparative note tables</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">55fc919</span><span class="commit-msg">Add expanded GAAP notes, disclosure checklist, PDF export, dashboard, rename to NoteFlow</span><span class="commit-date">Apr 8, 2026</span></div>
+            <div class="commit-item"><span class="commit-hash">d38f79c</span><span class="commit-msg">Initial commit: NoteFlow Financial Statement Suite</span><span class="commit-date">Apr 8, 2026</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Security & Config ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">🔐</span> Security &amp; Configuration</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <table class="dep-table">
+            <thead><tr><th>Feature</th><th>Implementation</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Data Encryption</td><td>AES-256-GCM, PBKDF2 key (600K rounds, cached per session)</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>HTTP Security Headers</td><td>X-Content-Type-Options, X-Frame-Options (DENY), X-XSS-Protection, HSTS, Referrer-Policy, Permissions-Policy</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Rate Limiting</td><td>In-memory limiter on webhook endpoint (30 req/min per IP)</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Error Monitoring</td><td>Global <span class="mono">window.onerror</span> + unhandled promise rejection → Firestore <span class="mono">errorLogs</span></td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Usage Analytics</td><td>Daily counters in Firestore <span class="mono">analytics</span> collection (logins, exports, statements)</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Health Monitoring</td><td>Cloud Function endpoint testing Firestore + Stripe connectivity</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Daily Metrics Backup</td><td>Scheduled function captures subscriber counts nightly at midnight ET</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Error Log Cleanup</td><td>Automated weekly purge of error logs older than 7 days</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Session Expiry</td><td>8-hour timeout, auto sign-out on check</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Sign-Up Blocking</td><td><span class="mono">SIGNUPS_DISABLED = true</span> — blocks public registration</td><td><span class="badge badge-pending">Testing</span></td></tr>
+              <tr><td>Stripe Webhook Verification</td><td>Signature verification via <span class="mono">constructEvent()</span></td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>Admin Bypass</td><td><span class="mono">getnoteflowapp@gmail.com</span> skips subscription gate</td><td><span class="badge badge-active">Active</span></td></tr>
+              <tr><td>2FA / Phone Auth</td><td>Code present but commented out — enable when ready</td><td><span class="badge badge-trial">Standby</span></td></tr>
+              <tr><td>Firestore Rules</td><td>Users can only read/write their own documents</td><td><span class="badge badge-active">Active</span></td></tr>
+            </tbody>
+          </table>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Environment Variables (<span class="mono">functions/.env</span>)</h4>
+          <table class="dep-table">
+            <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><span class="mono">STRIPE_SECRET_KEY</span></td><td>Stripe API secret (currently test mode: <span class="mono">sk_test_...</span>)</td></tr>
+              <tr><td><span class="mono">STRIPE_WEBHOOK_SECRET</span></td><td>Webhook signature verification key</td></tr>
+              <tr><td><span class="mono">RESEND_API_KEY</span></td><td>Resend email API key (pending setup)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── Deployment Guide ─── -->
+      <div class="tech-section">
+        <div class="tech-section-header" onclick="toggleSection(this)">
+          <h3><span class="icon">🚀</span> Deployment Guide</h3>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="tech-section-body">
+          <div class="note-logic-step">
+            <div class="note-logic-num">1</div>
+            <div class="note-logic-content">
+              <strong>Copy source to public/</strong>
+              <p><span class="mono">cp "Financial Statement Prep index.html" public/index.html</span></p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">2</div>
+            <div class="note-logic-content">
+              <strong>Deploy Hosting</strong>
+              <p><span class="mono">npx firebase-tools deploy --only hosting</span></p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">3</div>
+            <div class="note-logic-content">
+              <strong>Deploy Cloud Functions (if changed)</strong>
+              <p><span class="mono">npx firebase-tools deploy --only functions</span></p>
+            </div>
+          </div>
+          <div class="note-logic-step">
+            <div class="note-logic-num">4</div>
+            <div class="note-logic-content">
+              <strong>Verify</strong>
+              <p>Check <span class="mono">https://getnoteflowapp.com</span> — confirm login, statement generation, and exports work. Check Firebase Console → Functions for deployment status.</p>
+            </div>
+          </div>
+
+          <h4 style="font-size:0.82rem; margin: 20px 0 8px;">Pre-Launch Checklist</h4>
+          <div style="font-size:0.8rem; line-height:2;">
+            <label><input type="checkbox" disabled /> Switch Stripe to live keys (<span class="mono">sk_live_...</span>)</label><br>
+            <label><input type="checkbox" disabled /> Set <span class="mono">SIGNUPS_DISABLED = false</span></label><br>
+            <label><input type="checkbox" disabled /> Configure Resend API key</label><br>
+            <label><input type="checkbox" disabled /> Add custom domain to Resend for branded "from" address</label><br>
+            <label><input type="checkbox" disabled /> Enable 2FA / Phone Auth</label><br>
+            <label><input type="checkbox" disabled /> Update Stripe webhook URL to production endpoint</label><br>
+            <label><input type="checkbox" disabled /> Test full payment flow end-to-end</label><br>
+            <label><input type="checkbox" disabled /> Submit sitemap to Google Search Console</label><br>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-tech -->
+
+  </div><!-- /admin-body -->
+</div><!-- /admin-content -->
+
+<script>
+const ADMIN_EMAILS = ['getnoteflowapp@gmail.com'];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAG5yJDO4ojgqGNLBZSks4xzlUH21Ai-Fk",
+  authDomain: "noteflow-app1.firebaseapp.com",
+  projectId: "noteflow-app1",
+  storageBucket: "noteflow-app1.firebasestorage.app",
+  messagingSenderId: "745518844328",
+  appId: "1:745518844328:web:a9c7bd11d40ace2bfb359d"
+};
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
+
+var allUsers = [];
+
+// ─── Tab Switching ────────────────────────────────────────────────────
+function switchAdminTab(name) {
+  document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.admin-page').forEach(function(p) { p.classList.remove('active'); });
+
+  var tabs = document.querySelectorAll('.admin-tab');
+  var map = { users: 0, analytics: 1, health: 2, errors: 3, tech: 4 };
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  var page = document.getElementById('page-' + name);
+  if (page) page.classList.add('active');
+
+  if (name === 'tech') loadSafeModeState();
+  if (name === 'analytics') loadAnalytics();
+  if (name === 'health') loadHealthData();
+  if (name === 'errors') loadErrorLogs();
+}
+
+// ─── Collapsible Sections ─────────────────────────────────────────────
+function toggleSection(header) {
+  var body = header.nextElementSibling;
+  var chev = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// ─── Safe Mode ────────────────────────────────────────────────────────
+function loadSafeModeState() {
+  db.collection('config').doc('safeMode').get().then(function(doc) {
+    var data = doc.exists ? doc.data() : {};
+    var isOn = data.enabled || false;
+    document.getElementById('safe-mode-cb').checked = isOn;
+    updateSafeModeUI(isOn, data.enabledAt, data.enabledBy);
+  }).catch(function() {
+    document.getElementById('safe-mode-cb').checked = false;
+    updateSafeModeUI(false);
+  });
+}
+
+function toggleSafeMode() {
+  var cb = document.getElementById('safe-mode-cb');
+  var isOn = cb.checked;
+  var now = new Date().toISOString();
+  var email = auth.currentUser ? auth.currentUser.email : 'unknown';
+
+  db.collection('config').doc('safeMode').set({
+    enabled: isOn,
+    enabledAt: isOn ? now : null,
+    enabledBy: isOn ? email : null,
+    disabledAt: !isOn ? now : null,
+    disabledBy: !isOn ? email : null,
+  }, { merge: true }).then(function() {
+    updateSafeModeUI(isOn, isOn ? now : null, isOn ? email : null);
+  }).catch(function(err) {
+    cb.checked = !isOn; // revert checkbox
+    alert('Failed to toggle Safe Mode: ' + err.message);
+  });
+}
+
+function updateSafeModeUI(isOn, at, by) {
+  var box = document.getElementById('safe-mode-box');
+  var status = document.getElementById('safe-mode-status');
+  if (isOn) {
+    box.classList.add('safe-on');
+    box.classList.remove('');
+    var timeStr = at ? new Date(at).toLocaleString() : '';
+    status.innerHTML = '✅ Safe Mode is <strong>ON</strong>' + (timeStr ? ' — enabled ' + timeStr + (by ? ' by ' + esc(by) : '') : '');
+  } else {
+    box.classList.remove('safe-on');
+    status.innerHTML = '⚠️ Safe Mode is <strong>OFF</strong> — all operations are live.';
+  }
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────
+function adminSignIn() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  var btn = document.querySelector('#admin-login button');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+
+  auth.signInWithPopup(provider).then(function(result) {
+    var email = result.user.email;
+    if (ADMIN_EMAILS.indexOf(email) === -1) {
+      auth.signOut();
+      document.getElementById('admin-login-msg').textContent = 'Access denied. ' + email + ' is not an admin.';
+      btn.textContent = 'Sign In with Google';
+      btn.disabled = false;
+      return;
+    }
+    // onAuthStateChanged will call showAdminPanel
+  }).catch(function(err) {
+    document.getElementById('admin-login-msg').textContent = err.message;
+    btn.textContent = 'Sign In with Google';
+    btn.disabled = false;
+  });
+}
+
+function adminSignOut() {
+  auth.signOut();
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('admin-login').style.display = 'flex';
+  document.getElementById('admin-login-msg').textContent = '';
+  window.scrollTo(0, 0);
+}
+
+auth.onAuthStateChanged(function(user) {
+  if (user && ADMIN_EMAILS.indexOf(user.email) !== -1) {
+    showAdminPanel(user.email);
+  } else {
+    document.getElementById('admin-loading').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'none';
+    document.getElementById('admin-login').style.display = 'flex';
+  }
+});
+
+function showAdminPanel(email) {
+  document.getElementById('admin-loading').style.display = 'none';
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
+  document.getElementById('admin-email').textContent = email;
+  window.scrollTo(0, 0);
+  loadUsers();
+}
+
+// ─── Users ────────────────────────────────────────────────────────────
+function loadUsers() {
+  db.collection('users').get().catch(function(err) {
+    console.error('Failed to load users:', err);
+    document.getElementById('user-table-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc2626;padding:24px">Failed to load users: ' + esc(err.message) + '</td></tr>';
+    return { forEach: function() {} }; // empty stub
+  }).then(function(snapshot) {
+    allUsers = [];
+    var totalActive = 0;
+    var totalTrial = 0;
+    var totalFirms = 0;
+    var totalFirmSeats = 0;
+    var individualActive = 0;
+    var firmActive = 0;
+
+    snapshot.forEach(function(doc) {
+      var data = doc.data();
+      data._uid = doc.id;
+      allUsers.push(data);
+
+      var status = data.subscriptionStatus || 'trial';
+      if (status === 'active') {
+        totalActive++;
+        if (data.plan === 'firm') {
+          firmActive++;
+          totalFirms++;
+          if (data.firm) totalFirmSeats += (data.firm.members || []).length;
+        } else {
+          individualActive++;
+        }
+      }
+      if (status === 'trial') totalTrial++;
+    });
+
+    document.getElementById('stat-total').textContent = allUsers.length;
+    document.getElementById('stat-active').textContent = totalActive;
+    document.getElementById('stat-revenue').textContent = '$' + ((individualActive * 49) + (firmActive * 199)).toLocaleString() + '/mo est.';
+    document.getElementById('stat-trial').textContent = totalTrial;
+    document.getElementById('stat-firms').textContent = totalFirms;
+    document.getElementById('stat-firm-seats').textContent = totalFirmSeats + ' team members';
+
+    renderUserTable(allUsers);
+  });
+}
+
+function renderUserTable(users) {
+  var html = '';
+  users.sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+
+  users.forEach(function(u) {
+    var status = u.subscriptionStatus || 'trial';
+    var badgeClass = status === 'active' ? 'badge-active'
+      : status === 'trial' ? 'badge-trial'
+      : status === 'past_due' ? 'badge-pending'
+      : 'badge-expired';
+    var planBadge = u.plan === 'firm' ? ' <span class="badge badge-firm">Firm</span>' : '';
+    var dateStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
+    var trialInfo = '';
+    if (status === 'trial' && u.trialEndsAt) {
+      var daysLeft = Math.ceil((new Date(u.trialEndsAt) - new Date()) / (24*60*60*1000));
+      trialInfo = ' (' + (daysLeft > 0 ? daysLeft + 'd left' : 'expired') + ')';
+    }
+
+    html += '<tr>';
+    html += '<td>' + esc(u.email || '-') + '</td>';
+    html += '<td>' + esc(u.name || '-') + '</td>';
+    html += '<td><span class="badge ' + badgeClass + '">' + esc(status) + '</span>' + trialInfo + '</td>';
+    html += '<td>' + esc(u.plan || 'individual') + planBadge + '</td>';
+    html += '<td>' + dateStr + '</td>';
+    html += '<td>';
+    if (status !== 'active') {
+      html += '<button class="btn-sm btn-activate" onclick="setStatus(\'' + u._uid + '\', \'active\')">Activate</button> ';
+    }
+    if (status === 'active') {
+      html += '<button class="btn-sm btn-deactivate" onclick="setStatus(\'' + u._uid + '\', \'cancelled\')">Deactivate</button>';
+    }
+    html += '</td>';
+    html += '</tr>';
+  });
+
+  if (users.length === 0) {
+    html = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No users found</td></tr>';
+  }
+
+  document.getElementById('user-table-body').innerHTML = html;
+}
+
+function filterUsers() {
+  var q = document.getElementById('user-search').value.toLowerCase();
+  if (!q) { renderUserTable(allUsers); return; }
+  var filtered = allUsers.filter(function(u) {
+    return (u.email || '').toLowerCase().indexOf(q) !== -1 || (u.name || '').toLowerCase().indexOf(q) !== -1;
+  });
+  renderUserTable(filtered);
+}
+
+function setStatus(uid, status) {
+  var VALID_STATUSES = ['active', 'cancelled', 'trial', 'trial_expired', 'past_due'];
+  if (VALID_STATUSES.indexOf(status) === -1) { alert('Invalid status: ' + status); return; }
+  var action = status === 'active' ? 'activate' : 'deactivate';
+  if (!confirm('Are you sure you want to ' + action + ' this user?')) return;
+
+  db.collection('users').doc(uid).set({ subscriptionStatus: status }, { merge: true }).then(function() {
+    loadUsers();
+  }).catch(function(err) {
+    alert('Failed to update user: ' + err.message);
+  });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────
+function loadAnalytics() {
+  var today = new Date().toISOString().split('T')[0];
+
+  // Load today's stats
+  db.collection('analytics').doc(today).get().then(function(doc) {
+    var d = doc.exists ? doc.data() : {};
+    document.getElementById('a-logins-today').textContent = d.logins || 0;
+    document.getElementById('a-stmts-today').textContent = d.statements_generated || 0;
+    document.getElementById('a-exports-today').textContent = ((d.pdf_exports || 0) + (d.excel_exports || 0));
+  }).catch(function(err) { console.error('Failed to load today analytics:', err); });
+
+  // Load last 14 days
+  var dates = [];
+  for (var i = 0; i < 14; i++) {
+    var dt = new Date();
+    dt.setDate(dt.getDate() - i);
+    dates.push(dt.toISOString().split('T')[0]);
+  }
+
+  Promise.all(dates.map(function(d) {
+    return db.collection('analytics').doc(d).get().then(function(doc) {
+      return { date: d, data: doc.exists ? doc.data() : {} };
+    });
+  })).then(function(results) {
+    var html = '';
+    results.forEach(function(r) {
+      var d = r.data;
+      var hasData = (d.logins || d.statements_generated || d.pdf_exports || d.excel_exports || d.projects_created);
+      html += '<tr' + (!hasData ? ' style="color:#cbd5e1;"' : '') + '>';
+      html += '<td>' + esc(r.date) + '</td>';
+      html += '<td>' + (Number(d.logins) || 0) + '</td>';
+      html += '<td>' + (Number(d.statements_generated) || 0) + '</td>';
+      html += '<td>' + (Number(d.pdf_exports) || 0) + '</td>';
+      html += '<td>' + (Number(d.excel_exports) || 0) + '</td>';
+      html += '<td>' + (Number(d.projects_created) || 0) + '</td>';
+      html += '</tr>';
+    });
+    document.getElementById('analytics-table-body').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No data yet</td></tr>';
+  }).catch(function(err) { console.error('Failed to load analytics trends:', err); });
+
+  // Load daily metrics snapshots
+  db.collection('dailyMetrics').orderBy('date', 'desc').limit(14).get().then(function(snap) {
+    var html = '';
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      html += '<tr>';
+      html += '<td>' + esc(d.date) + '</td>';
+      html += '<td>' + (Number(d.totalUsers) || 0) + '</td>';
+      html += '<td><span class="badge badge-active">' + (Number(d.activeSubscribers) || 0) + '</span></td>';
+      html += '<td><span class="badge badge-trial">' + (Number(d.trialUsers) || 0) + '</span></td>';
+      html += '<td><span class="badge badge-firm">' + (Number(d.firmPlans) || 0) + '</span></td>';
+      html += '<td>' + (Number(d.pastDue) || 0) + '</td>';
+      html += '<td>' + (Number(d.cancelled) || 0) + '</td>';
+      html += '</tr>';
+    });
+    document.getElementById('metrics-table-body').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No snapshots yet — daily metrics run at midnight ET</td></tr>';
+  }).catch(function(err) { console.error('Failed to load daily metrics:', err); });
+}
+
+// ─── Health ───────────────────────────────────────────────────────────
+var HEALTH_URL = 'https://us-central1-noteflow-app1.cloudfunctions.net/healthCheck';
+
+function loadHealthData() {
+  document.getElementById('health-endpoint-url').textContent = HEALTH_URL;
+
+  // Check for error spike alert
+  db.collection('config').doc('systemHealth').get().then(function(doc) {
+    if (doc.exists && doc.data().errorAlert) {
+      document.getElementById('error-alert-card').style.display = 'block';
+      document.getElementById('error-alert-text').textContent = doc.data().errorsLast24h + ' errors in the last 24 hours. Check the Error Logs tab.';
+    } else {
+      document.getElementById('error-alert-card').style.display = 'none';
+    }
+  }).catch(function() {});
+
+  // Load health logs
+  db.collection('healthLogs').orderBy('timestamp', 'desc').limit(20).get().then(function(snap) {
+    if (snap.empty) {
+      document.getElementById('health-log-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No health checks yet — click "Run Check Now"</td></tr>';
+      return;
+    }
+
+    // Update status cards from latest
+    var latest = snap.docs[0].data();
+    updateHealthCards(latest);
+
+    var html = '';
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      var time = d.timestamp ? new Date(d.timestamp).toLocaleString() : '-';
+      var statusBadge = d.status === 'healthy'
+        ? '<span class="badge badge-active">Healthy</span>'
+        : '<span class="badge badge-expired">Degraded</span>';
+      html += '<tr>';
+      html += '<td>' + time + '</td>';
+      html += '<td>' + statusBadge + '</td>';
+      html += '<td>' + (d.firestore ? '✅' : '❌') + '</td>';
+      html += '<td>' + (d.stripe ? '✅' : '❌') + '</td>';
+      html += '<td>' + (Number(d.latencyMs) || '-') + 'ms</td>';
+      html += '</tr>';
+    });
+    document.getElementById('health-log-body').innerHTML = html;
+  }).catch(function(err) { console.error('Failed to load health logs:', err); });
+}
+
+function updateHealthCards(data) {
+  var statusEl = document.getElementById('h-status');
+  var card = document.getElementById('health-status-card');
+  if (data.status === 'healthy') {
+    statusEl.textContent = '✅ Healthy';
+    statusEl.style.color = '#16a34a';
+  } else {
+    statusEl.textContent = '⚠️ Degraded';
+    statusEl.style.color = '#dc2626';
+  }
+  document.getElementById('h-last-check').textContent = 'Last check: ' + new Date(data.timestamp).toLocaleString();
+  document.getElementById('h-firestore').innerHTML = data.firestore ? '<span style="color:#16a34a">✅ OK</span>' : '<span style="color:#dc2626">❌ Fail</span>';
+  document.getElementById('h-stripe').innerHTML = data.stripe ? '<span style="color:#16a34a">✅ OK</span>' : '<span style="color:#dc2626">❌ Fail</span>';
+}
+
+function runHealthCheck() {
+  var btn = document.getElementById('health-check-btn');
+  btn.textContent = 'Checking...';
+  btn.disabled = true;
+
+  fetch(HEALTH_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      updateHealthCards({
+        status: data.status,
+        timestamp: data.timestamp,
+        firestore: data.checks.firestore === 'ok',
+        stripe: data.checks.stripe === 'ok',
+        latencyMs: data.latencyMs,
+      });
+      btn.textContent = 'Run Check Now';
+      btn.disabled = false;
+      // Reload log
+      setTimeout(loadHealthData, 1000);
+    })
+    .catch(function(err) {
+      document.getElementById('h-status').textContent = '❌ Unreachable';
+      document.getElementById('h-status').style.color = '#dc2626';
+      btn.textContent = 'Run Check Now';
+      btn.disabled = false;
+    });
+}
+
+// ─── Error Logs ───────────────────────────────────────────────────────
+function loadErrorLogs() {
+  var now = new Date();
+  var cutoff24h = new Date(now - 24*60*60*1000).toISOString();
+  var cutoff7d = new Date(now - 7*24*60*60*1000).toISOString();
+
+  db.collection('errorLogs').orderBy('timestamp', 'desc').limit(100).get().then(function(snap) {
+    if (snap.empty) {
+      document.getElementById('error-log-body').innerHTML = '';
+      document.getElementById('error-log-empty').style.display = 'block';
+      document.getElementById('e-count-24h').textContent = '0';
+      document.getElementById('e-count-7d').textContent = '0';
+      document.getElementById('e-most-common').textContent = 'None';
+      return;
+    }
+
+    document.getElementById('error-log-empty').style.display = 'none';
+    var count24h = 0;
+    var count7d = 0;
+    var msgCounts = {};
+    var html = '';
+
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      var ts = d.timestamp || '';
+      if (ts >= cutoff24h) count24h++;
+      if (ts >= cutoff7d) count7d++;
+
+      var shortMsg = (d.message || '').substring(0, 60);
+      msgCounts[shortMsg] = (msgCounts[shortMsg] || 0) + 1;
+
+      var time = ts ? new Date(ts).toLocaleString() : '-';
+      var typeBadge = d.type === 'uncaught'
+        ? '<span class="badge badge-expired">Uncaught</span>'
+        : '<span class="badge badge-pending">Promise</span>';
+
+      html += '<tr>';
+      html += '<td style="white-space:nowrap;font-size:0.75rem;">' + time + '</td>';
+      html += '<td>' + typeBadge + '</td>';
+      html += '<td style="max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(d.message || '') + '">' + esc((d.message || '').substring(0, 80)) + '</td>';
+      html += '<td style="font-size:0.75rem;">' + esc(d.userEmail || '-') + '</td>';
+      html += '<td style="font-size:0.72rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;" title="' + esc(d.source || '') + '">' + esc((d.source || '').split('/').pop()) + (d.line ? ':' + d.line : '') + '</td>';
+      html += '</tr>';
+    });
+
+    document.getElementById('error-log-body').innerHTML = html;
+    document.getElementById('e-count-24h').textContent = count24h;
+    document.getElementById('e-count-7d').textContent = count7d;
+
+    // Find most common
+    var topMsg = '-';
+    var topCount = 0;
+    Object.keys(msgCounts).forEach(function(m) {
+      if (msgCounts[m] > topCount) { topCount = msgCounts[m]; topMsg = m; }
+    });
+    document.getElementById('e-most-common').textContent = topCount > 1 ? topMsg + ' (' + topCount + 'x)' : topMsg;
+  }).catch(function(err) { console.error('Failed to load error logs:', err); });
+}
+
+function clearOldErrors() {
+  if (!confirm('Delete error logs older than 7 days?')) return;
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 7);
+  var cutoffISO = cutoff.toISOString();
+
+  db.collection('errorLogs').where('timestamp', '<', cutoffISO).limit(400).get().then(function(snap) {
+    if (snap.empty) { alert('No old errors to clear.'); return; }
+    var batch = db.batch();
+    snap.docs.forEach(function(doc) { batch.delete(doc.ref); });
+    return batch.commit();
+  }).then(function(result) {
+    if (result !== undefined) loadErrorLogs();
+  }).catch(function(err) {
+    console.error('Failed to clear errors:', err);
+    alert('Failed to clear error logs: ' + err.message);
+  });
+}
+</script>
+</body>
+</html>
